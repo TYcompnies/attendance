@@ -477,7 +477,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.9 專業版</td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.10 專業版</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -1601,7 +1601,7 @@ async function doConnect(code) {
     showToast('正在連接雲端並下載資料...', 'info');
     const ctrl = new AbortController();
     const t = setTimeout(function() { ctrl.abort(); }, 30000);
-    const res = await fetch(JSONSTORAGE_API + '/' + code, {
+    const res = await fetch(JSONSTORAGE_API + '/' + code + '?t=' + Date.now(), {
       signal: ctrl.signal,
       mode: 'cors',
       cache: 'no-cache',
@@ -1688,12 +1688,13 @@ function mergeDB(cloudDb) {
   if (!db.schedule) db.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
 }
 
-async function pushToCloud(silent) {
+async function pushToCloud(silent, noBadge) {
   const key = getSyncKey();
   if (!key) return;
-  if (syncInProgress) { syncPending = true; return; }  // 推播進行中→標記待推，由執行中的推播接手
+  if (syncInProgress) { syncPending = true; return; }
   syncInProgress = true;
   let ok = false;
+  let errStatus = 0;  // v2.10：必須在 try 外面宣告，否則 catch 裡存不到（let 是區塊作用域）
   try {
     syncPending = false;
     const sizeKB = JSON.stringify(db).length / 1024;
@@ -1713,7 +1714,7 @@ async function pushToCloud(silent) {
       redirect: 'follow'
     });
     clearTimeout(t);
-    let errStatus = res.status;
+    errStatus = res.status;  // v2.10：移除 let，用外面宣告的 errStatus
     if (!res.ok) throw new Error('伺服器回應 ' + res.status);
     saveLocalOnly();
     ok = true;
@@ -1723,7 +1724,6 @@ async function pushToCloud(silent) {
     addSyncLog('PUT', 'ok', '大小 ' + sizeKB.toFixed(1) + 'KB', 200);
     if (!silent) showToast('同步完成：' + new Date().toLocaleTimeString('zh-TW'), 'success');
   } catch(e) {
-    // v2.8：詳細錯誤分類與指數退避重試
     syncPending = true;
     let msg = '';
     if (e.name === 'AbortError') {
@@ -1733,7 +1733,7 @@ async function pushToCloud(silent) {
     } else if (errStatus === 429) {
       msg = '同步過於頻繁（429），請稍後再試';
     } else if (errStatus === 0 || !errStatus) {
-      msg = '網路連線失敗，請確認手機可正常上網，或嘗試切換 WiFi/瀏覽器';
+      msg = '網路連線失敗（' + (e.message || 'TypeError') + '），請確認手機可正常上網';
     } else if (errStatus >= 500) {
       msg = '雲端伺服器暫時異常（' + errStatus + '），請稍後再試';
     } else {
@@ -1741,7 +1741,7 @@ async function pushToCloud(silent) {
     }
     lastSyncError = '推播失敗：' + msg;
     addSyncLog('PUT', 'err', msg, errStatus);
-    if (!silent) showToast('同步失敗：' + msg + '（' + Math.round(syncRetryDelay/1000) + '秒後自動重試）', 'error');
+    if (!silent && !noBadge) showToast('同步失敗：' + msg + '（' + Math.round(syncRetryDelay/1000) + '秒後自動重試）', 'error');
     if (!syncRetryTimer) {
       syncRetryTimer = setTimeout(function() {
         syncRetryTimer = null;
@@ -1751,18 +1751,16 @@ async function pushToCloud(silent) {
     }
   } finally {
     syncInProgress = false;
-    // 推播期間又有新變更 → 立刻補推一次，確保最新資料一定上傳
     if (ok && syncPending) {
       syncPending = false;
       setTimeout(function() { pushToCloud(true); }, 300);
     }
-    // v2.7：推送成功後立即拉取雲端，讓本機也拿到其他裝置的最新變更（雙向即時）
-    // 但如果這次 push 是 pullFromCloud 觸發的回推，就不再觸發 pull，避免 push→pull→push 無限循環
     if (ok) {
-      updateSyncBadge('synced');
+      if (!noBadge) updateSyncBadge('synced');
       if (!pushFromPull) setTimeout(function() { pullFromCloud(true); }, 500);
     } else {
-      updateSyncBadge('error');
+      // v2.10：push-back（noBadge=true）失敗不覆蓋徽章，避免 pull 成功但徽章顯示 error
+      if (!noBadge) updateSyncBadge('error');
     }
   }
 }
@@ -1773,20 +1771,21 @@ async function pullFromCloud(silent) {
   if (syncInProgress) { setTimeout(function() { pullFromCloud(silent); }, 1500); return; }
   syncInProgress = true;
   let changed = false, success = false;
+  let errStatus = 0;  // v2.10：必須在 try 外面宣告，否則 catch 裡存不到
   try {
     // 快照：比較「整個資料庫」是否變化（員工/考勤/WiFi/排班任一項目變更都要觸發刷新）
     const snap = function() { return JSON.stringify({ emp: db.employees, att: db.attendance, wifi: db.wifiSettings, sched: db.schedule }); };
     const beforeSnap = snap();
     const ctrl = new AbortController();
     const t = setTimeout(function() { ctrl.abort(); }, 30000);
-    const res = await fetch(JSONSTORAGE_API + '/' + key, {
+    const res = await fetch(JSONSTORAGE_API + '/' + key + '?t=' + Date.now(), {
       signal: ctrl.signal,
       mode: 'cors',
       cache: 'no-cache',
       redirect: 'follow'
     });
     clearTimeout(t);
-    let errStatus = res.status;
+    errStatus = res.status;  // v2.10：移除 let，用外面宣告的
     if (!res.ok) throw new Error('伺服器回應 ' + res.status);
     const cloudDb = await res.json();
     if (cloudDb && cloudDb.employees) {
@@ -1806,7 +1805,7 @@ async function pullFromCloud(silent) {
     } else if (errStatus === 429) {
       msg = '同步過於頻繁（429），請稍後再試';
     } else if (errStatus === 0 || !errStatus) {
-      msg = '網路連線失敗，請確認手機可正常上網';
+      msg = '網路連線失敗（' + (e.message || 'TypeError') + '），請確認手機可正常上網';
     } else if (errStatus >= 500) {
       msg = '雲端伺服器暫時異常（' + errStatus + '）';
     } else {
@@ -1819,21 +1818,19 @@ async function pullFromCloud(silent) {
   } finally {
     syncInProgress = false;
   }
-  // 只有「拉取成功」才回推雲端（避免斷網時把本機舊資料推上去覆蓋雲端的新資料）
-  // v2.7：設定 pushFromPull 旗標，讓 pushToCloud 知道這次是 pull 觸發的，不要再回觸發 pull（避免無限循環）
-  // v2.9：用 try-finally 保護 pushFromPull，避免 pushToCloud 異常時旗標永遠卡住
-  if (success && getSyncKey()) {
-    pushFromPull = true;
-    try { await pushToCloud(true); } finally { pushFromPull = false; }
-  }
-  // 合併成功 → 刷新系統裡「所有項目」的畫面（打卡狀態、個人考勤、管理統計、員工、考勤紀錄、WiFi、排班、同步狀態）
+  // v2.10：pull 成功 → 先設徽章 synced + 清除錯誤，再執行 push-back（靜默、不影響徽章）
   if (success && currentUser) {
     updateSyncBadge('synced');
+    lastSyncError = '';
+  }
+  if (success && getSyncKey()) {
+    pushFromPull = true;
+    try { await pushToCloud(true, true); } finally { pushFromPull = false; }  // noBadge=true
+  }
+  if (success && currentUser) {
     if (changed) {
       refreshAllViews();
     } else {
-      // 資料沒變：只更新同步狀態顯示（最後同步時間）；不走 switchPage，
-      // 避免 switchPage→maybePullOnNavigate→pullFromCloud 互相觸發形成拉取循環
       if (currentUser && currentUser.role === 'admin') loadSyncSettings();
     }
   }
@@ -1861,6 +1858,11 @@ async function manualSync() {
   if (!requireAdmin()) return;
   if (!getSyncKey()) { showToast('尚未啟用雲端同步', 'warning'); return; }
   showToast('正在同步...', 'info');
+  // v2.10：手動同步時重置所有錯誤狀態，避免卡在 error 不恢復
+  lastSyncError = '';
+  syncRetryDelay = 10000;
+  if (syncRetryTimer) { clearTimeout(syncRetryTimer); syncRetryTimer = null; }
+  syncInProgress = false;
   addSyncLog('MANUAL', 'ok', '開始手動同步', 0);
   await pushToCloud(true);    // 1. 先上傳本機變更
   await pullFromCloud(true);  // 2. 再下載雲端資料並合併（成功時自動回推 + 全畫面刷新）
@@ -1950,7 +1952,7 @@ async function testCloudConnection() {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(function() { ctrl.abort(); }, 30000);
-    const res = await fetch(JSONSTORAGE_API + '/' + key, {
+    const res = await fetch(JSONSTORAGE_API + '/' + key + '?t=' + Date.now(), {
       signal: ctrl.signal,
       mode: 'cors',
       cache: 'no-cache',
