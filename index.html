@@ -437,7 +437,7 @@
         <div class="card-header"><div class="card-title">☁️ 雲端同步（跨裝置）</div></div>
         <div class="info-banner blue">
           <span>ℹ️</span>
-          <span>把資料同步到免費雲端空間，<strong>所有紀錄不會遺失</strong>。啟用後<strong>每 10 秒自動同步</strong>、手機切回畫面立即同步，<strong>同步後系統裡所有項目（員工、考勤、統計、WiFi、排班）都會自動更新</strong>。換裝置步驟：① 在此頁點「複製連結」→ ② 在手機瀏覽器開啟該連結 → ③ 自動連接完成。</span>
+          <span>把資料同步到免費雲端空間，<strong>所有紀錄不會遺失</strong>。啟用後<strong>每 30 秒自動同步</strong>、手機切回畫面立即同步，<strong>同步後系統裡所有項目（員工、考勤、統計、WiFi、排班）都會自動更新</strong>。換裝置步驟：① 在此頁點「複製連結」→ ② 在手機瀏覽器開啟該連結 → ③ 自動連接完成。</span>
         </div>
         <div id="syncStatusBox" style="padding:14px 16px;background:var(--bg);border-radius:10px;margin-bottom:16px;font-size:14px;">
           <span id="syncStatusText">載入中...</span>
@@ -469,11 +469,15 @@
           <button class="btn btn-outline btn-sm" onclick="createCloudSync()" style="margin-top:12px;">✨ 建立雲端同步（取得同步碼）</button>
         </div>
         <div class="hint-text" id="syncHint" style="margin-top:10px;">同步碼等同於資料庫鑰匙，請妥善保管，勿隨意分享。免費雲端空間有容量與每月請求次數限制，請定期使用「匯出全部資料」備份。</div>
+        <div id="syncLogSection" style="margin-top:16px;display:none;">
+          <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">📋 最近同步紀錄（調試用）</div>
+          <div id="syncLogBox" style="background:var(--bg);border-radius:8px;padding:10px;max-height:180px;overflow-y:auto;font-size:12px;"></div>
+        </div>
       </div>
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.8 專業版</td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.9 專業版</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -1524,6 +1528,24 @@ let syncInProgress = false;
 let pushFromPull = false;  // v2.7：標記「這次 push 是 pullFromCloud 觸發的」，避免 push→pull→push 無限循環
 let lastSyncError = '';    // v2.8：記錄最後一次同步錯誤訊息，顯示在徽章 title 中
 let syncRetryDelay = 10000; // v2.8：動態重試延遲（指數退避）
+let syncLog = [];        // v2.9：同步日誌，記錄最近 20 次嘗試的時間/操作/結果/錯誤/響應碼
+let autoSyncLock = false; // v2.9：互斥鎖，避免 setInterval 觸發並行同步導致 race condition
+function addSyncLog(op, status, detail, httpStatus) {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('zh-TW', { hour12: false }) + '.' + String(now.getMilliseconds()).padStart(3, '0');
+  syncLog.unshift({ time: timeStr, op: op, status: status, detail: detail || '', http: httpStatus || 0 });
+  if (syncLog.length > 20) syncLog.pop();
+}
+function getSyncLogHTML() {
+  if (!syncLog.length) return '<div style="color:var(--text-secondary);font-size:12px;">暫無同步紀錄</div>';
+  return syncLog.map(function(l) {
+    var icon = l.status === 'ok' ? '✅' : (l.status === 'err' ? '❌' : '⚠️');
+    var color = l.status === 'ok' ? 'var(--success)' : (l.status === 'err' ? 'var(--danger)' : 'var(--warning)');
+    var detail = l.detail ? ' — ' + esc(l.detail) : '';
+    var http = l.http ? ' [' + l.http + ']' : '';
+    return '<div style="font-size:12px;font-family:monospace;margin:2px 0;"><span style="color:' + color + '">' + icon + '</span> ' + esc(l.time) + ' ' + esc(l.op) + http + detail + '</div>';
+  }).join('');
+}
 
 function getSyncKey() { return localStorage.getItem(SYNC_KEY_STORAGE) || ''; }
 function setSyncKey(k) { if (k) localStorage.setItem(SYNC_KEY_STORAGE, k); else localStorage.removeItem(SYNC_KEY_STORAGE); }
@@ -1553,10 +1575,12 @@ async function createCloudSync() {
     setSyncKey(data.id);
     db._last_sync = new Date().toISOString();
     saveLocalOnly();
+    addSyncLog('CREATE', 'ok', '同步碼 ' + data.id, 201);
     showToast('雲端同步已啟用！請記下同步碼', 'success');
     startAutoSync();      // 確保自動同步引擎啟動（首次建立同步碼的情況）
     loadSyncSettings();
   } catch(e) {
+    addSyncLog('CREATE', 'err', e.message, 0);
     showToast('建立失敗：' + e.message + '（請檢查網路連線）', 'error');
   }
 }
@@ -1596,9 +1620,11 @@ async function doConnect(code) {
     // 合併結果回推雲端：本機既有資料不會被覆蓋，兩邊紀錄合而為一
     await pushToCloud(true);
     showToast('連接成功！已合併雲端資料（考勤 ' + beforeCount + ' → ' + db.attendance.length + ' 筆）', 'success');
+    addSyncLog('CONNECT', 'ok', '同步碼 ' + code + ' 考勤 ' + beforeCount + '→' + db.attendance.length, 200);
     startAutoSync();      // 確保自動同步引擎啟動（手動輸入同步碼連接的情況）
     refreshAllViews();
   } catch(e) {
+    addSyncLog('CONNECT', 'err', e.message, 0);
     showToast('連接失敗：' + e.message, 'error');
   }
 }
@@ -1694,6 +1720,7 @@ async function pushToCloud(silent) {
     lastSyncError = '';
     syncRetryDelay = 10000;
     if (syncRetryTimer) { clearTimeout(syncRetryTimer); syncRetryTimer = null; }
+    addSyncLog('PUT', 'ok', '大小 ' + sizeKB.toFixed(1) + 'KB', 200);
     if (!silent) showToast('同步完成：' + new Date().toLocaleTimeString('zh-TW'), 'success');
   } catch(e) {
     // v2.8：詳細錯誤分類與指數退避重試
@@ -1703,6 +1730,8 @@ async function pushToCloud(silent) {
       msg = '連線逾時（30秒），網路可能不穩定';
     } else if (errStatus === 404) {
       msg = '同步碼不存在或已失效，請重新連接';
+    } else if (errStatus === 429) {
+      msg = '同步過於頻繁（429），請稍後再試';
     } else if (errStatus === 0 || !errStatus) {
       msg = '網路連線失敗，請確認手機可正常上網，或嘗試切換 WiFi/瀏覽器';
     } else if (errStatus >= 500) {
@@ -1711,6 +1740,7 @@ async function pushToCloud(silent) {
       msg = e.message;
     }
     lastSyncError = '推播失敗：' + msg;
+    addSyncLog('PUT', 'err', msg, errStatus);
     if (!silent) showToast('同步失敗：' + msg + '（' + Math.round(syncRetryDelay/1000) + '秒後自動重試）', 'error');
     if (!syncRetryTimer) {
       syncRetryTimer = setTimeout(function() {
@@ -1765,6 +1795,7 @@ async function pullFromCloud(silent) {
       saveLocalOnly();
       changed = snap() !== beforeSnap;
       success = true;
+      addSyncLog('GET', 'ok', changed ? '資料有更新' : '資料一致', 200);
     }
   } catch(e) {
     let msg = '';
@@ -1772,6 +1803,8 @@ async function pullFromCloud(silent) {
       msg = '連線逾時（30秒），網路可能不穩定';
     } else if (errStatus === 404) {
       msg = '同步碼不存在或已失效';
+    } else if (errStatus === 429) {
+      msg = '同步過於頻繁（429），請稍後再試';
     } else if (errStatus === 0 || !errStatus) {
       msg = '網路連線失敗，請確認手機可正常上網';
     } else if (errStatus >= 500) {
@@ -1780,6 +1813,7 @@ async function pullFromCloud(silent) {
       msg = e.message;
     }
     lastSyncError = '拉取失敗：' + msg;
+    addSyncLog('GET', 'err', msg, errStatus);
     if (!silent) showToast('雲端拉取失敗：' + msg, 'error');
     updateSyncBadge('error');
   } finally {
@@ -1787,7 +1821,11 @@ async function pullFromCloud(silent) {
   }
   // 只有「拉取成功」才回推雲端（避免斷網時把本機舊資料推上去覆蓋雲端的新資料）
   // v2.7：設定 pushFromPull 旗標，讓 pushToCloud 知道這次是 pull 觸發的，不要再回觸發 pull（避免無限循環）
-  if (success && getSyncKey()) { pushFromPull = true; await pushToCloud(true); pushFromPull = false; }
+  // v2.9：用 try-finally 保護 pushFromPull，避免 pushToCloud 異常時旗標永遠卡住
+  if (success && getSyncKey()) {
+    pushFromPull = true;
+    try { await pushToCloud(true); } finally { pushFromPull = false; }
+  }
   // 合併成功 → 刷新系統裡「所有項目」的畫面（打卡狀態、個人考勤、管理統計、員工、考勤紀錄、WiFi、排班、同步狀態）
   if (success && currentUser) {
     updateSyncBadge('synced');
@@ -1823,6 +1861,7 @@ async function manualSync() {
   if (!requireAdmin()) return;
   if (!getSyncKey()) { showToast('尚未啟用雲端同步', 'warning'); return; }
   showToast('正在同步...', 'info');
+  addSyncLog('MANUAL', 'ok', '開始手動同步', 0);
   await pushToCloud(true);    // 1. 先上傳本機變更
   await pullFromCloud(true);  // 2. 再下載雲端資料並合併（成功時自動回推 + 全畫面刷新）
   refreshAllViews();          // 3. 確保系統裡所有項目都顯示最新資料
@@ -1830,22 +1869,28 @@ async function manualSync() {
 }
 
 // ===== 自動同步引擎 =====
-// 每 10 秒自動同步一次 + 手機從背景切回畫面時立即同步（全程靜默，不彈錯誤干擾）
-// v2.7：間隔從 60s 降到 10s，讓跨裝置同步接近即時；
-//      push 成功後立即 pull，確保本機也拿到其他裝置的最新變更
+// v2.9：間隔從 10s 延長到 30s，避免觸發 extendsclass.com rate limit（429）導致連續失敗；
+//       新增 autoSyncLock 互斥鎖，避免 setInterval 觸發並行同步導致 race condition；
+//       手機從背景切回畫面時仍會立即同步（全程靜默，不彈錯誤干擾）。
 // 重要：不論開啟時是否已有同步碼，都先掛上定時器與監聽器；autoSyncOnce 內部才檢查同步碼。
 // 如此一來「之後才建立/連接同步碼」的裝置也能立刻享有自動同步（否則引擎永遠不會啟動）。
 let autoSyncStarted = false;
-const AUTOSYNC_INTERVAL = 10000; // 10 秒自動同步一次
+const AUTOSYNC_INTERVAL = 30000; // 30 秒自動同步一次（避免 rate limit）
 function startAutoSync() {
   if (autoSyncStarted) return;
   autoSyncStarted = true;
   async function autoSyncOnce() {
-    if (typeof navigator !== 'undefined' && !navigator.onLine) { updateSyncBadge('offline'); return; }
-    if (!getSyncKey()) { updateSyncBadge('offline'); return; }
-    updateSyncBadge('syncing');
-    if (syncPending) await pushToCloud(true);  // 有本機變更先上傳
-    await pullFromCloud(true);                  // 再拉取雲端新資料並合併
+    if (autoSyncLock) return; // 互斥鎖：前一次同步還沒完成，跳過這次
+    autoSyncLock = true;
+    try {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) { updateSyncBadge('offline'); return; }
+      if (!getSyncKey()) { updateSyncBadge('offline'); return; }
+      updateSyncBadge('syncing');
+      if (syncPending) await pushToCloud(true);  // 有本機變更先上傳
+      await pullFromCloud(true);                  // 再拉取雲端新資料並合併
+    } finally {
+      autoSyncLock = false;
+    }
   }
   setInterval(autoSyncOnce, AUTOSYNC_INTERVAL);
   function onVisible() {
@@ -1916,17 +1961,21 @@ async function testCloudConnection() {
       showToast('✅ 雲端連線正常！同步碼 ' + key + ' 有效', 'success');
       lastSyncError = '';
       updateSyncBadge('synced');
+      addSyncLog('TEST', 'ok', '連線正常', 200);
     } else if (res.status === 404) {
       showToast('❌ 同步碼不存在或已失效（404），請重新建立同步', 'error');
       lastSyncError = '同步碼不存在或已失效';
+      addSyncLog('TEST', 'err', '同步碼不存在', 404);
     } else {
       showToast('⚠️ 雲端伺服器回應 ' + res.status, 'warning');
       lastSyncError = '測試連線：伺服器回應 ' + res.status;
+      addSyncLog('TEST', 'err', '伺服器回應 ' + res.status, res.status);
     }
   } catch(e) {
     let msg = e.name === 'AbortError' ? '連線逾時' : (e.message || '網路連線失敗');
     showToast('❌ 連線測試失敗：' + msg + '。請確認手機網路正常，或嘗試切換 WiFi/瀏覽器', 'error');
     lastSyncError = '測試連線失敗：' + msg;
+    addSyncLog('TEST', 'err', msg, 0);
   }
   loadSyncSettings();
 }
@@ -1943,7 +1992,7 @@ function loadSyncSettings() {
     else if (lastSyncError) diag += '<br><span style="color:var(--danger);">⚠️ 最後錯誤：' + esc(lastSyncError) + '</span>';
     else diag += '<br><span style="color:var(--success);">✅ 網路正常，自動同步運作中</span>';
     statusEl.innerHTML = '<strong style="color:var(--success)">✅ 雲端同步已啟用（自動同步中）</strong>' +
-      '<br><span style="color:var(--text-secondary);font-size:12px;">每 10 秒自動同步一次；切回此頁面時也會立即同步。' +
+      '<br><span style="color:var(--text-secondary);font-size:12px;">每 30 秒自動同步一次；切回此頁面時也會立即同步。' +
       '<br>最後同步：' + esc(db._last_sync || '尚未同步') + ' · 資料大小：' + getDbSizeKB() + ' KB' + diag + '</span>';
     document.getElementById('syncCodeDisplay').value = key;
     codeSection.style.display = '';
@@ -1956,6 +2005,17 @@ function loadSyncSettings() {
   // v2.7：同步設定變更後，更新徽章和警告橫幅
   updateSyncBadge(key ? 'synced' : 'offline');
   checkSyncWarning();
+  // v2.9：顯示同步日誌（調試用，只顯示最近 20 筆）
+  var logSection = document.getElementById('syncLogSection');
+  var logBox = document.getElementById('syncLogBox');
+  if (logSection && logBox) {
+    if (key && syncLog.length) {
+      logSection.style.display = '';
+      logBox.innerHTML = getSyncLogHTML();
+    } else {
+      logSection.style.display = 'none';
+    }
+  }
 }
 
 // ===== 同步狀態徽章（v2.7）=====
@@ -2079,7 +2139,7 @@ document.querySelectorAll('[data-page]').forEach(function(el) {
   }
 
   if (getSyncKey() && !syncFlowPending) doInitialSync();
-  startAutoSync(); // 開啟自動同步引擎：每 10 秒 + 手機切回畫面時自動同步
+  startAutoSync(); // 開啟自動同步引擎：每 30 秒 + 手機切回畫面時自動同步
   // v2.7：初始同步徽章狀態
   updateSyncBadge(getSyncKey() ? 'synced' : 'offline');
   checkSyncWarning();
