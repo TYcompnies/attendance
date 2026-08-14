@@ -52,6 +52,19 @@
     .topbar-logo .icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
     .topbar-logo span { font-size: 18px; font-weight: 700; }
     .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .sync-badge { display: flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .sync-badge:hover { transform: scale(1.05); }
+    .sync-badge.synced { background: rgba(34,197,94,0.12); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
+    .sync-badge.syncing { background: rgba(59,130,246,0.12); color: var(--primary); border: 1px solid rgba(59,130,246,0.3); animation: pulse 1.5s infinite; }
+    .sync-badge.offline { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+    .sync-badge.error { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+    .sync-badge .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .sync-badge.synced .dot { background: var(--success); }
+    .sync-badge.syncing .dot { background: var(--primary); }
+    .sync-badge.offline .dot { background: #f59e0b; }
+    .sync-badge.error .dot { background: var(--danger); }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+    .sync-warning { background: linear-gradient(135deg, #fef3c7, #fde68a); border: 1px solid #f59e0b; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; font-size: 14px; }
     .user-info { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--bg); border-radius: 20px; }
     .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; }
     .user-name { font-size: 14px; font-weight: 600; }
@@ -219,6 +232,10 @@
       </div>
     </div>
     <div class="topbar-right">
+      <div class="sync-badge offline" id="syncBadge" onclick="quickSync()" title="點擊立即同步">
+        <span class="dot"></span>
+        <span id="syncBadgeText">同步載入中</span>
+      </div>
       <div class="user-info">
         <div class="user-avatar" id="userAvatar">A</div>
         <div>
@@ -232,6 +249,11 @@
   </div>
 
   <div class="main-content">
+    <div class="sync-warning" id="syncWarningBanner" style="display:none;">
+      <span style="font-size:20px;">⚠️</span>
+      <span><strong>尚未啟用雲端同步！</strong>手機和電腦的資料不會連動。請到「系統設定 → 雲端同步」建立同步碼，或在另一台裝置輸入同一個同步碼。</span>
+      <button class="btn btn-primary btn-sm" onclick="switchPage('admin-settings')" style="margin-left:auto;white-space:nowrap;">前往設定</button>
+    </div>
     <!-- Clock Page -->
     <div id="page-clock" class="page active">
       <div class="clock-container">
@@ -415,7 +437,7 @@
         <div class="card-header"><div class="card-title">☁️ 雲端同步（跨裝置）</div></div>
         <div class="info-banner blue">
           <span>ℹ️</span>
-          <span>把資料同步到免費雲端空間，<strong>所有紀錄不會遺失</strong>。啟用後<strong>每 60 秒自動同步</strong>、手機切回畫面立即同步，<strong>同步後系統裡所有項目（員工、考勤、統計、WiFi、排班）都會自動更新</strong>。換裝置步驟：① 在此頁點「複製連結」→ ② 在手機瀏覽器開啟該連結 → ③ 自動連接完成。</span>
+          <span>把資料同步到免費雲端空間，<strong>所有紀錄不會遺失</strong>。啟用後<strong>每 10 秒自動同步</strong>、手機切回畫面立即同步，<strong>同步後系統裡所有項目（員工、考勤、統計、WiFi、排班）都會自動更新</strong>。換裝置步驟：① 在此頁點「複製連結」→ ② 在手機瀏覽器開啟該連結 → ③ 自動連接完成。</span>
         </div>
         <div id="syncStatusBox" style="padding:14px 16px;background:var(--bg);border-radius:10px;margin-bottom:16px;font-size:14px;">
           <span id="syncStatusText">載入中...</span>
@@ -450,7 +472,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.6 專業版</td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.7 專業版</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -815,6 +837,9 @@ function showDashboard() {
 
   switchPage('clock');
   startClock();
+  // v2.7：登入後立刻檢查同步狀態，更新徽章與警告橫幅
+  if (getSyncKey()) { updateSyncBadge('synced'); checkSyncWarning(); }
+  else { updateSyncBadge('offline'); checkSyncWarning(); }
 }
 
 function setDefaultDateFilters() {
@@ -1495,6 +1520,7 @@ const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // 若用 application/json 會觸發 preflight，而該服務的 OPTIONS 端點無法正常回應，建立會失敗。
 const JSONSTORAGE_API = 'https://extendsclass.com/api/json-storage/bin';
 let syncInProgress = false;
+let pushFromPull = false;  // v2.7：標記「這次 push 是 pullFromCloud 觸發的」，避免 push→pull→push 無限循環
 
 function getSyncKey() { return localStorage.getItem(SYNC_KEY_STORAGE) || ''; }
 function setSyncKey(k) { if (k) localStorage.setItem(SYNC_KEY_STORAGE, k); else localStorage.removeItem(SYNC_KEY_STORAGE); }
@@ -1662,6 +1688,14 @@ async function pushToCloud(silent) {
       syncPending = false;
       setTimeout(function() { pushToCloud(true); }, 300);
     }
+    // v2.7：推送成功後立即拉取雲端，讓本機也拿到其他裝置的最新變更（雙向即時）
+    // 但如果這次 push 是 pullFromCloud 觸發的回推，就不再觸發 pull，避免 push→pull→push 無限循環
+    if (ok) {
+      updateSyncBadge('synced');
+      if (!pushFromPull) setTimeout(function() { pullFromCloud(true); }, 500);
+    } else {
+      updateSyncBadge('error');
+    }
   }
 }
 
@@ -1690,13 +1724,16 @@ async function pullFromCloud(silent) {
     }
   } catch(e) {
     if (!silent) showToast('雲端拉取失敗：' + (e.name === 'AbortError' ? '連線逾時' : e.message), 'error');
+    updateSyncBadge('error');
   } finally {
     syncInProgress = false;
   }
   // 只有「拉取成功」才回推雲端（避免斷網時把本機舊資料推上去覆蓋雲端的新資料）
-  if (success && getSyncKey()) await pushToCloud(true);
+  // v2.7：設定 pushFromPull 旗標，讓 pushToCloud 知道這次是 pull 觸發的，不要再回觸發 pull（避免無限循環）
+  if (success && getSyncKey()) { pushFromPull = true; await pushToCloud(true); pushFromPull = false; }
   // 合併成功 → 刷新系統裡「所有項目」的畫面（打卡狀態、個人考勤、管理統計、員工、考勤紀錄、WiFi、排班、同步狀態）
   if (success && currentUser) {
+    updateSyncBadge('synced');
     if (changed) {
       refreshAllViews();
     } else {
@@ -1736,19 +1773,23 @@ async function manualSync() {
 }
 
 // ===== 自動同步引擎 =====
-// 每 60 秒自動同步一次 + 手機從背景切回畫面時立即同步（全程靜默，不彈錯誤干擾）
+// 每 10 秒自動同步一次 + 手機從背景切回畫面時立即同步（全程靜默，不彈錯誤干擾）
+// v2.7：間隔從 60s 降到 10s，讓跨裝置同步接近即時；
+//      push 成功後立即 pull，確保本機也拿到其他裝置的最新變更
 // 重要：不論開啟時是否已有同步碼，都先掛上定時器與監聽器；autoSyncOnce 內部才檢查同步碼。
 // 如此一來「之後才建立/連接同步碼」的裝置也能立刻享有自動同步（否則引擎永遠不會啟動）。
 let autoSyncStarted = false;
+const AUTOSYNC_INTERVAL = 10000; // 10 秒自動同步一次
 function startAutoSync() {
   if (autoSyncStarted) return;
   autoSyncStarted = true;
   async function autoSyncOnce() {
-    if (!getSyncKey()) return;
+    if (!getSyncKey()) { updateSyncBadge('offline'); return; }
+    updateSyncBadge('syncing');
     if (syncPending) await pushToCloud(true);  // 有本機變更先上傳
     await pullFromCloud(true);                  // 再拉取雲端新資料並合併
   }
-  setInterval(autoSyncOnce, 60000);
+  setInterval(autoSyncOnce, AUTOSYNC_INTERVAL);
   function onVisible() {
     if (!getSyncKey() || document.hidden) return;
     autoSyncOnce();
@@ -1762,6 +1803,8 @@ function disconnectSync() {
   showConfirm('斷開後此裝置不再自動同步（雲端資料仍會保留）。確定斷開？', function() {
     setSyncKey(null);
     loadSyncSettings();
+    updateSyncBadge('offline');
+    checkSyncWarning();
     showToast('已斷開雲端同步', 'success');
   }, '⚠️');
 }
@@ -1804,7 +1847,7 @@ function loadSyncSettings() {
   const connectSection = document.getElementById('syncConnectSection');
   if (key) {
     statusEl.innerHTML = '<strong style="color:var(--success)">✅ 雲端同步已啟用（自動同步中）</strong>' +
-      '<br><span style="color:var(--text-secondary);font-size:12px;">每 60 秒自動同步一次；切回此頁面時也會立即同步。' +
+      '<br><span style="color:var(--text-secondary);font-size:12px;">每 10 秒自動同步一次；切回此頁面時也會立即同步。' +
       '<br>最後同步：' + esc(db._last_sync || '尚未同步') + ' · 資料大小：' + getDbSizeKB() + ' KB</span>';
     document.getElementById('syncCodeDisplay').value = key;
     codeSection.style.display = '';
@@ -1813,6 +1856,48 @@ function loadSyncSettings() {
     statusEl.innerHTML = '<span style="color:var(--text-secondary);">尚未啟用雲端同步 — 資料目前只存在此瀏覽器，<strong>換裝置會重新開始</strong>。建議立即建立同步。</span>';
     codeSection.style.display = 'none';
     connectSection.style.display = '';
+  }
+  // v2.7：同步設定變更後，更新徽章和警告橫幅
+  updateSyncBadge(key ? 'synced' : 'offline');
+  checkSyncWarning();
+}
+
+// ===== 同步狀態徽章（v2.7）=====
+// 在 topbar 永遠顯示同步狀態，讓使用者不管停在哪一頁都能知道：
+// ✅已同步 / 🔄同步中 / ⚠️未連接 / ❌同步失敗
+// 點擊徽章 → 立即同步（有同步碼）或跳到設定頁（無同步碼）
+function updateSyncBadge(state) {
+  const badge = document.getElementById('syncBadge');
+  const text = document.getElementById('syncBadgeText');
+  if (!badge || !text) return;
+  badge.className = 'sync-badge ' + state;
+  switch(state) {
+    case 'synced':  text.textContent = '已同步'; break;
+    case 'syncing': text.textContent = '同步中…'; break;
+    case 'offline': text.textContent = '未啟用同步'; break;
+    case 'error':   text.textContent = '同步失敗'; break;
+  }
+}
+function quickSync() {
+  if (!currentUser) return;
+  if (!getSyncKey()) {
+    showToast('尚未啟用雲端同步，正在跳轉到設定頁…', 'warning');
+    if (currentUser.role === 'admin') switchPage('admin-settings');
+    return;
+  }
+  if (currentUser.role === 'admin') manualSync();
+  else { updateSyncBadge('syncing'); pullFromCloud(true).then(function(){ updateSyncBadge('synced'); }).catch(function(){ updateSyncBadge('error'); }); }
+}
+
+// ===== 未啟用同步的醒目提示（v2.7）=====
+// 新網址首次使用（localStorage 空、無 syncKey）時，在主畫面頂端顯示醒目黃色橫幅
+function checkSyncWarning() {
+  const banner = document.getElementById('syncWarningBanner');
+  if (!banner) return;
+  if (getSyncKey()) {
+    banner.style.display = 'none';
+  } else {
+    banner.style.display = 'flex';
   }
 }
 
@@ -1898,7 +1983,10 @@ document.querySelectorAll('[data-page]').forEach(function(el) {
   }
 
   if (getSyncKey() && !syncFlowPending) doInitialSync();
-  startAutoSync(); // 開啟自動同步引擎：每 60 秒 + 手機切回畫面時自動同步
+  startAutoSync(); // 開啟自動同步引擎：每 10 秒 + 手機切回畫面時自動同步
+  // v2.7：初始同步徽章狀態
+  updateSyncBadge(getSyncKey() ? 'synced' : 'offline');
+  checkSyncWarning();
 })();
 </script>
 </body>
