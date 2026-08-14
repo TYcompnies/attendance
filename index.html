@@ -450,7 +450,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.5 專業版</td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.6 專業版</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -1518,6 +1518,7 @@ async function createCloudSync() {
     db._last_sync = new Date().toISOString();
     saveLocalOnly();
     showToast('雲端同步已啟用！請記下同步碼', 'success');
+    startAutoSync();      // 確保自動同步引擎啟動（首次建立同步碼的情況）
     loadSyncSettings();
   } catch(e) {
     showToast('建立失敗：' + e.message + '（請檢查網路連線）', 'error');
@@ -1551,6 +1552,7 @@ async function doConnect(code) {
     // 合併結果回推雲端：本機既有資料不會被覆蓋，兩邊紀錄合而為一
     await pushToCloud(true);
     showToast('連接成功！已合併雲端資料（考勤 ' + beforeCount + ' → ' + db.attendance.length + ' 筆）', 'success');
+    startAutoSync();      // 確保自動同步引擎啟動（手動輸入同步碼連接的情況）
     refreshAllViews();
   } catch(e) {
     showToast('連接失敗：' + e.message, 'error');
@@ -1698,10 +1700,9 @@ async function pullFromCloud(silent) {
     if (changed) {
       refreshAllViews();
     } else {
-      // 資料沒變：仍輕量刷新目前頁面（確保「最後同步時間」等狀態文字是最新）
-      const pageEl = document.querySelector('.page.active');
-      const pageName = pageEl ? pageEl.id.replace('page-', '') : 'clock';
-      switchPage(pageName);
+      // 資料沒變：只更新同步狀態顯示（最後同步時間）；不走 switchPage，
+      // 避免 switchPage→maybePullOnNavigate→pullFromCloud 互相觸發形成拉取循環
+      if (currentUser && currentUser.role === 'admin') loadSyncSettings();
     }
   }
   if (!silent && changed) showToast('已從雲端更新資料', 'success');
@@ -1736,8 +1737,12 @@ async function manualSync() {
 
 // ===== 自動同步引擎 =====
 // 每 60 秒自動同步一次 + 手機從背景切回畫面時立即同步（全程靜默，不彈錯誤干擾）
+// 重要：不論開啟時是否已有同步碼，都先掛上定時器與監聽器；autoSyncOnce 內部才檢查同步碼。
+// 如此一來「之後才建立/連接同步碼」的裝置也能立刻享有自動同步（否則引擎永遠不會啟動）。
+let autoSyncStarted = false;
 function startAutoSync() {
-  if (!getSyncKey()) return;
+  if (autoSyncStarted) return;
+  autoSyncStarted = true;
   async function autoSyncOnce() {
     if (!getSyncKey()) return;
     if (syncPending) await pushToCloud(true);  // 有本機變更先上傳
@@ -1814,11 +1819,24 @@ function loadSyncSettings() {
 // ===== Navigation =====
 const ADMIN_PAGES = ['admin-stats', 'admin-employees', 'admin-attendance', 'admin-wifi', 'admin-settings'];
 
+// 切換頁面時順帶拉取雲端最新資料（節流，避免頻繁切頁狂打 API）
+// 讓使用者切到「員工」「考勤」等頁面時，能立刻看到其他裝置剛新增/打卡的內容
+var PULL_NAV_THROTTLE = 8000; // 切頁拉取節流毫秒數（可調整）
+let lastPagePull = 0;
+function maybePullOnNavigate() {
+  if (!getSyncKey()) return;
+  const now = Date.now();
+  if (now - lastPagePull < PULL_NAV_THROTTLE) return;
+  lastPagePull = now;
+  pullFromCloud(true);
+}
+
 function switchPage(pageName) {
   if (ADMIN_PAGES.includes(pageName) && (!currentUser || currentUser.role !== 'admin')) {
     showToast('權限不足！此頁面僅限管理員使用。', 'error');
     pageName = 'clock';
   }
+  maybePullOnNavigate();   // 切頁即拉取最新（有同步碼才動作，節流保護）
   document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
   const pageEl = document.getElementById('page-' + pageName);
   if (pageEl) pageEl.classList.add('active');
