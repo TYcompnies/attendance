@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="專業WiFi打卡出勤管理系統，支援IP白名單驗證、即時打卡、考勤記錄與統計分析">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏰</text></svg>">
+  <title>智能出勤管理系統 | WiFi打卡</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #4f46e5; --primary-dark: #4338ca; --primary-light: #6366f1;
+      --success: #10b981; --success-dark: #059669; --danger: #ef4444; --warning: #f59e0b;
+      --bg: #f0f2f5; --card-bg: #ffffff; --text: #1f2937; --text-secondary: #6b7280;
+      --border: #e5e7eb; --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+      --radius: 12px;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* Login */
+    .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; }
+    .login-card { background: var(--card-bg); border-radius: 20px; padding: 40px; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .login-logo { text-align: center; margin-bottom: 30px; }
+    .login-logo .icon { width: 72px; height: 72px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 36px; margin-bottom: 16px; }
+    .login-logo h1 { font-size: 24px; font-weight: 700; }
+    .login-logo p { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    .form-group input, .form-group select { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 15px; outline: none; transition: border-color 0.2s; }
+    .form-group input:focus, .form-group select:focus { border-color: var(--primary); }
+    .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: var(--success-dark); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-sm { padding: 8px 16px; font-size: 14px; width: auto; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .login-hint { margin-top: 20px; padding: 12px 16px; background: #f3f4f6; border-radius: 8px; font-size: 13px; color: var(--text-secondary); text-align: center; }
+    .login-hint code { background: #e5e7eb; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: var(--primary); }
+
+    /* Dashboard */
+    .dashboard { display: none; min-height: 100vh; }
+    .dashboard.active { display: block; }
+    .topbar { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+    .topbar-logo { display: flex; align-items: center; gap: 10px; }
+    .topbar-logo .icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .topbar-logo span { font-size: 18px; font-weight: 700; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .user-info { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--bg); border-radius: 20px; }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; }
+    .user-name { font-size: 14px; font-weight: 600; }
+    .user-role { font-size: 12px; color: var(--text-secondary); }
+    .nav-tabs { display: flex; gap: 4px; }
+    .nav-tab { padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; border: none; background: transparent; color: var(--text-secondary); }
+    .nav-tab:hover { background: var(--bg); }
+    .nav-tab.active { background: var(--primary); color: white; }
+    .main-content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* Clock */
+    .clock-container { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+    .clock-card { background: var(--card-bg); border-radius: var(--radius); padding: 40px; width: 100%; max-width: 500px; text-align: center; box-shadow: var(--shadow-lg); }
+    .clock-time { font-size: 48px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--primary); margin: 20px 0; }
+    .clock-date { font-size: 16px; color: var(--text-secondary); margin-bottom: 24px; }
+    .clock-status { display: flex; justify-content: space-around; margin-bottom: 24px; gap: 16px; }
+    .status-item { flex: 1; padding: 16px; background: var(--bg); border-radius: 10px; }
+    .status-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+    .status-value { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .status-value.success { color: var(--success); }
+    .status-value.danger { color: var(--danger); }
+    .status-value.pending { color: var(--text-secondary); }
+    .clock-buttons { display: flex; gap: 12px; justify-content: center; }
+    .clock-buttons .btn { flex: 1; max-width: 200px; }
+    .wifi-status { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; }
+    .wifi-status.verified { background: #d1fae5; color: var(--success-dark); }
+    .wifi-status.unverified { background: #fee2e2; color: var(--danger); }
+    .wifi-status.disabled { background: #f3f4f6; color: var(--text-secondary); }
+    .wifi-status.checking { background: #fef3c7; color: #d97706; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: var(--card-bg); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+    .stat-card .label { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+    .stat-card .value { font-size: 32px; font-weight: 700; }
+    .stat-card .icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 12px; }
+    .stat-card.blue .icon { background: #dbeafe; color: #2563eb; }
+    .stat-card.green .icon { background: #d1fae5; color: var(--success-dark); }
+    .stat-card.orange .icon { background: #fef3c7; color: #d97706; }
+    .stat-card.purple .icon { background: #ede9fe; color: #7c3aed; }
+
+    /* Summary cards */
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .summary-card { background: var(--bg); border-radius: 10px; padding: 16px; text-align: center; }
+    .summary-card .val { font-size: 24px; font-weight: 700; }
+    .summary-card .lbl { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* Card & Table */
+    .card { background: var(--card-bg); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 24px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .card-title { font-size: 18px; font-weight: 700; }
+    .table-wrapper { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+    th { font-weight: 600; color: var(--text-secondary); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+    tbody tr:hover { background: var(--bg); }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-success { background: #d1fae5; color: var(--success-dark); }
+    .badge-warning { background: #fef3c7; color: #d97706; }
+    .badge-danger { background: #fee2e2; color: var(--danger); }
+    .badge-info { background: #dbeafe; color: #2563eb; }
+
+    /* Forms */
+    .filter-bar { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 20px; }
+    .filter-bar .form-group { margin-bottom: 0; flex: 1; min-width: 150px; }
+    .search-bar { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; }
+    .search-bar input { flex: 1; padding: 10px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; outline: none; }
+    .search-bar input:focus { border-color: var(--primary); }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: var(--card-bg); border-radius: var(--radius); padding: 30px; width: 100%; max-width: 480px; box-shadow: var(--shadow-lg); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-title { font-size: 20px; font-weight: 700; }
+    .modal-close { width: 32px; height: 32px; border: none; background: var(--bg); border-radius: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+
+    /* Confirm dialog */
+    .confirm-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 250; align-items: center; justify-content: center; padding: 20px; }
+    .confirm-overlay.active { display: flex; }
+    .confirm-box { background: var(--card-bg); border-radius: var(--radius); padding: 30px; width: 100%; max-width: 380px; text-align: center; box-shadow: var(--shadow-lg); }
+    .confirm-box .icon { font-size: 48px; margin-bottom: 16px; }
+    .confirm-box .msg { font-size: 16px; margin-bottom: 24px; line-height: 1.5; }
+    .confirm-box .btns { display: flex; gap: 12px; }
+    .confirm-box .btns .btn { flex: 1; }
+
+    /* Toast */
+    .toast-container { position: fixed; top: 80px; right: 24px; z-index: 300; display: flex; flex-direction: column; gap: 8px; max-width: 360px; }
+    .toast { padding: 14px 20px; border-radius: 10px; color: white; font-size: 14px; font-weight: 500; box-shadow: var(--shadow-lg); animation: slideIn 0.3s ease; max-width: 360px; }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.info { background: var(--primary); }
+    .toast.warning { background: var(--warning); }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .nav-tabs { display: none; }
+      .main-content { padding: 16px; }
+      .clock-time { font-size: 36px; }
+      .topbar { padding: 0 12px; }
+      .user-name, .user-role { display: none; }
+      .filter-bar { flex-direction: column; }
+    }
+    .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); border-top: 1px solid var(--border); padding: 8px; z-index: 100; }
+    .mobile-nav button { flex: 1; padding: 8px 4px; border: none; background: transparent; font-size: 11px; color: var(--text-secondary); cursor: pointer; }
+    .mobile-nav button.active { color: var(--primary); font-weight: 600; }
+    @media (max-width: 768px) { .mobile-nav { display: flex; justify-content: space-around; } .main-content { padding-bottom: 80px; } }
+    .section-title { font-size: 22px; font-weight: 700; margin-bottom: 20px; }
+    .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .info-banner { padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .info-banner.blue { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .checkbox-label input { width: auto; }
+    .schedule-row { display: flex; gap: 12px; align-items: flex-end; }
+    .schedule-row .form-group { flex: 1; margin-bottom: 0; }
+    .hint-text { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .action-btns { display: flex; gap: 6px; }
+  </style>
+</head>
+<body>
+
+<!-- Login Page -->
+<div id="loginPage" class="login-page">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="icon">⏰</div>
+      <h1>智能出勤管理系統</h1>
+      <p>WiFi連線打卡 · 專業考勤管理</p>
+    </div>
+    <form id="loginForm">
+      <div class="form-group">
+        <label>員工編號</label>
+        <input type="text" id="loginEmployeeId" placeholder="請輸入員工編號" required maxlength="20">
+      </div>
+      <div class="form-group">
+        <label>密碼</label>
+        <input type="password" id="loginPassword" placeholder="請輸入密碼" required maxlength="50">
+      </div>
+      <button type="submit" class="btn btn-primary">登入系統</button>
+    </form>
+    <div class="login-hint">
+      預設管理員帳號：<code>admin</code> / 密碼：<code>admin123</code>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" class="dashboard">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">
+        <div class="icon">⏰</div>
+        <span>出勤管理系統</span>
+      </div>
+      <div class="nav-tabs" id="navTabs">
+        <button class="nav-tab active" data-page="clock">打卡</button>
+        <button class="nav-tab" data-page="history">我的記錄</button>
+        <button class="nav-tab admin-only" data-page="admin-stats" style="display:none">統計概覽</button>
+        <button class="nav-tab admin-only" data-page="admin-employees" style="display:none">員工管理</button>
+        <button class="nav-tab admin-only" data-page="admin-attendance" style="display:none">考勤記錄</button>
+        <button class="nav-tab admin-only" data-page="admin-wifi" style="display:none">WiFi設定</button>
+        <button class="nav-tab admin-only" data-page="admin-settings" style="display:none">系統設定</button>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <div>
+          <div class="user-name" id="userName">Admin</div>
+          <div class="user-role" id="userRole">管理員</div>
+        </div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="openChangePasswordModal()">改密碼</button>
+      <button class="btn btn-outline btn-sm" onclick="logout()">登出</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <!-- Clock Page -->
+    <div id="page-clock" class="page active">
+      <div class="clock-container">
+        <div class="clock-card">
+          <div class="clock-date" id="clockDate">載入中...</div>
+          <div class="clock-time" id="clockTime">00:00:00</div>
+          <div class="wifi-status checking" id="wifiStatus"><span>🔄 正在偵測網路環境...</span></div>
+          <div style="margin: 24px 0;">
+            <div class="clock-status">
+              <div class="status-item">
+                <div class="status-label">上班打卡</div>
+                <div class="status-value pending" id="clockInTime">--:--</div>
+              </div>
+              <div class="status-item">
+                <div class="status-label">下班打卡</div>
+                <div class="status-value pending" id="clockOutTime">--:--</div>
+              </div>
+              <div class="status-item">
+                <div class="status-label">工作時數</div>
+                <div class="status-value pending" id="workHours">--</div>
+              </div>
+            </div>
+          </div>
+          <div class="clock-buttons">
+            <button class="btn btn-success" id="clockInBtn" onclick="clockIn()">上班打卡</button>
+            <button class="btn btn-danger" id="clockOutBtn" onclick="clockOut()">下班打卡</button>
+          </div>
+        </div>
+        <div class="info-banner blue">
+          <span>ℹ️</span>
+          <span>系統會自動偵測您的公共IP位址，只有在管理員設定的IP白名單內才能完成打卡。</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- History Page -->
+    <div id="page-history" class="page">
+      <div class="section-title">我的考勤記錄</div>
+      <div class="summary-grid" id="historySummary">
+        <div class="summary-card"><div class="val" id="sumTotalDays" style="color:var(--primary)">-</div><div class="lbl">總打卡天數</div></div>
+        <div class="summary-card"><div class="val" id="sumTotalHours" style="color:var(--success)">-</div><div class="lbl">總工作時數</div></div>
+        <div class="summary-card"><div class="val" id="sumAvgHours" style="color:#7c3aed">-</div><div class="lbl">平均每日時數</div></div>
+        <div class="summary-card"><div class="val" id="sumLateCount" style="color:var(--danger)">-</div><div class="lbl">遲到次數</div></div>
+      </div>
+      <div class="card">
+        <div class="filter-bar">
+          <div class="form-group"><label>開始日期</label><input type="date" id="historyStartDate"></div>
+          <div class="form-group"><label>結束日期</label><input type="date" id="historyEndDate"></div>
+          <button class="btn btn-primary btn-sm" onclick="loadHistory()">查詢</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>日期</th><th>上班時間</th><th>下班時間</th><th>工作時數</th><th>WiFi驗證</th><th>IP位址</th><th>狀態</th></tr></thead>
+            <tbody id="historyTableBody"><tr><td colspan="7" class="empty-state">請點擊查詢載入資料</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Stats -->
+    <div id="page-admin-stats" class="page">
+      <div class="section-title">統計概覽</div>
+      <div class="stats-grid">
+        <div class="stat-card blue"><div class="icon">👥</div><div class="label">在職員工數</div><div class="value" id="statTotalEmployees">-</div></div>
+        <div class="stat-card green"><div class="icon">✅</div><div class="label">今日已打卡</div><div class="value" id="statClockedIn">-</div></div>
+        <div class="stat-card orange"><div class="icon">🕐</div><div class="label">今日待打卡</div><div class="value" id="statNotClockedIn">-</div></div>
+        <div class="stat-card purple"><div class="icon">📊</div><div class="label">總考勤記錄</div><div class="value" id="statTotalRecords">-</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">近7日出勤趨勢</div></div>
+        <div id="dailyChart" style="height: 200px; display: flex; align-items: flex-end; gap: 12px; padding: 20px 0;"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">今日部門出勤</div></div>
+        <div class="table-wrapper">
+          <table><thead><tr><th>部門</th><th>打卡人數</th><th>記錄數</th></tr></thead>
+          <tbody id="deptTableBody"><tr><td colspan="3" class="empty-state">載入中...</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Employees -->
+    <div id="page-admin-employees" class="page">
+      <div class="card-header" style="margin-bottom: 20px;">
+        <div class="section-title" style="margin: 0;">員工管理</div>
+        <button class="btn btn-primary btn-sm" onclick="showAddEmployeeModal()">+ 新增員工</button>
+      </div>
+      <div class="card">
+        <div class="search-bar">
+          <input type="text" id="employeeSearchInput" placeholder="搜尋員工編號或姓名..." oninput="loadEmployees()">
+        </div>
+        <div class="table-wrapper">
+          <table><thead><tr><th>員工編號</th><th>姓名</th><th>部門</th><th>角色</th><th>狀態</th><th>今日</th><th>建立時間</th><th>操作</th></tr></thead>
+          <tbody id="employeesTableBody"><tr><td colspan="8" class="empty-state">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Attendance -->
+    <div id="page-admin-attendance" class="page">
+      <div class="section-title">考勤記錄管理</div>
+      <div class="card">
+        <div class="filter-bar">
+          <div class="form-group"><label>開始日期</label><input type="date" id="adminAttStartDate"></div>
+          <div class="form-group"><label>結束日期</label><input type="date" id="adminAttEndDate"></div>
+          <div class="form-group"><label>員工編號</label><input type="text" id="adminAttEmployeeId" placeholder="留空查全部"></div>
+          <button class="btn btn-primary btn-sm" onclick="loadAdminAttendance()">查詢</button>
+          <button class="btn btn-outline btn-sm" onclick="exportCSV()">匯出CSV</button>
+        </div>
+        <div class="table-wrapper">
+          <table><thead><tr><th>日期</th><th>員工編號</th><th>姓名</th><th>部門</th><th>上班</th><th>下班</th><th>WiFi</th><th>IP</th><th>狀態</th></tr></thead>
+          <tbody id="adminAttTableBody"><tr><td colspan="9" class="empty-state">請點擊查詢載入資料</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin WiFi Settings -->
+    <div id="page-admin-wifi" class="page">
+      <div class="section-title">WiFi打卡設定</div>
+      <div class="card">
+        <div class="info-banner blue">
+          <span>ℹ️</span>
+          <span>設定允許打卡的IP位址清單。當員工打卡時，系統會檢查其公共IP是否在清單中。多個IP用逗號分隔，支援萬用字元（如 203.0.113.*）。</span>
+        </div>
+        <div class="info-banner" style="background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;">
+          <span>👑</span>
+          <span>管理員不受此限制 — 隨時隨地（含手機、出差在外）都可查看員工出勤與打卡。</span>
+        </div>
+        <div id="currentIPDisplay" style="margin-bottom: 20px; padding: 16px; background: var(--bg); border-radius: 10px;">
+          <strong>您目前的公共IP位址：</strong><span id="adminCurrentIP" style="font-family: monospace; font-size: 16px; color: var(--primary);">載入中...</span>
+          <button class="btn btn-outline btn-sm" style="margin-left: 12px;" onclick="addCurrentIP()">加入白名單</button>
+        </div>
+        <div class="form-group">
+          <label>WiFi網路名稱</label>
+          <input type="text" id="wifiNameInput" placeholder="例如：公司辦公室WiFi" maxlength="50">
+        </div>
+        <div class="form-group">
+          <label>允許打卡的IP位址清單</label>
+          <input type="text" id="allowedIPsInput" placeholder="例如：203.0.113.45, 203.0.113.*">
+          <div class="hint-text">留空 = 允許所有IP（不限制）。多個IP用逗號分隔。</div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label"><input type="checkbox" id="wifiEnabledInput"> 啟用WiFi打卡驗證</label>
+        </div>
+        <button class="btn btn-primary" onclick="saveWifiSettings()">儲存設定</button>
+      </div>
+    </div>
+
+    <!-- Admin System Settings -->
+    <div id="page-admin-settings" class="page">
+      <div class="section-title">系統設定</div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">工作排班設定</div></div>
+        <div class="info-banner blue">
+          <span>ℹ️</span>
+          <span>設定標準上下班時間，系統會自動判定遲到與早退。留空則不進行判定。</span>
+        </div>
+        <div class="schedule-row" style="margin-bottom: 20px;">
+          <div class="form-group"><label>標準上班時間</label><input type="time" id="scheduleStartTime" value="09:00"></div>
+          <div class="form-group"><label>標準下班時間</label><input type="time" id="scheduleEndTime" value="18:00"></div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label"><input type="checkbox" id="scheduleEnabled" checked> 啟用遲到/早退判定</label>
+        </div>
+        <button class="btn btn-primary" onclick="saveScheduleSettings()">儲存排班設定</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">資料備份與還原</div></div>
+        <div class="info-banner blue">
+          <span>ℹ️</span>
+          <span>定期匯出資料作為備份。還原操作會覆蓋目前所有資料，請謹慎使用。</span>
+        </div>
+        <div class="action-btns" style="gap:12px;">
+          <button class="btn btn-outline btn-sm" onclick="exportFullData()" style="flex:1;">📥 匯出全部資料(JSON)</button>
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('importFileInput').click()" style="flex:1;">📤 還原資料(JSON)</button>
+          <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importFullData(event)">
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">☁️ 雲端同步（跨裝置）</div></div>
+        <div class="info-banner blue">
+          <span>ℹ️</span>
+          <span>把資料同步到免費雲端空間，<strong>所有紀錄不會遺失</strong>。啟用後<strong>每 60 秒自動同步</strong>、手機切回畫面立即同步，<strong>同步後系統裡所有項目（員工、考勤、統計、WiFi、排班）都會自動更新</strong>。換裝置步驟：① 在此頁點「複製連結」→ ② 在手機瀏覽器開啟該連結 → ③ 自動連接完成。</span>
+        </div>
+        <div id="syncStatusBox" style="padding:14px 16px;background:var(--bg);border-radius:10px;margin-bottom:16px;font-size:14px;">
+          <span id="syncStatusText">載入中...</span>
+        </div>
+        <div id="syncCodeSection" style="display:none;margin-bottom:16px;">
+          <div class="form-group">
+            <label>您的同步碼（在另一台裝置輸入即可同步同一份資料）</label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="syncCodeDisplay" readonly style="flex:1;font-family:monospace;letter-spacing:1px;font-size:13px;">
+              <button class="btn btn-outline btn-sm" onclick="copySyncCode()">複製碼</button>
+              <button class="btn btn-outline btn-sm" onclick="copySyncLink()">複製連結</button>
+            </div>
+            <div class="hint-text">也可在另一台裝置的瀏覽器網址列直接貼上「複製連結」，開啟即自動連接同步。</div>
+          </div>
+          <div class="action-btns" style="gap:12px;margin-top:12px;">
+            <button class="btn btn-outline btn-sm" onclick="manualSync()" style="flex:1;">🔄 立即同步</button>
+            <button class="btn btn-outline btn-sm" onclick="disconnectSync()" style="flex:1;color:var(--danger);border:1.5px solid var(--danger);">斷開同步</button>
+          </div>
+        </div>
+        <div id="syncConnectSection">
+          <div class="form-group">
+            <label>在另一台裝置使用此系統？輸入同步碼連接</label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="syncCodeInput" placeholder="貼上同步碼" style="flex:1;font-family:monospace;" maxlength="64">
+              <button class="btn btn-primary" onclick="connectCloudSync()">連接</button>
+            </div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="createCloudSync()" style="margin-top:12px;">✨ 建立雲端同步（取得同步碼）</button>
+        </div>
+        <div class="hint-text" id="syncHint" style="margin-top:10px;">同步碼等同於資料庫鑰匙，請妥善保管，勿隨意分享。免費雲端空間有容量與每月請求次數限制，請定期使用「匯出全部資料」備份。</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">系統資訊</div></div>
+        <table style="margin-bottom: 0;">
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.5 專業版</td></tr>
+          <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
+          <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
+          <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
+          <tr><td style="color:var(--text-secondary)">Session 逾時</td><td>8 小時自動登出</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="mobile-nav" id="mobileNav">
+    <button class="active" data-page="clock">打卡</button>
+    <button data-page="history">記錄</button>
+    <button class="admin-only" data-page="admin-stats" style="display:none">統計</button>
+    <button class="admin-only" data-page="admin-employees" style="display:none">員工</button>
+    <button class="admin-only" data-page="admin-attendance" style="display:none">考勤</button>
+    <button class="admin-only" data-page="admin-wifi" style="display:none">WiFi</button>
+    <button class="admin-only" data-page="admin-settings" style="display:none">設定</button>
+  </div>
+</div>
+
+<!-- Add Employee Modal -->
+<div class="modal-overlay" id="addEmployeeModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">新增員工</div>
+      <button class="modal-close" onclick="closeModal('addEmployeeModal')">&times;</button>
+    </div>
+    <form id="addEmployeeForm">
+      <div class="form-group"><label>員工編號 *</label><input type="text" id="newEmployeeId" required placeholder="例如：EMP001" maxlength="20"></div>
+      <div class="form-group"><label>姓名 *</label><input type="text" id="newEmployeeName" required placeholder="員工姓名" maxlength="30"></div>
+      <div class="form-group"><label>密碼 *</label><input type="password" id="newEmployeePassword" required placeholder="初始密碼" maxlength="50"></div>
+      <div class="form-group"><label>部門</label><input type="text" id="newEmployeeDept" placeholder="例如：研發部" maxlength="30"></div>
+      <div class="form-group"><label>角色</label><select id="newEmployeeRole"><option value="employee">一般員工</option><option value="admin">管理員</option></select></div>
+      <button type="submit" class="btn btn-primary">建立帳號</button>
+    </form>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal-overlay" id="changePasswordModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">修改密碼</div>
+      <button class="modal-close" onclick="closeModal('changePasswordModal')">&times;</button>
+    </div>
+    <form id="changePasswordForm">
+      <div class="form-group"><label>目前密碼 *</label><input type="password" id="oldPassword" required placeholder="請輸入目前密碼" maxlength="50"></div>
+      <div class="form-group"><label>新密碼 *</label><input type="password" id="newPassword" required placeholder="請輸入新密碼" minlength="4" maxlength="50"></div>
+      <div class="form-group"><label>確認新密碼 *</label><input type="password" id="confirmPassword" required placeholder="再次輸入新密碼" maxlength="50"></div>
+      <button type="submit" class="btn btn-primary">確認修改</button>
+    </form>
+  </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal-overlay" id="resetPasswordModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">重設員工密碼</div>
+      <button class="modal-close" onclick="closeModal('resetPasswordModal')">&times;</button>
+    </div>
+    <form id="resetPasswordForm">
+      <div class="form-group"><label>員工</label><input type="text" id="resetEmpDisplay" disabled></div>
+      <div class="form-group"><label>新密碼 *</label><input type="password" id="resetNewPassword" required placeholder="請輸入新密碼" minlength="4" maxlength="50"></div>
+      <button type="submit" class="btn btn-primary">重設密碼</button>
+    </form>
+  </div>
+</div>
+
+<!-- Confirm Dialog -->
+<div class="confirm-overlay" id="confirmDialog">
+  <div class="confirm-box">
+    <div class="icon" id="confirmIcon">⚠️</div>
+    <div class="msg" id="confirmMsg">確定要執行此操作嗎？</div>
+    <div class="btns">
+      <button class="btn btn-outline" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-danger" id="confirmOkBtn">確定</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ===== Data Layer (localStorage) =====
+const DB_KEY = 'attendance_system_db';
+const SESSION_KEY = 'attendance_session';
+const SESSION_TIMEOUT = 8 * 60 * 60 * 1000; // 8 hours
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+let db = loadDB();
+let currentUser = null;
+let currentIP = null;
+let loginAttempts = {};
+let confirmCallback = null;
+
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Migration: ensure all required fields exist
+      if (!parsed.wifiSettings) parsed.wifiSettings = { allowed_ips: '', wifi_name: 'Office WiFi', enabled: false };
+      if (!parsed.schedule) parsed.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
+      if (!parsed.attendance) parsed.attendance = [];
+      if (!parsed.employees) parsed.employees = [];
+      if (!parsed.nextEmpId) parsed.nextEmpId = parsed.employees.length + 1;
+      if (!parsed.nextAttId) parsed.nextAttId = parsed.attendance.length + 1;
+      // Migration: add updated_at for cloud sync merge correctness
+      const nowISO = new Date().toISOString();
+      (parsed.employees || []).forEach(function(e) { if (!e.updated_at) e.updated_at = nowISO; });
+      (parsed.attendance || []).forEach(function(a) { if (!a.updated_at) a.updated_at = nowISO; });
+      return parsed;
+    }
+  } catch(e) {}
+  const now = new Date().toLocaleString('zh-TW');
+  const defaultDB = {
+    employees: [{
+      id: 1, employee_id: 'admin', name: 'System Admin',
+      password: 'admin123', department: 'Management',
+      role: 'admin', created_at: now, active: 1
+    }],
+    attendance: [],
+    wifiSettings: { allowed_ips: '', wifi_name: 'Office WiFi', enabled: false },
+    schedule: { start_time: '09:00', end_time: '18:00', enabled: true },
+    nextEmpId: 2, nextAttId: 1
+  };
+  localStorage.setItem(DB_KEY, JSON.stringify(defaultDB));
+  return defaultDB;
+}
+
+let syncTimer = null;
+let syncPending = false;      // true = 本機有尚未上傳雲端的變更
+let syncRetryTimer = null;    // 推播失敗的自動重試計時器
+function saveDB() {
+  localStorage.setItem(DB_KEY, JSON.stringify(db));
+  syncPending = true;
+  // Cloud sync: debounce so rapid changes (e.g. clock ticks) don't spam the API
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(function() { if (getSyncKey()) pushToCloud(true); }, 2000);
+}
+
+// ===== HTML Escape (prevent XSS) =====
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function trim(v) {
+  return v ? String(v).trim() : '';
+}
+
+// ===== Authorization Guard =====
+function requireAdmin() {
+  if (!currentUser || currentUser.role !== 'admin') {
+    showToast('權限不足！此功能僅限管理員使用。', 'error');
+    return false;
+  }
+  return true;
+}
+
+function requireLogin() {
+  if (!currentUser) {
+    showToast('請先登入', 'error');
+    return false;
+  }
+  return true;
+}
+
+// ===== IP Detection =====
+async function detectIP() {
+  try {
+    const res = await fetch('https://api.ipify.org?format=json');
+    const data = await res.json();
+    return data.ip;
+  } catch(e) {
+    try {
+      const res2 = await fetch('https://httpbin.org/ip');
+      const data2 = await res2.json();
+      return data2.origin;
+    } catch(e2) {
+      return 'unknown';
+    }
+  }
+}
+
+function isIPAllowed(ip, allowedIPsStr) {
+  if (!allowedIPsStr || allowedIPsStr.trim() === '') return true;
+  if (!ip || ip === 'unknown') return false;
+  const allowed = allowedIPsStr.split(',').map(s => s.trim()).filter(s => s);
+  return allowed.some(a => {
+    if (a === ip) return true;
+    if (a.includes('*')) {
+      const pattern = a.replace(/\./g, '\\.').replace(/\*/g, '.*');
+      return new RegExp('^' + pattern + '$').test(ip);
+    }
+    return false;
+  });
+}
+
+// ===== Late / Early Calculation =====
+function calcAttendanceStatus(clockIn, clockOut) {
+  const schedule = db.schedule;
+  if (!schedule || !schedule.enabled || !clockIn) return 'normal';
+  let status = 'normal';
+  if (schedule.start_time && clockIn > schedule.start_time) status = 'late';
+  if (clockOut && schedule.end_time && clockOut < schedule.end_time) {
+    status = status === 'late' ? 'late_early' : 'early';
+  }
+  return status;
+}
+
+function statusBadge(status) {
+  const map = {
+    'present': '<span class="badge badge-success">正常</span>',
+    'normal': '<span class="badge badge-success">正常</span>',
+    'late': '<span class="badge badge-warning">遲到</span>',
+    'early': '<span class="badge badge-warning">早退</span>',
+    'late_early': '<span class="badge badge-danger">遲到+早退</span>',
+    'absent': '<span class="badge badge-danger">缺席</span>'
+  };
+  return map[status] || esc(status);
+}
+
+// ===== Toast (max 3) =====
+function showToast(msg, type) {
+  type = type || 'info';
+  const c = document.getElementById('toastContainer');
+  while (c.children.length >= 3) c.removeChild(c.firstChild);
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function() {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(100%)';
+    t.style.transition = 'all 0.3s';
+    setTimeout(function() { if (t.parentNode) t.remove(); }, 300);
+  }, 4000);
+}
+
+// ===== Confirm Dialog =====
+function showConfirm(msg, callback, icon) {
+  document.getElementById('confirmIcon').textContent = icon || '⚠️';
+  document.getElementById('confirmMsg').textContent = msg;
+  confirmCallback = callback;
+  document.getElementById('confirmDialog').classList.add('active');
+}
+
+function closeConfirm() {
+  confirmCallback = null;
+  document.getElementById('confirmDialog').classList.remove('active');
+}
+
+document.getElementById('confirmOkBtn').addEventListener('click', function() {
+  if (confirmCallback) confirmCallback();
+  closeConfirm();
+});
+
+// ===== Session Management =====
+function saveSession() {
+  localStorage.setItem(SESSION_KEY, JSON.stringify({
+    employeeId: currentUser.employeeId,
+    timestamp: Date.now()
+  }));
+}
+
+function checkSession() {
+  const raw = localStorage.getItem(SESSION_KEY);
+  if (!raw) return null;
+  try {
+    const session = JSON.parse(raw);
+    if (Date.now() - session.timestamp > SESSION_TIMEOUT) {
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return session;
+  } catch(e) {
+    return null;
+  }
+}
+
+// ===== Auth =====
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const empId = trim(document.getElementById('loginEmployeeId').value);
+  const pwd = document.getElementById('loginPassword').value;
+
+  // Rate limiting
+  const now = Date.now();
+  if (loginAttempts[empId] && loginAttempts[empId].lockedUntil > now) {
+    const remaining = Math.ceil((loginAttempts[empId].lockedUntil - now) / 1000 / 60);
+    showToast('帳號已鎖定，請 ' + remaining + ' 分鐘後再試', 'error');
+    return;
+  }
+
+  const user = db.employees.find(function(u) {
+    return u.employee_id === empId && u.password === pwd && u.active === 1;
+  });
+
+  if (!user) {
+    // Record failed attempt
+    if (!loginAttempts[empId]) loginAttempts[empId] = { count: 0, lockedUntil: 0 };
+    loginAttempts[empId].count++;
+    if (loginAttempts[empId].count >= LOGIN_MAX_ATTEMPTS) {
+      loginAttempts[empId].lockedUntil = now + LOGIN_LOCKOUT_MS;
+      loginAttempts[empId].count = 0;
+      showToast('登入失敗超過 ' + LOGIN_MAX_ATTEMPTS + ' 次，帳號已鎖定 5 分鐘', 'error');
+    } else {
+      const remaining = LOGIN_MAX_ATTEMPTS - loginAttempts[empId].count;
+      showToast('帳號或密碼錯誤，剩餘 ' + remaining + ' 次嘗試機會', 'error');
+    }
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginPassword').focus();
+    return;
+  }
+
+  // Reset attempts on success
+  delete loginAttempts[empId];
+  currentUser = { id: user.id, employeeId: user.employee_id, name: user.name, role: user.role, department: user.department };
+  saveSession();
+  showDashboard();
+  showToast('登入成功！歡迎，' + currentUser.name, 'success');
+});
+
+function logout() {
+  currentUser = null;
+  localStorage.removeItem(SESSION_KEY);
+  document.querySelectorAll('.admin-only').forEach(function(el) { el.style.display = 'none'; });
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('page-clock').classList.add('active');
+  document.querySelectorAll('[data-page]').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('[data-page="clock"]').forEach(function(t) { t.classList.add('active'); });
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('dashboard').classList.remove('active');
+  // Clear login form
+  document.getElementById('loginEmployeeId').value = '';
+  document.getElementById('loginPassword').value = '';
+}
+
+function showDashboard() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('dashboard').classList.add('active');
+  document.getElementById('userName').textContent = currentUser.name;
+  document.getElementById('userRole').textContent = currentUser.role === 'admin' ? '管理員' : '員工';
+  document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+
+  if (currentUser.role === 'admin') {
+    document.querySelectorAll('.admin-only').forEach(function(el) { el.style.display = ''; });
+  } else {
+    document.querySelectorAll('.admin-only').forEach(function(el) { el.style.display = 'none'; });
+  }
+
+  // Set default date filters to current month
+  setDefaultDateFilters();
+
+  switchPage('clock');
+  startClock();
+}
+
+function setDefaultDateFilters() {
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA');
+  const today = now.toLocaleDateString('en-CA');
+  const setVal = function(id, val) { const el = document.getElementById(id); if (el && !el.value) el.value = val; };
+  setVal('historyStartDate', firstDay);
+  setVal('historyEndDate', today);
+  setVal('adminAttStartDate', firstDay);
+  setVal('adminAttEndDate', today);
+}
+
+// ===== Clock =====
+let clockIntervalId = null;
+
+function startClock() {
+  if (clockIntervalId) clearInterval(clockIntervalId);
+  function update() {
+    const now = new Date();
+    const clockTimeEl = document.getElementById('clockTime');
+    const clockDateEl = document.getElementById('clockDate');
+    if (clockTimeEl) clockTimeEl.textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
+    if (clockDateEl) clockDateEl.textContent = now.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+    if (!currentUser) return;
+    const today = now.toLocaleDateString('en-CA');
+    const record = db.attendance.find(function(a) { return a.employee_id === currentUser.employeeId && a.date === today; });
+    if (record && record.clock_in && !record.clock_out) {
+      const workHoursEl = document.getElementById('workHours');
+      if (workHoursEl) {
+        const inTime = new Date(record.date + 'T' + record.clock_in);
+        const hours = ((now - inTime) / 3600000).toFixed(1);
+        workHoursEl.textContent = hours + 'h';
+      }
+    }
+  }
+  update();
+  clockIntervalId = setInterval(update, 1000);
+}
+
+async function loadClockStatus() {
+  if (!currentUser) return;
+  const today = new Date().toLocaleDateString('en-CA');
+  const record = db.attendance.find(function(a) { return a.employee_id === currentUser.employeeId && a.date === today; });
+  const wifiEl = document.getElementById('wifiStatus');
+  const isAdmin = currentUser.role === 'admin';
+
+  if (!currentIP || currentIP === 'unknown') {
+    wifiEl.className = 'wifi-status checking';
+    wifiEl.innerHTML = '<span>🔄 正在偵測網路環境...</span>';
+    currentIP = await detectIP();
+  }
+
+  if (isAdmin) {
+    // Admin is EXEMPT from WiFi/IP restrictions — can clock in/out & manage from anywhere
+    wifiEl.className = 'wifi-status verified';
+    wifiEl.innerHTML = '<span>👑 管理員模式：不受WiFi管制，可隨時隨地使用 · IP: ' + esc(currentIP) + '</span>';
+  } else {
+    const wifi = db.wifiSettings;
+    const wifiVerified = wifi.enabled ? isIPAllowed(currentIP, wifi.allowed_ips) : true;
+
+    if (!wifi.enabled) {
+      wifiEl.className = 'wifi-status disabled';
+      wifiEl.innerHTML = '<span>⚠️ WiFi驗證已停用（任何網路均可打卡）</span>';
+    } else if (wifiVerified) {
+      wifiEl.className = 'wifi-status verified';
+      wifiEl.innerHTML = '<span>✅ 已連線：' + esc(wifi.wifi_name || 'Office WiFi') + ' · IP: ' + esc(currentIP) + '</span>';
+    } else {
+      wifiEl.className = 'wifi-status unverified';
+      wifiEl.innerHTML = '<span>❌ 未連接公司網路 · 您的IP: ' + esc(currentIP) + '</span>';
+    }
+  }
+
+  const clockInEl = document.getElementById('clockInTime');
+  const clockOutEl = document.getElementById('clockOutTime');
+  const workHoursEl = document.getElementById('workHours');
+
+  if (record && record.clock_in) {
+    clockInEl.textContent = record.clock_in;
+    clockInEl.className = 'status-value success';
+  } else {
+    clockInEl.textContent = '--:--';
+    clockInEl.className = 'status-value pending';
+  }
+
+  if (record && record.clock_out) {
+    clockOutEl.textContent = record.clock_out;
+    clockOutEl.className = 'status-value success';
+    const inTime = new Date(record.date + 'T' + record.clock_in);
+    const outTime = new Date(record.date + 'T' + record.clock_out);
+    workHoursEl.textContent = ((outTime - inTime) / 3600000).toFixed(1) + 'h';
+    workHoursEl.className = 'status-value success';
+  } else if (record && record.clock_in) {
+    clockOutEl.textContent = '--:--';
+    clockOutEl.className = 'status-value pending';
+    const inTime = new Date(record.date + 'T' + record.clock_in);
+    const hours = ((new Date() - inTime) / 3600000).toFixed(1);
+    workHoursEl.textContent = hours + 'h';
+    workHoursEl.className = 'status-value pending';
+  } else {
+    clockOutEl.textContent = '--:--';
+    clockOutEl.className = 'status-value pending';
+    workHoursEl.textContent = '--';
+    workHoursEl.className = 'status-value pending';
+  }
+
+  document.getElementById('clockInBtn').disabled = !!(record && record.clock_in);
+  document.getElementById('clockOutBtn').disabled = !!(record && record.clock_out) || !(record && record.clock_in);
+}
+
+function clockIn() {
+  if (!requireLogin()) return;
+  const today = new Date().toLocaleDateString('en-CA');
+  const now = new Date().toLocaleTimeString('en-GB');
+  const wifi = db.wifiSettings;
+  const isAdmin = currentUser.role === 'admin';
+  // Admin is EXEMPT from WiFi verification — can clock in from anywhere
+  const wifiVerified = isAdmin ? true : (wifi.enabled ? isIPAllowed(currentIP, wifi.allowed_ips) : true);
+
+  if (!isAdmin && wifi.enabled && !wifiVerified) {
+    showToast('WiFi驗證失敗！您必須在公司網路內才能打卡。您的IP: ' + currentIP, 'error');
+    return;
+  }
+
+  let record = db.attendance.find(function(a) { return a.employee_id === currentUser.employeeId && a.date === today; });
+  if (record && record.clock_in) {
+    showToast('今日已打卡上班', 'warning');
+    return;
+  }
+
+  const status = calcAttendanceStatus(now, null);
+  const nowISO = new Date().toISOString();
+  if (record) {
+    record.clock_in = now;
+    record.clock_in_ip = currentIP;
+    record.ip_address = record.ip_address || currentIP;
+    record.wifi_verified = wifiVerified ? 1 : 0;
+    record.status = status;
+    record.updated_at = nowISO;
+  } else {
+    db.attendance.push({
+      id: db.nextAttId++, employee_id: currentUser.employeeId,
+      clock_in: now, clock_out: null, date: today,
+      ip_address: currentIP, clock_in_ip: currentIP, clock_out_ip: null,
+      wifi_verified: wifiVerified ? 1 : 0,
+      status: status, created_at: new Date().toLocaleString('zh-TW'),
+      updated_at: nowISO
+    });
+  }
+  saveDB();
+  const lateMsg = status === 'late' ? '（遲到）' : '';
+  const adminMsg = isAdmin ? '（管理員不受WiFi管制）' : '';
+  showToast('上班打卡成功！時間：' + now + lateMsg + adminMsg, 'success');
+  loadClockStatus();
+}
+
+function clockOut() {
+  if (!requireLogin()) return;
+  const today = new Date().toLocaleDateString('en-CA');
+  const now = new Date().toLocaleTimeString('en-GB');
+  const wifi = db.wifiSettings;
+  const isAdmin = currentUser.role === 'admin';
+
+  // Re-verify WiFi on clock out — admin exempt
+  const wifiVerified = isAdmin ? true : (wifi.enabled ? isIPAllowed(currentIP, wifi.allowed_ips) : true);
+  if (!isAdmin && wifi.enabled && !wifiVerified) {
+    showToast('WiFi驗證失敗！您必須在公司網路內才能打卡。您的IP: ' + currentIP, 'error');
+    return;
+  }
+
+  const record = db.attendance.find(function(a) { return a.employee_id === currentUser.employeeId && a.date === today; });
+  if (!record || !record.clock_in) {
+    showToast('您今日尚未打卡上班', 'error');
+    return;
+  }
+  if (record.clock_out) {
+    showToast('今日已打卡下班', 'warning');
+    return;
+  }
+
+  record.clock_out = now;
+  record.clock_out_ip = currentIP;
+  record.updated_at = new Date().toISOString();
+  // Re-calculate status with both clock_in and clock_out
+  record.status = calcAttendanceStatus(record.clock_in, now);
+  saveDB();
+
+  const inTime = new Date(record.date + 'T' + record.clock_in);
+  const outTime = new Date(record.date + 'T' + now);
+  const hours = ((outTime - inTime) / 3600000).toFixed(1);
+  let extraMsg = '';
+  if (record.status === 'early') extraMsg = '（早退）';
+  else if (record.status === 'late_early') extraMsg = '（遲到+早退）';
+  showToast('下班打卡成功！工作時數：' + hours + ' 小時' + extraMsg, 'success');
+  loadClockStatus();
+}
+
+// ===== History =====
+function loadHistory() {
+  if (!requireLogin()) return;
+  const startDate = document.getElementById('historyStartDate').value;
+  const endDate = document.getElementById('historyEndDate').value;
+  let records = db.attendance.filter(function(a) { return a.employee_id === currentUser.employeeId; });
+  if (startDate) records = records.filter(function(a) { return a.date >= startDate; });
+  if (endDate) records = records.filter(function(a) { return a.date <= endDate; });
+  records.sort(function(a, b) { return b.date.localeCompare(a.date); });
+  records = records.slice(0, 90);
+
+  // Summary stats
+  let totalDays = records.length;
+  let totalMinutes = 0;
+  let lateCount = 0;
+  records.forEach(function(r) {
+    if (r.clock_in && r.clock_out) {
+      const inT = new Date(r.date + 'T' + r.clock_in);
+      const outT = new Date(r.date + 'T' + r.clock_out);
+      totalMinutes += (outT - inT) / 60000;
+    }
+    if (r.status === 'late' || r.status === 'late_early') lateCount++;
+  });
+  const totalHours = (totalMinutes / 60).toFixed(1);
+  const avgHours = totalDays > 0 ? (totalMinutes / 60 / totalDays).toFixed(1) : '0';
+
+  document.getElementById('sumTotalDays').textContent = totalDays;
+  document.getElementById('sumTotalHours').textContent = totalHours + 'h';
+  document.getElementById('sumAvgHours').textContent = avgHours + 'h';
+  document.getElementById('sumLateCount').textContent = lateCount;
+
+  const tbody = document.getElementById('historyTableBody');
+  if (records.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="icon">📭</div>暫無考勤記錄</td></tr>';
+    return;
+  }
+  tbody.innerHTML = records.map(function(r) {
+    let hours = '--';
+    if (r.clock_in && r.clock_out) {
+      const inT = new Date(r.date + 'T' + r.clock_in);
+      const outT = new Date(r.date + 'T' + r.clock_out);
+      hours = ((outT - inT) / 3600000).toFixed(1) + 'h';
+    }
+    return '<tr>' +
+      '<td>' + esc(r.date) + '</td>' +
+      '<td>' + (r.clock_in ? esc(r.clock_in) : '<span style="color:#999">未打卡</span>') + '</td>' +
+      '<td>' + (r.clock_out ? esc(r.clock_out) : '<span style="color:#999">未打卡</span>') + '</td>' +
+      '<td>' + hours + '</td>' +
+      '<td>' + (r.wifi_verified ? '<span class="badge badge-success">已驗證</span>' : '<span class="badge badge-warning">未驗證</span>') + '</td>' +
+      '<td style="font-family:monospace;font-size:12px">' + (esc(r.ip_address) || '--') + '</td>' +
+      '<td>' + statusBadge(r.status) + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+// ===== Admin Stats =====
+function loadAdminStats() {
+  if (!requireAdmin()) return;
+  const today = new Date().toLocaleDateString('en-CA');
+  const todayRecords = db.attendance.filter(function(a) { return a.date === today; });
+  const activeEmployees = db.employees.filter(function(e) { return e.active === 1 && e.role !== 'admin'; });
+  const activeEmpIds = new Set(activeEmployees.map(function(e) { return e.employee_id; }));
+  const clockedInToday = new Set(todayRecords.filter(function(r) { return r.clock_in && activeEmpIds.has(r.employee_id); }).map(function(r) { return r.employee_id; }));
+
+  document.getElementById('statTotalEmployees').textContent = activeEmployees.length;
+  document.getElementById('statClockedIn').textContent = clockedInToday.size;
+  document.getElementById('statNotClockedIn').textContent = Math.max(0, activeEmployees.length - clockedInToday.size);
+  document.getElementById('statTotalRecords').textContent = db.attendance.length;
+
+  // Daily chart — show ALL 7 days including zeros
+  const chartEl = document.getElementById('dailyChart');
+  const dayLabels = [];
+  const dayData = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toLocaleDateString('en-CA');
+    dayLabels.push(dateStr);
+    const count = db.attendance.filter(function(a) { return a.date === dateStr && a.clock_in; }).length;
+    dayData.push(count);
+  }
+  const maxVal = Math.max.apply(null, dayData.concat([1]));
+  chartEl.innerHTML = dayLabels.map(function(dateStr, i) {
+    const count = dayData[i];
+    const height = (count / maxVal) * 160;
+    return '<div style="flex:1;text-align:center;" title="' + dateStr + ': ' + count + '人">' +
+      '<div style="height:160px;display:flex;align-items:flex-end;justify-content:center;">' +
+      '<div style="width:60%;height:' + height + 'px;background:linear-gradient(180deg,var(--primary),var(--primary-light));border-radius:8px 8px 0 0;min-height:4px;transition:height 0.5s;"></div>' +
+      '</div>' +
+      '<div style="font-size:12px;color:var(--text-secondary);margin-top:8px;">' + dateStr.substring(5) + '</div>' +
+      '<div style="font-size:14px;font-weight:600;">' + count + '</div>' +
+      '</div>';
+  }).join('');
+
+  // Department stats
+  const deptGrouped = {};
+  todayRecords.forEach(function(r) {
+    const emp = db.employees.find(function(e) { return e.employee_id === r.employee_id; });
+    const dept = emp ? (emp.department || '未分部門') : '未分部門';
+    if (!deptGrouped[dept]) deptGrouped[dept] = { total: 0, employees: new Set() };
+    deptGrouped[dept].total++;
+    deptGrouped[dept].employees.add(r.employee_id);
+  });
+
+  const deptBody = document.getElementById('deptTableBody');
+  const deptArr = Object.entries(deptGrouped);
+  if (deptArr.length === 0) {
+    deptBody.innerHTML = '<tr><td colspan="3" class="empty-state">今日暫無資料</td></tr>';
+  } else {
+    deptBody.innerHTML = deptArr.map(function(entry) {
+      return '<tr><td>' + esc(entry[0]) + '</td><td>' + entry[1].employees.size + '</td><td>' + entry[1].total + '</td></tr>';
+    }).join('');
+  }
+}
+
+// ===== Admin Employees =====
+function loadEmployees() {
+  if (!requireAdmin()) return;
+  const searchQuery = trim(document.getElementById('employeeSearchInput').value).toLowerCase();
+  const today = new Date().toLocaleDateString('en-CA');
+  const tbody = document.getElementById('employeesTableBody');
+
+  let employees = db.employees;
+  if (searchQuery) {
+    employees = employees.filter(function(e) {
+      return e.employee_id.toLowerCase().includes(searchQuery) ||
+             (e.name || '').toLowerCase().includes(searchQuery) ||
+             (e.department || '').toLowerCase().includes(searchQuery);
+    });
+  }
+
+  if (employees.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">👤</div>' + (searchQuery ? '未找到符合條件的員工' : '暫無員工') + '</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = employees.map(function(e) {
+    const todayRecord = db.attendance.find(function(a) { return a.employee_id === e.employee_id && a.date === today; });
+    let todayStatus = '<span style="color:#999">未打卡</span>';
+    if (todayRecord && todayRecord.clock_in) {
+      if (todayRecord.clock_out) todayStatus = '<span class="badge badge-info">' + esc(todayRecord.clock_in) + '~' + esc(todayRecord.clock_out) + '</span>';
+      else todayStatus = '<span class="badge badge-success">' + esc(todayRecord.clock_in) + '</span>';
+    }
+    const canManage = e.employee_id !== 'admin';
+    const actions = canManage ?
+      '<div class="action-btns">' +
+        (e.active ? '<button class="btn btn-outline btn-sm" onclick="confirmToggleEmployee(' + e.id + ', false)">停用</button>' : '<button class="btn btn-outline btn-sm" onclick="confirmToggleEmployee(' + e.id + ', true)">啟用</button>') +
+        '<button class="btn btn-outline btn-sm" onclick="openResetPasswordModal(' + e.id + ')">重設密碼</button>' +
+      '</div>' : '--';
+    return '<tr>' +
+      '<td style="font-weight:600">' + esc(e.employee_id) + '</td>' +
+      '<td>' + esc(e.name) + '</td>' +
+      '<td>' + (esc(e.department) || '--') + '</td>' +
+      '<td>' + (e.role === 'admin' ? '<span class="badge badge-info">管理員</span>' : '<span class="badge badge-success">員工</span>') + '</td>' +
+      '<td>' + (e.active ? '<span class="badge badge-success">在職</span>' : '<span class="badge badge-danger">停用</span>') + '</td>' +
+      '<td>' + todayStatus + '</td>' +
+      '<td style="font-size:12px;color:var(--text-secondary)">' + esc(e.created_at) + '</td>' +
+      '<td>' + actions + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+function confirmToggleEmployee(id, activate) {
+  if (!requireAdmin()) return;
+  const emp = db.employees.find(function(e) { return e.id === id; });
+  if (!emp) return;
+  const msg = activate ? '確定要啟用員工「' + emp.name + '」嗎？' : '確定要停用員工「' + emp.name + '」嗎？停用後該員工將無法登入系統。';
+  showConfirm(msg, function() {
+    emp.active = activate ? 1 : 0;
+    emp.updated_at = new Date().toISOString();
+    saveDB();
+    showToast(activate ? '員工已啟用' : '員工已停用', 'success');
+    loadEmployees();
+  }, activate ? '✅' : '⚠️');
+}
+
+function toggleEmployee(id, activate) {
+  // Legacy wrapper — now goes through confirm
+  confirmToggleEmployee(id, activate);
+}
+
+function showAddEmployeeModal() {
+  if (!requireAdmin()) return;
+  document.getElementById('addEmployeeModal').classList.add('active');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+document.getElementById('addEmployeeForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  if (!requireAdmin()) return;
+  const empId = trim(document.getElementById('newEmployeeId').value);
+  const empName = trim(document.getElementById('newEmployeeName').value);
+  const empPwd = document.getElementById('newEmployeePassword').value;
+  const empDept = trim(document.getElementById('newEmployeeDept').value);
+
+  if (empId.length < 2) { showToast('員工編號至少需要2個字元', 'error'); return; }
+  if (empPwd.length < 4) { showToast('密碼至少需要4個字元', 'error'); return; }
+
+  if (db.employees.find(function(e) { return e.employee_id === empId; })) {
+    showToast('員工編號已存在', 'error');
+    return;
+  }
+  db.employees.push({
+    id: db.nextEmpId++, employee_id: empId,
+    name: empName,
+    password: empPwd,
+    department: empDept,
+    role: document.getElementById('newEmployeeRole').value,
+    created_at: new Date().toLocaleString('zh-TW'), active: 1,
+    updated_at: new Date().toISOString()
+  });
+  saveDB();
+  showToast('員工建立成功！', 'success');
+  closeModal('addEmployeeModal');
+  document.getElementById('addEmployeeForm').reset();
+  loadEmployees();
+});
+
+// ===== Password Change =====
+function openChangePasswordModal() {
+  if (!requireLogin()) return;
+  document.getElementById('changePasswordForm').reset();
+  document.getElementById('changePasswordModal').classList.add('active');
+}
+
+document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  if (!requireLogin()) return;
+  const oldPwd = document.getElementById('oldPassword').value;
+  const newPwd = document.getElementById('newPassword').value;
+  const confirmPwd = document.getElementById('confirmPassword').value;
+
+  const user = db.employees.find(function(u) { return u.employee_id === currentUser.employeeId; });
+  if (!user || user.password !== oldPwd) {
+    showToast('目前密碼不正確', 'error');
+    return;
+  }
+  if (newPwd.length < 4) {
+    showToast('新密碼至少需要4個字元', 'error');
+    return;
+  }
+  if (newPwd !== confirmPwd) {
+    showToast('兩次輸入的新密碼不一致', 'error');
+    return;
+  }
+  if (newPwd === oldPwd) {
+    showToast('新密碼不能與舊密碼相同', 'error');
+    return;
+  }
+  user.password = newPwd;
+  user.updated_at = new Date().toISOString();
+  saveDB();
+  showToast('密碼修改成功！', 'success');
+  closeModal('changePasswordModal');
+});
+
+// ===== Admin Reset Password =====
+let resetEmpId = null;
+
+function openResetPasswordModal(id) {
+  if (!requireAdmin()) return;
+  const emp = db.employees.find(function(e) { return e.id === id; });
+  if (!emp) return;
+  if (emp.employee_id === 'admin') {
+    showToast('無法重設系統管理員密碼', 'error');
+    return;
+  }
+  resetEmpId = id;
+  document.getElementById('resetEmpDisplay').value = emp.employee_id + ' - ' + emp.name;
+  document.getElementById('resetNewPassword').value = '';
+  document.getElementById('resetPasswordModal').classList.add('active');
+}
+
+document.getElementById('resetPasswordForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  if (!requireAdmin()) return;
+  if (!resetEmpId) return;
+  const newPwd = document.getElementById('resetNewPassword').value;
+  if (newPwd.length < 4) {
+    showToast('新密碼至少需要4個字元', 'error');
+    return;
+  }
+  const emp = db.employees.find(function(e) { return e.id === resetEmpId; });
+  if (!emp) return;
+  emp.password = newPwd;
+  emp.updated_at = new Date().toISOString();
+  saveDB();
+  showToast('員工「' + emp.name + '」的密碼已重設', 'success');
+  closeModal('resetPasswordModal');
+  resetEmpId = null;
+});
+
+// ===== Admin Attendance =====
+function loadAdminAttendance() {
+  if (!requireAdmin()) return;
+  const startDate = document.getElementById('adminAttStartDate').value;
+  const endDate = document.getElementById('adminAttEndDate').value;
+  const empId = trim(document.getElementById('adminAttEmployeeId').value);
+  let records = db.attendance.map(function(a) {
+    const emp = db.employees.find(function(e) { return e.employee_id === a.employee_id; });
+    return Object.assign({}, a, { employee_name: emp ? emp.name : null, department: emp ? emp.department : null });
+  });
+  if (startDate) records = records.filter(function(r) { return r.date >= startDate; });
+  if (endDate) records = records.filter(function(r) { return r.date <= endDate; });
+  if (empId) records = records.filter(function(r) { return r.employee_id === empId; });
+  records.sort(function(a, b) { if (b.date !== a.date) return b.date.localeCompare(a.date); return (b.clock_in || '').localeCompare(a.clock_in || ''); });
+
+  const tbody = document.getElementById('adminAttTableBody');
+  if (records.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="icon">📭</div>暫無記錄</td></tr>';
+    return;
+  }
+  tbody.innerHTML = records.map(function(r) {
+    return '<tr>' +
+      '<td>' + esc(r.date) + '</td>' +
+      '<td style="font-weight:600">' + esc(r.employee_id) + '</td>' +
+      '<td>' + (esc(r.employee_name) || '--') + '</td>' +
+      '<td>' + (esc(r.department) || '--') + '</td>' +
+      '<td>' + (r.clock_in ? esc(r.clock_in) : '<span style="color:#999">--</span>') + '</td>' +
+      '<td>' + (r.clock_out ? esc(r.clock_out) : '<span style="color:#999">--</span>') + '</td>' +
+      '<td>' + (r.wifi_verified ? '<span class="badge badge-success">是</span>' : '<span class="badge badge-warning">否</span>') + '</td>' +
+      '<td style="font-family:monospace;font-size:12px">' + (esc(r.ip_address) || '--') + '</td>' +
+      '<td>' + statusBadge(r.status) + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+function exportCSV() {
+  if (!requireAdmin()) return;
+  const startDate = document.getElementById('adminAttStartDate').value;
+  const endDate = document.getElementById('adminAttEndDate').value;
+  const empId = trim(document.getElementById('adminAttEmployeeId').value);
+  let records = db.attendance.map(function(a) {
+    const emp = db.employees.find(function(e) { return e.employee_id === a.employee_id; });
+    return Object.assign({}, a, { employee_name: emp ? emp.name : '', department: emp ? emp.department : '' });
+  });
+  if (startDate) records = records.filter(function(r) { return r.date >= startDate; });
+  if (endDate) records = records.filter(function(r) { return r.date <= endDate; });
+  if (empId) records = records.filter(function(r) { return r.employee_id === empId; });
+  records.sort(function(a, b) { return b.date.localeCompare(a.date); });
+
+  const headers = ['員工編號', '姓名', '部門', '日期', '上班時間', '下班時間', '上班IP', '下班IP', 'WiFi驗證', '狀態'];
+  const statusZh = { normal: '正常', present: '正常', late: '遲到', early: '早退', late_early: '遲到+早退', absent: '缺席' };
+  const lines = [headers.join(',')];
+  records.forEach(function(r) {
+    var row = [r.employee_id, r.employee_name, r.department, r.date, r.clock_in || '', r.clock_out || '', r.clock_in_ip || r.ip_address || '', r.clock_out_ip || '', r.wifi_verified ? '是' : '否', statusZh[r.status] || r.status];
+    lines.push(row.map(function(v) {
+      var s = String(v || '');
+      return '"' + s.replace(/"/g, '""') + '"';
+    }).join(','));
+  });
+
+  var dateStr = new Date().toLocaleDateString('en-CA');
+  var blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'attendance_export_' + dateStr + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV已匯出（共 ' + records.length + ' 筆記錄）', 'success');
+}
+
+// ===== WiFi Settings =====
+async function loadWifiSettings() {
+  if (!requireAdmin()) return;
+  const wifi = db.wifiSettings;
+  document.getElementById('wifiNameInput').value = wifi.wifi_name || '';
+  document.getElementById('allowedIPsInput').value = wifi.allowed_ips || '';
+  document.getElementById('wifiEnabledInput').checked = wifi.enabled;
+
+  if (!currentIP || currentIP === 'unknown') currentIP = await detectIP();
+  document.getElementById('adminCurrentIP').textContent = currentIP;
+}
+
+function addCurrentIP() {
+  if (!requireAdmin()) return;
+  if (!currentIP || currentIP === 'unknown') {
+    showToast('無法取得目前IP位址，請稍後再試', 'error');
+    return;
+  }
+  const input = document.getElementById('allowedIPsInput');
+  const existing = input.value.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+  if (!existing.includes(currentIP)) {
+    existing.push(currentIP);
+    input.value = existing.join(', ');
+    showToast('已加入IP: ' + currentIP, 'success');
+  } else {
+    showToast('此IP已在清單中', 'info');
+  }
+}
+
+function saveWifiSettings() {
+  if (!requireAdmin()) return;
+  db.wifiSettings = {
+    wifi_name: trim(document.getElementById('wifiNameInput').value),
+    allowed_ips: trim(document.getElementById('allowedIPsInput').value),
+    enabled: document.getElementById('wifiEnabledInput').checked,
+    updated_at: new Date().toISOString()
+  };
+  saveDB();
+  showToast('WiFi設定已儲存！', 'success');
+  loadClockStatus();
+}
+
+// ===== Schedule Settings =====
+function loadScheduleSettings() {
+  if (!requireAdmin()) return;
+  const schedule = db.schedule || { start_time: '09:00', end_time: '18:00', enabled: true };
+  document.getElementById('scheduleStartTime').value = schedule.start_time || '09:00';
+  document.getElementById('scheduleEndTime').value = schedule.end_time || '18:00';
+  document.getElementById('scheduleEnabled').checked = schedule.enabled !== false;
+}
+
+function saveScheduleSettings() {
+  if (!requireAdmin()) return;
+  db.schedule = {
+    start_time: document.getElementById('scheduleStartTime').value,
+    end_time: document.getElementById('scheduleEndTime').value,
+    enabled: document.getElementById('scheduleEnabled').checked,
+    updated_at: new Date().toISOString()
+  };
+  saveDB();
+  showToast('排班設定已儲存！', 'success');
+}
+
+// ===== Data Backup / Restore =====
+function exportFullData() {
+  if (!requireAdmin()) return;
+  const dateStr = new Date().toLocaleDateString('en-CA');
+  const data = JSON.stringify(db, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'attendance_backup_' + dateStr + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('資料已匯出（共 ' + db.employees.length + ' 名員工，' + db.attendance.length + ' 筆記錄）', 'success');
+}
+
+function importFullData(event) {
+  if (!requireAdmin()) return;
+  const file = event.target.files[0];
+  if (!file) return;
+  showConfirm('還原操作會覆蓋目前所有資料，確定要繼續嗎？', function() {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (!imported.employees || !imported.attendance) {
+          showToast('檔案格式不正確：缺少必要資料', 'error');
+          return;
+        }
+        db = imported;
+        if (!db.wifiSettings) db.wifiSettings = { allowed_ips: '', wifi_name: 'Office WiFi', enabled: false };
+        if (!db.schedule) db.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
+        if (!db.nextEmpId) db.nextEmpId = db.employees.length + 1;
+        if (!db.nextAttId) db.nextAttId = db.attendance.length + 1;
+        // 補上 updated_at，確保匯入後與雲端合併時新舊判定正確
+        const impNowISO = new Date().toISOString();
+        (db.employees || []).forEach(function(e) { if (!e.updated_at) e.updated_at = impNowISO; });
+        (db.attendance || []).forEach(function(a) { if (!a.updated_at) a.updated_at = impNowISO; });
+        saveDB();
+        showToast('資料還原成功！', 'success');
+        loadEmployees();
+      } catch(err) {
+        showToast('檔案解析失敗：' + err.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }, '⚠️');
+}
+
+// ===== Cloud Sync (cross-device data sharing) =====
+const SYNC_KEY_STORAGE = 'attendance_sync_key';
+// 雲端同步 API：extendsclass.com 免費 JSON 儲存（免註冊、免API key、支援CORS）。
+// 注意：Content-Type 必須用 text/plain —— 這屬於「簡單請求」，瀏覽器不會發 OPTIONS 預檢；
+// 若用 application/json 會觸發 preflight，而該服務的 OPTIONS 端點無法正常回應，建立會失敗。
+const JSONSTORAGE_API = 'https://extendsclass.com/api/json-storage/bin';
+let syncInProgress = false;
+
+function getSyncKey() { return localStorage.getItem(SYNC_KEY_STORAGE) || ''; }
+function setSyncKey(k) { if (k) localStorage.setItem(SYNC_KEY_STORAGE, k); else localStorage.removeItem(SYNC_KEY_STORAGE); }
+function getDbSizeKB() { return (JSON.stringify(db).length / 1024).toFixed(1); }
+function saveLocalOnly() { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+
+async function createCloudSync() {
+  if (!requireAdmin()) return;
+  if (getSyncKey()) { showToast('已啟用雲端同步，無需重複建立', 'warning'); loadSyncSettings(); return; }
+  try {
+    showToast('正在建立雲端空間...', 'info');
+    const res = await fetch(JSONSTORAGE_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(db)
+    });
+    if (!res.ok) throw new Error('伺服器回應 ' + res.status);
+    const data = await res.json();
+    if (!data.id) throw new Error('回應中沒有同步碼');
+    setSyncKey(data.id);
+    db._last_sync = new Date().toISOString();
+    saveLocalOnly();
+    showToast('雲端同步已啟用！請記下同步碼', 'success');
+    loadSyncSettings();
+  } catch(e) {
+    showToast('建立失敗：' + e.message + '（請檢查網路連線）', 'error');
+  }
+}
+
+async function connectCloudSync() {
+  if (!requireAdmin()) return;
+  const code = trim(document.getElementById('syncCodeInput').value);
+  if (!code) { showToast('請輸入同步碼', 'error'); return; }
+  if (getSyncKey() && getSyncKey() !== code) {
+    showConfirm('目前已有啟用中的同步碼。連接新同步碼後，雲端資料會與本機資料合併，確定繼續？', function() { doConnect(code); }, '⚠️');
+    return;
+  }
+  doConnect(code);
+}
+
+async function doConnect(code) {
+  try {
+    showToast('正在連接雲端並下載資料...', 'info');
+    const res = await fetch(JSONSTORAGE_API + '/' + code);
+    if (res.status === 404) throw new Error('同步碼不存在或已失效');
+    if (!res.ok) throw new Error('伺服器回應 ' + res.status);
+    const cloudDb = await res.json();
+    if (!cloudDb || !cloudDb.employees || !cloudDb.attendance) throw new Error('雲端資料格式不正確');
+    const beforeCount = db.attendance.length;
+    mergeDB(cloudDb);
+    setSyncKey(code);
+    db._last_sync = new Date().toISOString();
+    saveLocalOnly();
+    // 合併結果回推雲端：本機既有資料不會被覆蓋，兩邊紀錄合而為一
+    await pushToCloud(true);
+    showToast('連接成功！已合併雲端資料（考勤 ' + beforeCount + ' → ' + db.attendance.length + ' 筆）', 'success');
+    refreshAllViews();
+  } catch(e) {
+    showToast('連接失敗：' + e.message, 'error');
+  }
+}
+
+function mergeDB(cloudDb) {
+  if (!cloudDb) return;
+  // 員工：以 employee_id（業務鍵）合併，避免兩台裝置各自新增員工拿到相同數字id而互相覆蓋
+  const empMap = {};
+  (db.employees || []).forEach(function(e) { if (e && e.employee_id) empMap[e.employee_id] = e; });
+  (cloudDb.employees || []).forEach(function(ce) {
+    if (!ce || !ce.employee_id) return;
+    const le = empMap[ce.employee_id];
+    if (!le) { empMap[ce.employee_id] = ce; return; }
+    if (ce.updated_at && (!le.updated_at || ce.updated_at > le.updated_at)) {
+      // 雲端較新：保留本機的 id 與 created_at，其餘以雲端為準
+      const keepId = le.id, keepCreated = le.created_at;
+      Object.keys(ce).forEach(function(k) { le[k] = ce[k]; });
+      le.id = keepId;
+      le.created_at = keepCreated || ce.created_at;
+    }
+  });
+  db.employees = Object.values(empMap);
+
+  // 考勤：以 employee_id + date 為業務鍵合併；
+  // 若本機只有上班、雲端只有下班（或相反）→ 欄位級合併成完整一筆，避免重複與缺漏
+  const attMap = {};
+  (db.attendance || []).forEach(function(a) { if (a && a.employee_id && a.date) attMap[a.employee_id + '|' + a.date] = a; });
+  (cloudDb.attendance || []).forEach(function(ca) {
+    if (!ca || !ca.employee_id || !ca.date) return;
+    const k = ca.employee_id + '|' + ca.date;
+    const la = attMap[k];
+    if (!la) { attMap[k] = ca; return; }
+    let changed = false;
+    if (!la.clock_in && ca.clock_in) { la.clock_in = ca.clock_in; la.clock_in_ip = ca.clock_in_ip || la.clock_in_ip; changed = true; }
+    if (!la.clock_out && ca.clock_out) { la.clock_out = ca.clock_out; la.clock_out_ip = ca.clock_out_ip || la.clock_out_ip; changed = true; }
+    if (ca.updated_at && (!la.updated_at || ca.updated_at > la.updated_at)) {
+      la.updated_at = ca.updated_at;
+      if (ca.status) la.status = ca.status;
+      if (typeof ca.wifi_verified !== 'undefined') la.wifi_verified = ca.wifi_verified;
+      changed = true;
+    }
+    if (changed && !la.updated_at) la.updated_at = new Date().toISOString();
+    if (changed && !la.ip_address && (la.clock_in_ip || ca.ip_address)) la.ip_address = la.clock_in_ip || ca.ip_address;
+  });
+  db.attendance = Object.values(attMap);
+
+  // 重新編號：避免兩台裝置各自新增時數字 id 衝突（員工以 employee_id、考勤以 employee_id+date 為業務鍵）
+  db.employees.forEach(function(e, i) { e.id = i + 1; });
+  db.attendance.forEach(function(a, i) { a.id = i + 1; });
+  db.nextEmpId = db.employees.length + 1;
+  db.nextAttId = db.attendance.length + 1;
+
+  // WiFi 與排班設定：以 updated_at 新者為準
+  ['wifiSettings', 'schedule'].forEach(function(k) {
+    if (!db[k]) { db[k] = cloudDb[k] || null; return; }
+    if (!cloudDb[k]) return;
+    const lts = db[k].updated_at || '', cts = cloudDb[k].updated_at || '';
+    if (cts && (!lts || cts > lts)) db[k] = cloudDb[k];
+  });
+  if (!db.wifiSettings) db.wifiSettings = { allowed_ips: '', wifi_name: 'Office WiFi', enabled: false };
+  if (!db.schedule) db.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
+}
+
+async function pushToCloud(silent) {
+  const key = getSyncKey();
+  if (!key) return;
+  if (syncInProgress) { syncPending = true; return; }  // 推播進行中→標記待推，由執行中的推播接手
+  syncInProgress = true;
+  let ok = false;
+  try {
+    syncPending = false;
+    const sizeKB = JSON.stringify(db).length / 1024;
+    if (sizeKB > 90) {
+      showToast('⚠️ 資料量已達 ' + Math.round(sizeKB) + 'KB，請定期匯出備份，避免雲端同步失敗', 'warning');
+    }
+    db._last_sync = new Date().toISOString();
+    const ctrl = new AbortController();
+    const t = setTimeout(function() { ctrl.abort(); }, 20000);
+    const res = await fetch(JSONSTORAGE_API + '/' + key, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(db),
+      signal: ctrl.signal
+    });
+    clearTimeout(t);
+    if (!res.ok) throw new Error('伺服器回應 ' + res.status);
+    saveLocalOnly();
+    ok = true;
+    if (syncRetryTimer) { clearTimeout(syncRetryTimer); syncRetryTimer = null; }
+    if (!silent) showToast('同步完成：' + new Date().toLocaleTimeString('zh-TW'), 'success');
+  } catch(e) {
+    // 失敗：保留 pending，10 秒後自動重試，避免斷網期間的打卡遺失
+    syncPending = true;
+    if (!silent) showToast('同步失敗：' + (e.name === 'AbortError' ? '連線逾時' : e.message) + '（稍後自動重試）', 'error');
+    if (!syncRetryTimer) {
+      syncRetryTimer = setTimeout(function() {
+        syncRetryTimer = null;
+        if (syncPending && getSyncKey()) pushToCloud(true);
+      }, 10000);
+    }
+  } finally {
+    syncInProgress = false;
+    // 推播期間又有新變更 → 立刻補推一次，確保最新資料一定上傳
+    if (ok && syncPending) {
+      syncPending = false;
+      setTimeout(function() { pushToCloud(true); }, 300);
+    }
+  }
+}
+
+async function pullFromCloud(silent) {
+  const key = getSyncKey();
+  if (!key) return;
+  if (syncInProgress) { setTimeout(function() { pullFromCloud(silent); }, 1500); return; }
+  syncInProgress = true;
+  let changed = false, success = false;
+  try {
+    // 快照：比較「整個資料庫」是否變化（員工/考勤/WiFi/排班任一項目變更都要觸發刷新）
+    const snap = function() { return JSON.stringify({ emp: db.employees, att: db.attendance, wifi: db.wifiSettings, sched: db.schedule }); };
+    const beforeSnap = snap();
+    const ctrl = new AbortController();
+    const t = setTimeout(function() { ctrl.abort(); }, 20000);
+    const res = await fetch(JSONSTORAGE_API + '/' + key, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!res.ok) throw new Error('伺服器回應 ' + res.status);
+    const cloudDb = await res.json();
+    if (cloudDb && cloudDb.employees) {
+      mergeDB(cloudDb);
+      db._last_sync = new Date().toISOString();
+      saveLocalOnly();
+      changed = snap() !== beforeSnap;
+      success = true;
+    }
+  } catch(e) {
+    if (!silent) showToast('雲端拉取失敗：' + (e.name === 'AbortError' ? '連線逾時' : e.message), 'error');
+  } finally {
+    syncInProgress = false;
+  }
+  // 只有「拉取成功」才回推雲端（避免斷網時把本機舊資料推上去覆蓋雲端的新資料）
+  if (success && getSyncKey()) await pushToCloud(true);
+  // 合併成功 → 刷新系統裡「所有項目」的畫面（打卡狀態、個人考勤、管理統計、員工、考勤紀錄、WiFi、排班、同步狀態）
+  if (success && currentUser) {
+    if (changed) {
+      refreshAllViews();
+    } else {
+      // 資料沒變：仍輕量刷新目前頁面（確保「最後同步時間」等狀態文字是最新）
+      const pageEl = document.querySelector('.page.active');
+      const pageName = pageEl ? pageEl.id.replace('page-', '') : 'clock';
+      switchPage(pageName);
+    }
+  }
+  if (!silent && changed) showToast('已從雲端更新資料', 'success');
+}
+
+// ===== 全畫面刷新 =====
+// 同步合併後，把系統裡所有資料驅動的項目全部重新載入，讓使用者不管停在哪一頁
+// 都能立刻看到雲端更新的最新內容（這是「自動同步」有感的核心）。
+function refreshAllViews() {
+  if (!currentUser) return;
+  loadClockStatus();   // 打卡頁：今日上下班狀態、WiFi 狀態（所有人）
+  loadHistory();       // 個人考勤紀錄（所有人）
+  if (currentUser.role === 'admin') {
+    loadAdminStats();       // 管理統計與圖表
+    loadEmployees();        // 員工管理列表
+    loadAdminAttendance();  // 管理考勤紀錄
+    loadWifiSettings();     // WiFi 設定（IP白名單）
+    loadScheduleSettings(); // 排班設定
+    loadSyncSettings();     // 雲端同步狀態
+  }
+}
+
+async function manualSync() {
+  if (!requireAdmin()) return;
+  if (!getSyncKey()) { showToast('尚未啟用雲端同步', 'warning'); return; }
+  showToast('正在同步...', 'info');
+  await pushToCloud(true);    // 1. 先上傳本機變更
+  await pullFromCloud(true);  // 2. 再下載雲端資料並合併（成功時自動回推 + 全畫面刷新）
+  refreshAllViews();          // 3. 確保系統裡所有項目都顯示最新資料
+  showToast('同步完成：' + new Date().toLocaleTimeString('zh-TW'), 'success');
+}
+
+// ===== 自動同步引擎 =====
+// 每 60 秒自動同步一次 + 手機從背景切回畫面時立即同步（全程靜默，不彈錯誤干擾）
+function startAutoSync() {
+  if (!getSyncKey()) return;
+  async function autoSyncOnce() {
+    if (!getSyncKey()) return;
+    if (syncPending) await pushToCloud(true);  // 有本機變更先上傳
+    await pullFromCloud(true);                  // 再拉取雲端新資料並合併
+  }
+  setInterval(autoSyncOnce, 60000);
+  function onVisible() {
+    if (!getSyncKey() || document.hidden) return;
+    autoSyncOnce();
+  }
+  document.addEventListener('visibilitychange', onVisible);
+  window.addEventListener('focus', onVisible);
+}
+
+function disconnectSync() {
+  if (!requireAdmin()) return;
+  showConfirm('斷開後此裝置不再自動同步（雲端資料仍會保留）。確定斷開？', function() {
+    setSyncKey(null);
+    loadSyncSettings();
+    showToast('已斷開雲端同步', 'success');
+  }, '⚠️');
+}
+
+function copySyncCode() {
+  const code = getSyncKey();
+  if (!code) return;
+  const input = document.getElementById('syncCodeDisplay');
+  input.select(); input.setSelectionRange(0, 99999);
+  try {
+    document.execCommand('copy');
+    showToast('同步碼已複製', 'success');
+  } catch(e) {
+    showToast('請手動複製同步碼', 'info');
+  }
+}
+
+function copySyncLink() {
+  const code = getSyncKey();
+  if (!code) return;
+  const url = location.origin + location.pathname + '?sync=' + code;
+  const ta = document.createElement('textarea');
+  ta.value = url;
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('同步連結已複製！在手機開啟此連結即自動連接', 'success');
+  } catch(e) {
+    showToast('請手動複製網址：' + url, 'info');
+  }
+  document.body.removeChild(ta);
+}
+
+function loadSyncSettings() {
+  if (!requireAdmin()) return;
+  const key = getSyncKey();
+  const statusEl = document.getElementById('syncStatusText');
+  const codeSection = document.getElementById('syncCodeSection');
+  const connectSection = document.getElementById('syncConnectSection');
+  if (key) {
+    statusEl.innerHTML = '<strong style="color:var(--success)">✅ 雲端同步已啟用（自動同步中）</strong>' +
+      '<br><span style="color:var(--text-secondary);font-size:12px;">每 60 秒自動同步一次；切回此頁面時也會立即同步。' +
+      '<br>最後同步：' + esc(db._last_sync || '尚未同步') + ' · 資料大小：' + getDbSizeKB() + ' KB</span>';
+    document.getElementById('syncCodeDisplay').value = key;
+    codeSection.style.display = '';
+    connectSection.style.display = 'none';
+  } else {
+    statusEl.innerHTML = '<span style="color:var(--text-secondary);">尚未啟用雲端同步 — 資料目前只存在此瀏覽器，<strong>換裝置會重新開始</strong>。建議立即建立同步。</span>';
+    codeSection.style.display = 'none';
+    connectSection.style.display = '';
+  }
+}
+
+// ===== Navigation =====
+const ADMIN_PAGES = ['admin-stats', 'admin-employees', 'admin-attendance', 'admin-wifi', 'admin-settings'];
+
+function switchPage(pageName) {
+  if (ADMIN_PAGES.includes(pageName) && (!currentUser || currentUser.role !== 'admin')) {
+    showToast('權限不足！此頁面僅限管理員使用。', 'error');
+    pageName = 'clock';
+  }
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  const pageEl = document.getElementById('page-' + pageName);
+  if (pageEl) pageEl.classList.add('active');
+  document.querySelectorAll('[data-page]').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('[data-page="' + pageName + '"]').forEach(function(t) { t.classList.add('active'); });
+  if (pageName === 'clock') loadClockStatus();
+  if (pageName === 'history') loadHistory();
+  if (pageName === 'admin-stats') loadAdminStats();
+  if (pageName === 'admin-employees') loadEmployees();
+  if (pageName === 'admin-attendance') loadAdminAttendance();
+  if (pageName === 'admin-wifi') loadWifiSettings();
+  if (pageName === 'admin-settings') { loadScheduleSettings(); loadSyncSettings(); }
+}
+
+document.querySelectorAll('[data-page]').forEach(function(el) {
+  el.addEventListener('click', function(e) { switchPage(e.currentTarget.dataset.page); });
+});
+
+// ===== Init =====
+(function init() {
+  // Cloud sync: auto-connect when opened via a shared ?sync=XXXX link (cross-device)
+  let syncFlowPending = false; // true = 等待使用者確認是否切換同步碼
+  const urlSync = new URLSearchParams(location.search).get('sync');
+  if (urlSync && /^[A-Za-z0-9_-]{4,64}$/.test(urlSync)) {
+    const existingKey = getSyncKey();
+    if (existingKey && existingKey !== urlSync) {
+      // 裝置已連接另一個同步空間 → 先詢問，避免誤連到別人的資料庫
+      syncFlowPending = true;
+      showConfirm('此裝置已連接另一個同步碼。要改用連結中的同步碼，並與目前資料合併嗎？（本機資料不會遺失）', function() {
+        setSyncKey(urlSync);
+        history.replaceState(null, '', location.pathname);
+        showToast('已切換同步碼，正在合併雲端資料...', 'info');
+        doInitialSync();
+      }, '🔄');
+    } else {
+      setSyncKey(urlSync);
+      history.replaceState(null, '', location.pathname); // clean URL
+      showToast('偵測到同步連結，正在連接雲端...', 'info');
+    }
+  }
+
+  const session = checkSession();
+  if (session) {
+    const user = db.employees.find(function(e) { return e.employee_id === session.employeeId && e.active === 1; });
+    if (user) {
+      currentUser = { id: user.id, employeeId: user.employee_id, name: user.name, role: user.role, department: user.department };
+      saveSession(); // Refresh timestamp
+      showDashboard();
+    } else {
+      localStorage.removeItem(SESSION_KEY);
+    }
+  }
+
+  // 啟動後從雲端拉取最新資料 → 合併 → 回推 → 自動重整所有項目畫面（靜默：失敗不彈窗）
+  function doInitialSync() {
+    setTimeout(function() {
+      pullFromCloud(true); // 內部會依變更情況刷新全部項目（refreshAllViews）或目前頁面
+    }, 600);
+  }
+
+  if (getSyncKey() && !syncFlowPending) doInitialSync();
+  startAutoSync(); // 開啟自動同步引擎：每 60 秒 + 手機切回畫面時自動同步
+})();
+</script>
+</body>
+</html>
