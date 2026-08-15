@@ -465,6 +465,19 @@
           </div>
         </div>
         <div id="syncConnectSection">
+          <!-- v3.0: GitHub Token 設定 — 用於雲端同步推播 -->
+          <div class="form-group" id="tokenSection" style="background:#fef3c7;padding:12px;border-radius:8px;margin-bottom:12px;">
+            <label style="font-size:13px;color:#92400e;">🔑 GitHub Token（雲端同步所需，設定一次即可）</label>
+            <div style="display:flex;gap:8px;margin-top:6px;">
+              <input type="password" id="githubTokenInput" placeholder="ghp_... 或 gho_..." style="flex:1;font-family:monospace;font-size:13px;">
+              <button class="btn btn-primary btn-sm" onclick="saveGitHubTokenUI()">儲存</button>
+            </div>
+            <div style="font-size:11px;color:#92400e;margin-top:4px;">
+              <span id="tokenStatus">尚未設定</span> ·
+              <a href="https://github.com/settings/tokens/new?scopes=repo&description=Attendance-Sync" target="_blank" style="color:#92400e;text-decoration:underline;">按此建立 Token</a>
+              · 設定後即可建立/連接同步
+            </div>
+          </div>
           <div class="form-group">
             <label>在另一台裝置使用此系統？輸入同步碼連接</label>
             <div style="display:flex;gap:8px;">
@@ -483,7 +496,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.13 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -1526,9 +1539,20 @@ function importFullData(event) {
 
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
-// 雲端同步 API：extendsclass.com 免費 JSON 儲存（免註冊、免API key、支援CORS）。
-// 注意：Content-Type 必須用 text/plain —— 這屬於「簡單請求」，瀏覽器不會發 OPTIONS 預檢；
-// 若用 application/json 會觸發 preflight，而該服務的 OPTIONS 端點無法正常回應，建立會失敗。
+// v3.0：改用 GitHub API 作為雲端同步後端。
+// 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
+// GitHub API 正確回應 204 給 OPTIONS preflight，所有 HTTP method 均可從瀏覽器使用。
+// GET（拉取）：raw.githubusercontent.com — 簡單請求，不需 auth，CORS *
+// PUT（推播）：api.github.com — 需 token，正確 CORS preflight（204）
+const GITHUB_OWNER = 'TYcompnies';
+const GITHUB_REPO = 'attendance';
+const GITHUB_BRANCH = 'main';
+// v3.0: Token stored in localStorage (not hardcoded — GitHub push protection blocks secrets in code)
+function getGitHubToken() { return localStorage.getItem('attendance_github_token') || ''; }
+function setGitHubToken(t) { if (t) localStorage.setItem('attendance_github_token', t); else localStorage.removeItem('attendance_github_token'); }
+const GITHUB_API_BASE = 'https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/sync/';
+const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/sync/';
+// 舊版 extendsclass API 保留為 fallback（唯讀）
 const JSONSTORAGE_API = 'https://extendsclass.com/api/json-storage/bin';
 let syncInProgress = false;
 let pushFromPull = false;  // v2.7：標記「這次 push 是 pullFromCloud 觸發的」，避免 push→pull→push 無限循環
@@ -1555,45 +1579,71 @@ function getSyncLogHTML() {
 
 function getSyncKey() { return localStorage.getItem(SYNC_KEY_STORAGE) || ''; }
 function setSyncKey(k) { if (k) localStorage.setItem(SYNC_KEY_STORAGE, k); else localStorage.removeItem(SYNC_KEY_STORAGE); }
+// v3.0：GitHub API 需要 SHA 來更新檔案；每次 PUT 成功後儲存新 SHA
+function getSyncSha() { return localStorage.getItem('attendance_sync_sha_' + getSyncKey()) || ''; }
+function setSyncSha(sha) { var k = 'attendance_sync_sha_' + getSyncKey(); if (sha) localStorage.setItem(k, sha); else localStorage.removeItem(k); }
+function clearSyncSha() { localStorage.removeItem('attendance_sync_sha_' + getSyncKey()); }
+// v3.0：產生隨機同步碼（7位小寫英數）
+function generateSyncCode() {
+  var chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  var code = '';
+  for (var i = 0; i < 7; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+  return code;
+}
+// v3.0：Base64 編碼（支援 UTF-8 中文）
+function encodeBase64(str) { return btoa(unescape(encodeURIComponent(str))); }
+function decodeBase64(b64) { return decodeURIComponent(escape(atob(b64))); }
 function getDbSizeKB() { return (JSON.stringify(db).length / 1024).toFixed(1); }
 function saveLocalOnly() { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
 
 async function createCloudSync() {
   if (!requireAdmin()) return;
+  if (!getGitHubToken()) { showToast('請先在下方設定 GitHub Token', 'warning'); document.getElementById('githubTokenInput').focus(); return; }
   if (getSyncKey()) { showToast('已啟用雲端同步，無需重複建立', 'warning'); loadSyncSettings(); return; }
-  clearAllSyncState();  // v2.13：確保從乾淨狀態開始
+  clearAllSyncState();
   try {
     showToast('正在建立雲端空間...', 'info');
-    const ctrl = new AbortController();
-    const t = setTimeout(function() { ctrl.abort(); }, 45000); // v2.11：45s 超時
-    const res = await fetch(JSONSTORAGE_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-cache, no-store', 'Pragma': 'no-cache' },
-      body: JSON.stringify(db),
+    var code = generateSyncCode();
+    db._last_sync = new Date().toISOString();
+    var body = JSON.stringify({
+      message: 'Create sync: ' + code,
+      content: encodeBase64(JSON.stringify(db))
+    });
+    var ctrl = new AbortController();
+    var t = setTimeout(function() { ctrl.abort(); }, 45000);
+    var res = await fetch(GITHUB_API_BASE + code + '.json', {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'token ' + getGitHubToken(),
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: body,
       signal: ctrl.signal,
-      mode: 'cors',
-      cache: 'no-store',
-      redirect: 'follow'
+      mode: 'cors'
     });
     clearTimeout(t);
-    if (!res.ok) throw new Error('伺服器回應 ' + res.status);
-    const data = await res.json();
-    if (!data.id) throw new Error('回應中沒有同步碼');
-    setSyncKey(data.id);
-    db._last_sync = new Date().toISOString();
+    if (!res.ok) {
+      var errBody = await res.text();
+      throw new Error('GitHub API ' + res.status + ': ' + errBody.substring(0, 100));
+    }
+    var data = await res.json();
+    setSyncKey(code);
+    setSyncSha(data.content.sha);
     saveLocalOnly();
-    addSyncLog('CREATE', 'ok', '同步碼 ' + data.id, 201);
-    showToast('雲端同步已啟用！請記下同步碼', 'success');
-    startAutoSync();      // 確保自動同步引擎啟動（首次建立同步碼的情況）
+    addSyncLog('CREATE', 'ok', '同步碼 ' + code, 201);
+    showToast('雲端同步已啟用！同步碼：' + code, 'success');
+    startAutoSync();
     loadSyncSettings();
   } catch(e) {
     addSyncLog('CREATE', 'err', e.message, 0);
-    showToast('建立失敗：' + e.message + '（請檢查網路連線）', 'error');
+    showToast('建立失敗：' + e.message, 'error');
   }
 }
 
 async function connectCloudSync() {
   if (!requireAdmin()) return;
+  if (!getGitHubToken()) { showToast('請先設定 GitHub Token', 'warning'); document.getElementById('githubTokenInput').focus(); return; }
   const code = trim(document.getElementById('syncCodeInput').value);
   if (!code) { showToast('請輸入同步碼', 'error'); return; }
   if (getSyncKey() && getSyncKey() !== code) {
@@ -1604,30 +1654,33 @@ async function connectCloudSync() {
 }
 
 async function doConnect(code) {
-  clearAllSyncState();  // v2.13：確保從乾淨狀態開始，避免 syncInProgress 卡住導致 push-back 不執行
+  clearAllSyncState();
   try {
     showToast('正在連接雲端並下載資料...', 'info');
-    const ctrl = new AbortController();
-    const t = setTimeout(function() { ctrl.abort(); }, 45000); // v2.11：45s 超時
-    const res = await fetch(JSONSTORAGE_API + '/' + code + '?t=' + Date.now(), {
+    var ctrl = new AbortController();
+    var t = setTimeout(function() { ctrl.abort(); }, 45000);
+    // v3.0：GitHub API GET — 即時取得最新資料，無 CDN 快取問題
+    var res = await fetch(GITHUB_API_BASE + code + '.json', {
       signal: ctrl.signal,
       mode: 'cors',
-      cache: 'no-store',
-      redirect: 'follow',
-      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
+      headers: {
+        'Authorization': 'token ' + getGitHubToken(),
+        'Accept': 'application/vnd.github.v3+json'
+      }
     });
     clearTimeout(t);
     if (res.status === 404) throw new Error('同步碼不存在或已失效');
-    if (!res.ok) throw new Error('伺服器回應 ' + res.status);
-    const cloudDb = await res.json();
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var ghData = await res.json();
+    var cloudDb = JSON.parse(decodeBase64(ghData.content.replace(/\n/g, '')));
     if (!cloudDb || !cloudDb.employees || !cloudDb.attendance) throw new Error('雲端資料格式不正確');
-    const beforeCount = db.attendance.length;
+    var beforeCount = db.attendance.length;
     mergeDB(cloudDb);
     setSyncKey(code);
+    if (ghData.sha) setSyncSha(ghData.sha);
     db._last_sync = new Date().toISOString();
     saveLocalOnly();
-    // 合併結果回推雲端：本機既有資料不會被覆蓋，兩邊紀錄合而為一
-    await pushToCloud(true, false, true); // v2.12：skipPull=true — 剛 GET 完不需要再 pull
+    await pushToCloud(true, false, true);
     showToast('連接成功！已合併雲端資料（考勤 ' + beforeCount + ' → ' + db.attendance.length + ' 筆）', 'success');
     addSyncLog('CONNECT', 'ok', '同步碼 ' + code + ' 考勤 ' + beforeCount + '→' + db.attendance.length, 200);
     startAutoSync();      // 確保自動同步引擎啟動（手動輸入同步碼連接的情況）
@@ -1698,59 +1751,84 @@ function mergeDB(cloudDb) {
 }
 
 async function pushToCloud(silent, noBadge, skipPull) {
-  const key = getSyncKey();
+  var key = getSyncKey();
   if (!key) return;
   if (syncInProgress) { syncPending = true; return; }
   syncInProgress = true;
-  let ok = false;
-  let errStatus = 0;
+  var ok = false;
+  var errStatus = 0;
   try {
     syncPending = false;
-    const sizeKB = JSON.stringify(db).length / 1024;
+    var sizeKB = JSON.stringify(db).length / 1024;
     if (sizeKB > 90) {
-      showToast('⚠️ 資料量已達 ' + Math.round(sizeKB) + 'KB，請定期匯出備份，避免雲端同步失敗', 'warning');
+      showToast('⚠️ 資料量已達 ' + Math.round(sizeKB) + 'KB，請定期匯出備份', 'warning');
     }
     db._last_sync = new Date().toISOString();
-    const ctrl = new AbortController();
-    const t = setTimeout(function() { ctrl.abort(); }, 45000); // v2.11：45s 超時（手機慢網路）
-    const res = await fetch(JSONSTORAGE_API + '/' + key, {
+    // v3.0：GitHub Contents API PUT — 正確 CORS preflight（204）
+    var putBody = {
+      message: 'Sync push: ' + new Date().toISOString(),
+      content: encodeBase64(JSON.stringify(db))
+    };
+    var sha = getSyncSha();
+    if (sha) putBody.sha = sha;
+    var ctrl = new AbortController();
+    var t = setTimeout(function() { ctrl.abort(); }, 45000);
+    var res = await fetch(GITHUB_API_BASE + key + '.json', {
       method: 'PUT',
-      headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-cache, no-store', 'Pragma': 'no-cache' },
-      body: JSON.stringify(db),
+      headers: {
+        'Authorization': 'token ' + getGitHubToken(),
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(putBody),
       signal: ctrl.signal,
-      mode: 'cors',
-      cache: 'no-store',
-      redirect: 'follow'
+      mode: 'cors'
     });
     clearTimeout(t);
-    errStatus = res.status;  // v2.10：移除 let，用外面宣告的 errStatus
-    if (!res.ok) throw new Error('伺服器回應 ' + res.status);
+    errStatus = res.status;
+    if (res.status === 409 || res.status === 422) {
+      // SHA 過期 — 另一台裝置已更新檔案。清除 SHA，先 pull 再重試
+      clearSyncSha();
+      addSyncLog('PUT', 'ok', 'SHA 衝突，先拉取再重試', res.status);
+      syncInProgress = false;
+      await pullFromCloud(true);
+      syncInProgress = false;
+      // 重試 push
+      setTimeout(function() { pushToCloud(silent, noBadge, skipPull); }, 500);
+      return;
+    }
+    if (!res.ok) {
+      var errText = await res.text();
+      throw new Error('GitHub API ' + res.status + ': ' + errText.substring(0, 80));
+    }
+    var data = await res.json();
+    setSyncSha(data.content.sha); // 儲存新 SHA 供下次更新用
     saveLocalOnly();
     ok = true;
     lastSyncError = '';
-    syncFailCount = 0; // v2.12：成功 → 重置失敗計數
+    syncFailCount = 0;
     syncRetryDelay = 10000;
     if (syncRetryTimer) { clearTimeout(syncRetryTimer); syncRetryTimer = null; }
     addSyncLog('PUT', 'ok', '大小 ' + sizeKB.toFixed(1) + 'KB', 200);
     if (!silent) showToast('同步完成：' + new Date().toLocaleTimeString('zh-TW'), 'success');
   } catch(e) {
     syncPending = true;
-    let msg = '';
+    var msg = '';
     if (e.name === 'AbortError') {
-      msg = '連線逾時（45秒），網路可能不穩定或被阻擋';
+      msg = '連線逾時（45秒），網路可能不穩定';
     } else if (errStatus === 404) {
-      msg = '同步碼不存在或已失效，請重新連接';
-    } else if (errStatus === 429) {
-      msg = '同步過於頻繁（429），請稍後再試';
+      msg = '同步檔案不存在，請重新建立同步';
+    } else if (errStatus === 401 || errStatus === 403) {
+      msg = 'GitHub 認證失敗（' + errStatus + '），請聯繫管理員';
     } else if (errStatus === 0 || !errStatus) {
-      msg = '網路連線失敗（' + (e.message || 'TypeError') + '），請確認手機可正常上網';
+      msg = '網路連線失敗（' + (e.message || 'TypeError') + '）';
     } else if (errStatus >= 500) {
-      msg = '雲端伺服器暫時異常（' + errStatus + '），請稍後再試';
+      msg = 'GitHub 伺服器暫時異常（' + errStatus + '）';
     } else {
       msg = e.message;
     }
     lastSyncError = '推播失敗：' + msg;
-    syncFailCount++; // v2.12：累計失敗次數
+    syncFailCount++;
     addSyncLog('PUT', 'err', msg, errStatus);
     if (!silent && !noBadge) showToast('同步失敗：' + msg + '（' + Math.round(syncRetryDelay/1000) + '秒後自動重試）', 'error');
     if (!syncRetryTimer) {
@@ -1770,7 +1848,6 @@ async function pushToCloud(silent, noBadge, skipPull) {
       if (!noBadge) updateSyncBadge('synced');
       if (!pushFromPull && !skipPull) setTimeout(function() { pullFromCloud(true); }, 500);
     } else {
-      // v2.10：push-back（noBadge=true）失敗不覆蓋徽章，避免 pull 成功但徽章顯示 error
       if (!noBadge) updateSyncBadge('error');
     }
   }
@@ -1787,55 +1864,58 @@ async function pullFromCloud(silent) {
   // v2.12：如果同步進行中，標記 pendingPull 並返回（不再無限遞迴 setTimeout）
   if (syncInProgress) { pendingPull = true; return; }
   syncInProgress = true;
-  let changed = false, success = false;
-  let errStatus = 0;
+  var changed = false, success = false;
+  var errStatus = 0;
   try {
-    // 快照：比較「整個資料庫」是否變化（員工/考勤/WiFi/排班任一項目變更都要觸發刷新）
-    const snap = function() { return JSON.stringify({ emp: db.employees, att: db.attendance, wifi: db.wifiSettings, sched: db.schedule }); };
-    const beforeSnap = snap();
-    const ctrl = new AbortController();
-    const t = setTimeout(function() { ctrl.abort(); }, 45000);
-    const res = await fetch(JSONSTORAGE_API + '/' + key + '?t=' + Date.now(), {
+    var snap = function() { return JSON.stringify({ emp: db.employees, att: db.attendance, wifi: db.wifiSettings, sched: db.schedule }); };
+    var beforeSnap = snap();
+    var ctrl = new AbortController();
+    var t = setTimeout(function() { ctrl.abort(); }, 45000);
+    // v3.0：GitHub API GET — 無 CDN 快取問題，即時取得最新資料
+    // raw.githubusercontent.com 有 5 分鐘 CDN 快取，會導致跨裝置同步延遲
+    var res = await fetch(GITHUB_API_BASE + key + '.json', {
       signal: ctrl.signal,
       mode: 'cors',
-      cache: 'no-store',
-      redirect: 'follow',
-      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
+      headers: {
+        'Authorization': 'token ' + getGitHubToken(),
+        'Accept': 'application/vnd.github.v3+json'
+      }
     });
     clearTimeout(t);
     errStatus = res.status;
-    if (!res.ok) throw new Error('伺服器回應 ' + res.status);
-    const cloudDb = await res.json();
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    // v3.0：GitHub API 回應格式 { content: Base64, sha: ... } — 需解碼
+    var ghData = await res.json();
+    var sha = ghData.sha || '';
+    var cloudDb = JSON.parse(decodeBase64(ghData.content.replace(/\n/g, '')));
+    if (sha) setSyncSha(sha); // 更新 SHA 供下次 push 用
     if (cloudDb && cloudDb.employees) {
       mergeDB(cloudDb);
       db._last_sync = new Date().toISOString();
       saveLocalOnly();
       changed = snap() !== beforeSnap;
       success = true;
-      syncFailCount = 0; // v2.12：成功 → 重置失敗計數
+      syncFailCount = 0;
       addSyncLog('GET', 'ok', changed ? '資料有更新' : '資料一致', 200);
     }
   } catch(e) {
-    let msg = '';
+    var msg = '';
     if (e.name === 'AbortError') {
-      msg = '連線逾時（45秒），網路可能不穩定或被阻擋';
+      msg = '連線逾時（45秒），網路可能不穩定';
     } else if (errStatus === 404) {
       msg = '同步碼不存在或已失效';
-    } else if (errStatus === 429) {
-      msg = '同步過於頻繁（429），請稍後再試';
     } else if (errStatus === 0 || !errStatus) {
-      msg = '網路連線失敗（' + (e.message || 'TypeError') + '），請確認手機可正常上網';
+      msg = '網路連線失敗（' + (e.message || 'TypeError') + '）';
     } else if (errStatus >= 500) {
-      msg = '雲端伺服器暫時異常（' + errStatus + '）';
+      msg = 'GitHub 伺服器暫時異常（' + errStatus + '）';
     } else {
       msg = e.message;
     }
     lastSyncError = '拉取失敗：' + msg;
-    syncFailCount++; // v2.12：累計失敗次數
+    syncFailCount++;
     addSyncLog('GET', 'err', msg, errStatus);
     if (!silent) showToast('雲端拉取失敗：' + msg, 'error');
     updateSyncBadge('error');
-    // v2.12：連續失敗超過 3 次 → 自動重置同步狀態
     if (syncFailCount >= 3) {
       addSyncLog('AUTO-RESET', 'ok', '連續失敗 ' + syncFailCount + ' 次，自動重置', 0);
       syncInProgress = false;
@@ -1851,15 +1931,13 @@ async function pullFromCloud(silent) {
   } finally {
     syncInProgress = false;
   }
-  // v2.12：pull 成功 → 設徽章 synced（不論是否有 currentUser，避免 session 過期時徽章卡在 syncing）
   if (success) {
     updateSyncBadge('synced');
     lastSyncError = '';
   }
-  // v2.11：只在「資料有變化」或「本機有未推變更」時才 push-back，避免無謂的 PUT 觸發 502
   if (success && (changed || syncPending) && getSyncKey()) {
     pushFromPull = true;
-    try { await pushToCloud(true, true, true); } finally { pushFromPull = false; }  // v2.12：noBadge=true, skipPull=true
+    try { await pushToCloud(true, true, true); } finally { pushFromPull = false; }
   }
   if (success && currentUser) {
     if (changed) {
@@ -1869,7 +1947,6 @@ async function pullFromCloud(silent) {
     }
   }
   if (!silent && changed) showToast('已從雲端更新資料', 'success');
-  // v2.12：如果有 pendingPull（之前 syncInProgress 時被擋下的），現在執行
   if (success && pendingPull) {
     pendingPull = false;
     setTimeout(function() { pullFromCloud(true); }, 500);
@@ -1963,7 +2040,8 @@ function clearAllSyncState() {
 function disconnectSync() {
   if (!requireAdmin()) return;
   showConfirm('斷開後此裝置不再自動同步（雲端資料仍會保留）。確定斷開？', function() {
-    clearAllSyncState();  // v2.13：清除所有同步狀態，避免重新建立時卡住
+    clearAllSyncState();
+    clearSyncSha(); // v3.0：清除 SHA
     setSyncKey(null);
     loadSyncSettings();
     updateSyncBadge('offline');
@@ -2040,16 +2118,18 @@ function copySyncLink() {
 async function testCloudConnection() {
   if (!getSyncKey()) { showToast('尚未啟用同步', 'warning'); return; }
   showToast('正在測試雲端連線...', 'info');
-  const key = getSyncKey();
+  var key = getSyncKey();
   try {
-    const ctrl = new AbortController();
-    const t = setTimeout(function() { ctrl.abort(); }, 45000); // v2.11：45s 超時
-    const res = await fetch(JSONSTORAGE_API + '/' + key + '?t=' + Date.now(), {
+    var ctrl = new AbortController();
+    var t = setTimeout(function() { ctrl.abort(); }, 45000);
+    // v3.0：測試 GitHub API 連線
+    var res = await fetch(GITHUB_API_BASE + key + '.json', {
       signal: ctrl.signal,
       mode: 'cors',
-      cache: 'no-store',
-      redirect: 'follow',
-      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
+      headers: {
+        'Authorization': 'token ' + getGitHubToken(),
+        'Accept': 'application/vnd.github.v3+json'
+      }
     });
     clearTimeout(t);
     if (res.ok) {
@@ -2075,8 +2155,33 @@ async function testCloudConnection() {
   loadSyncSettings();
 }
 
+// v3.0：儲存 GitHub Token
+function saveGitHubTokenUI() {
+  var input = document.getElementById('githubTokenInput');
+  var token = (input.value || '').trim();
+  if (!token) { showToast('請輸入 Token', 'error'); return; }
+  if (!token.match(/^gh[pousr]_/)) { showToast('Token 格式不正確（應以 ghp_ 或 gho_ 開頭）', 'error'); return; }
+  setGitHubToken(token);
+  input.value = '';
+  updateTokenStatus();
+  showToast('Token 已儲存！現在可以建立或連接雲端同步', 'success');
+  loadSyncSettings();
+}
+function updateTokenStatus() {
+  var el = document.getElementById('tokenStatus');
+  if (!el) return;
+  if (getGitHubToken()) {
+    el.textContent = '✅ 已設定';
+    el.style.color = '#059669';
+  } else {
+    el.textContent = '❌ 尚未設定';
+    el.style.color = '#dc2626';
+  }
+}
+
 function loadSyncSettings() {
   if (!requireAdmin()) return;
+  updateTokenStatus();
   const key = getSyncKey();
   const statusEl = document.getElementById('syncStatusText');
   const codeSection = document.getElementById('syncCodeSection');
