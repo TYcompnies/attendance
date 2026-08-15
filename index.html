@@ -501,7 +501,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.1 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.2 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -2340,23 +2340,55 @@ async function autoFindSyncCode(silent) {
       if (!silent) showToast('雲端還沒有同步資料，請先按「建立雲端同步」', 'warning');
       return;
     }
-    // 依最後更新時間排序，取最新的同步碼
-    jsonFiles.sort(function(a, b) { return new Date(b.updated_at || 0) - new Date(a.updated_at || 0); });
-    var code = jsonFiles[0].name.replace(/\.json$/, '');
+    // v3.2：GitHub API 目錄列表「不包含 updated_at 欄位」，
+    // 必須逐一 GET 檔案內容比較 JSON 中的 _last_sync，才能找到真正最新的同步碼
+    // （舊版用 f.updated_at 排序，但該欄位不存在 → 排序無效 → 永遠選字母序第一個）
+    var fileInfos = await Promise.all(jsonFiles.map(async function(f) {
+      try {
+        var r2 = await fetch(f.url, {
+          mode: 'cors',
+          headers: {
+            'Authorization': 'token ' + getGitHubToken(),
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (!r2.ok) return { name: f.name, lastSync: '', empCount: 0 };
+        var d2 = await r2.json();
+        var content = JSON.parse(decodeBase64(d2.content.replace(/\n/g, '')));
+        return {
+          name: f.name,
+          lastSync: content._last_sync || '',
+          empCount: (content.employees || []).length
+        };
+      } catch(e2) {
+        return { name: f.name, lastSync: '', empCount: 0 };
+      }
+    }));
+    // 依 _last_sync 降序排列（最新的在最前面）
+    fileInfos.sort(function(a, b) {
+      return (b.lastSync || '').localeCompare(a.lastSync || '');
+    });
+    var code = fileInfos[0].name.replace(/\.json$/, '');
     if (!/^[A-Za-z0-9_-]{4,64}$/.test(code)) {
       if (!silent) showToast('偵測到的同步碼格式異常', 'error');
       return;
     }
-    addSyncLog('AUTOFIND', 'ok', '找到同步碼 ' + code, 0);
-    if (getSyncKey()) {
+    addSyncLog('AUTOFIND', 'ok', '找到同步碼 ' + code + '（員工 ' + (fileInfos[0].empCount || 0) + ' 人，同步 ' + (fileInfos[0].lastSync || '未知') + '）', 0);
+    // v3.2：若目前同步碼與找到的相同 → 已連接，不需重複
+    if (getSyncKey() === code) {
       if (!silent) showToast('已連接同步碼：' + code, 'success');
       loadSyncSettings();
       return;
     }
-    // 自動填入並連接
+    // v3.2：自動填入並連接（包含從舊/已刪除同步碼切換到新同步碼的情況）
     document.getElementById('syncCodeInput').value = code;
-    if (!silent) showToast('🔗 找到同步碼 ' + code + '，正在自動連接...', 'success');
-    connectCloudSync();
+    if (!silent) showToast('🔗 找到同步碼 ' + code + '（' + (fileInfos[0].empCount || 0) + ' 名員工），正在自動連接...', 'success');
+    // 若已有不同的同步碼：靜默模式直接切換，非靜默模式走 connectCloudSync（有確認對話框）
+    if (getSyncKey() && getSyncKey() !== code && silent) {
+      doConnect(code);
+    } else {
+      connectCloudSync();
+    }
   } catch(e) {
     if (e.name === 'AbortError') {
       if (!silent) showToast('搜尋逾時，請檢查網路', 'error');
