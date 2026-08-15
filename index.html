@@ -483,7 +483,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.12 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.13 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -1561,6 +1561,7 @@ function saveLocalOnly() { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
 async function createCloudSync() {
   if (!requireAdmin()) return;
   if (getSyncKey()) { showToast('已啟用雲端同步，無需重複建立', 'warning'); loadSyncSettings(); return; }
+  clearAllSyncState();  // v2.13：確保從乾淨狀態開始
   try {
     showToast('正在建立雲端空間...', 'info');
     const ctrl = new AbortController();
@@ -1603,6 +1604,7 @@ async function connectCloudSync() {
 }
 
 async function doConnect(code) {
+  clearAllSyncState();  // v2.13：確保從乾淨狀態開始，避免 syncInProgress 卡住導致 push-back 不執行
   try {
     showToast('正在連接雲端並下載資料...', 'info');
     const ctrl = new AbortController();
@@ -1943,9 +1945,25 @@ function startAutoSync() {
   window.addEventListener('focus', onVisible);
 }
 
+// v2.13：清除所有同步狀態變數和計時器 — 斷開/重建/連接同步前必須呼叫
+// 解決「斷開同步後無法重新建立」的問題：syncInProgress 等變數卡住時，pushToCloud/pullFromCloud 會直接 return
+function clearAllSyncState() {
+  syncInProgress = false;
+  syncPending = false;
+  autoSyncLock = false;
+  pushFromPull = false;
+  pendingPull = false;
+  syncFailCount = 0;
+  lastSyncError = '';
+  syncRetryDelay = 10000;
+  if (syncRetryTimer) { clearTimeout(syncRetryTimer); syncRetryTimer = null; }
+  if (typeof syncTimer !== 'undefined' && syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
+}
+
 function disconnectSync() {
   if (!requireAdmin()) return;
   showConfirm('斷開後此裝置不再自動同步（雲端資料仍會保留）。確定斷開？', function() {
+    clearAllSyncState();  // v2.13：清除所有同步狀態，避免重新建立時卡住
     setSyncKey(null);
     loadSyncSettings();
     updateSyncBadge('offline');
@@ -1958,16 +1976,7 @@ function disconnectSync() {
 // 清除所有同步鎖、錯誤狀態、重試計時器，讓同步引擎從乾淨狀態重新開始
 function resetSyncState() {
   if (!requireAdmin()) return;
-  syncInProgress = false;
-  syncPending = false;
-  autoSyncLock = false;
-  pushFromPull = false;
-  pendingPull = false; // v2.12
-  syncFailCount = 0;   // v2.12
-  lastSyncError = '';
-  syncRetryDelay = 10000;
-  if (syncRetryTimer) { clearTimeout(syncRetryTimer); syncRetryTimer = null; }
-  if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
+  clearAllSyncState();  // v2.13：使用共用函數
   addSyncLog('RESET', 'ok', '同步狀態已重置', 0);
   updateSyncBadge(getSyncKey() ? 'synced' : 'offline');
   loadSyncSettings();
@@ -1982,17 +1991,7 @@ function resetSyncState() {
 async function deepSync() {
   if (!requireAdmin()) return;
   if (!getSyncKey()) { showToast('尚未啟用雲端同步', 'warning'); return; }
-  // 強制清除所有鎖定
-  syncInProgress = false;
-  syncPending = false;
-  autoSyncLock = false;
-  pushFromPull = false;
-  pendingPull = false;
-  syncFailCount = 0;
-  lastSyncError = '';
-  syncRetryDelay = 10000;
-  if (syncRetryTimer) { clearTimeout(syncRetryTimer); syncRetryTimer = null; }
-  if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
+  clearAllSyncState();  // v2.13：使用共用函數
   showToast('正在深度同步（強制重新拉取）...', 'info');
   updateSyncBadge('syncing');
   addSyncLog('DEEP', 'ok', '開始深度同步', 0);
