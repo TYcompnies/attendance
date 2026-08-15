@@ -601,7 +601,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.6 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.6.1 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-16)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -892,7 +892,7 @@ function getApprovedLeaveDays(employeeId, startDate, endDate) {
       var ds = cur.getFullYear() + '-' + String(cur.getMonth() + 1).padStart(2, '0') + '-' + String(cur.getDate()).padStart(2, '0');
       if (startDate && ds < startDate) { cur.setDate(cur.getDate() + 1); continue; }
       if (endDate && ds > endDate) break;
-      result.push({ date: ds, leave_type: l.type, leave_id: l.id, employee_id: l.employee_id, employee_name: l.employee_name || '', department: l.department || '' });
+      result.push({ date: ds, leave_type: l.leave_type || l.type, leave_id: l.id, employee_id: l.employee_id, employee_name: l.employee_name || '', department: l.department || '' });
       cur.setDate(cur.getDate() + 1);
     }
   });
@@ -1267,12 +1267,13 @@ function showDashboard() {
 function setDefaultDateFilters() {
   const now = new Date();
   const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA');
-  const today = now.toLocaleDateString('en-CA');
+  // v3.6.1: 預設結束日期延長到「下個月月底」，讓已核准的未來請假日（含跨月）也會顯示
+  const endNext = new Date(now.getFullYear(), now.getMonth() + 2, 0).toLocaleDateString('en-CA');
   const setVal = function(id, val) { const el = document.getElementById(id); if (el && !el.value) el.value = val; };
   setVal('historyStartDate', firstDay);
-  setVal('historyEndDate', today);
+  setVal('historyEndDate', endNext);
   setVal('adminAttStartDate', firstDay);
-  setVal('adminAttEndDate', today);
+  setVal('adminAttEndDate', endNext);
 }
 
 // ===== Clock =====
