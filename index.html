@@ -313,6 +313,7 @@
         <div class="summary-card"><div class="val" id="sumTotalHours" style="color:var(--success)">-</div><div class="lbl">總工作時數</div></div>
         <div class="summary-card"><div class="val" id="sumAvgHours" style="color:#7c3aed">-</div><div class="lbl">平均每日時數</div></div>
         <div class="summary-card"><div class="val" id="sumLateCount" style="color:var(--danger)">-</div><div class="lbl">遲到次數</div></div>
+        <div class="summary-card"><div class="val" id="sumLeaveDays" style="color:#1d4ed8">-</div><div class="lbl">請假天數</div></div>
       </div>
       <div class="card">
         <div class="filter-bar">
@@ -600,7 +601,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.5 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.6 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -873,6 +874,34 @@ function leaveStatusBadge(status) {
     'cancelled': '<span class="badge" style="background:#e5e7eb;color:#6b7280">🚫 已取消</span>'
   };
   return map[status] || esc(status);
+}
+
+// v3.6: 將已核准假單展開為逐日紀錄（供考勤表格 / 我的紀錄 / CSV 匯出共用）
+// 回傳 [{date, leave_type, leave_id, employee_id, employee_name, department}]
+function getApprovedLeaveDays(employeeId, startDate, endDate) {
+  var result = [];
+  var approved = (db.leave_requests || []).filter(function(l) { return l.status === 'approved'; });
+  if (employeeId) approved = approved.filter(function(l) { return l.employee_id === employeeId; });
+  approved.forEach(function(l) {
+    if (!l.start_date || !l.end_date) return;
+    var sp = l.start_date.split('-');
+    var ep = l.end_date.split('-');
+    var cur = new Date(parseInt(sp[0]), parseInt(sp[1]) - 1, parseInt(sp[2]));
+    var endD = new Date(parseInt(ep[0]), parseInt(ep[1]) - 1, parseInt(ep[2]));
+    while (cur <= endD) {
+      var ds = cur.getFullYear() + '-' + String(cur.getMonth() + 1).padStart(2, '0') + '-' + String(cur.getDate()).padStart(2, '0');
+      if (startDate && ds < startDate) { cur.setDate(cur.getDate() + 1); continue; }
+      if (endDate && ds > endDate) break;
+      result.push({ date: ds, leave_type: l.type, leave_id: l.id, employee_id: l.employee_id, employee_name: l.employee_name || '', department: l.department || '' });
+      cur.setDate(cur.getDate() + 1);
+    }
+  });
+  return result;
+}
+
+// 請假日期 badge（用於考勤表格顯示）
+function leaveDayBadge(type) {
+  return '<span class="badge" style="background:#dbeafe;color:#1d4ed8">' + esc(leaveTypeText(type)) + '</span>';
 }
 
 // 天數預覽（申請表單）
@@ -1438,25 +1467,53 @@ function loadHistory() {
   let records = db.attendance.filter(function(a) { return a.employee_id === currentUser.employeeId; });
   if (startDate) records = records.filter(function(a) { return a.date >= startDate; });
   if (endDate) records = records.filter(function(a) { return a.date <= endDate; });
+
+  // v3.6: 合併已核准請假（逐日展開）
+  var leaveDays = getApprovedLeaveDays(currentUser.employeeId, startDate || null, endDate || null);
+  var leaveMap = {};
+  leaveDays.forEach(function(ld) { leaveMap[ld.date] = ld; });
+  var attDates = {};
+  records.forEach(function(r) {
+    attDates[r.date] = true;
+    if (leaveMap[r.date]) r._leaveType = leaveMap[r.date].leave_type;
+  });
+  var leaveCount = 0;
+  leaveDays.forEach(function(ld) {
+    if (!attDates[ld.date]) {
+      records.push({
+        date: ld.date, clock_in: null, clock_out: null, status: 'leave',
+        _isLeave: true, _leaveType: ld.leave_type
+      });
+      leaveCount++;
+    } else {
+      leaveCount++;
+    }
+  });
+
   records.sort(function(a, b) { return b.date.localeCompare(a.date); });
   records = records.slice(0, 90);
 
-  // Summary stats
+  // Summary stats（請假不計工作時數，但計入總天數）
   let totalDays = records.length;
   let totalMinutes = 0;
   let lateCount = 0;
+  let workDays = 0;
   records.forEach(function(r) {
+    if (r._isLeave) return;
+    workDays++;
     const wh = calcWorkHours(r);
     if (wh) totalMinutes += wh.minutes;
     if (r.status === 'late' || r.status === 'late_early') lateCount++;
   });
   const totalHours = (totalMinutes / 60).toFixed(1);
-  const avgHours = totalDays > 0 ? (totalMinutes / 60 / totalDays).toFixed(1) : '0';
+  const avgHours = workDays > 0 ? (totalMinutes / 60 / workDays).toFixed(1) : '0';
 
   document.getElementById('sumTotalDays').textContent = totalDays;
   document.getElementById('sumTotalHours').textContent = totalHours + 'h';
   document.getElementById('sumAvgHours').textContent = avgHours + 'h';
   document.getElementById('sumLateCount').textContent = lateCount;
+  var sumLeaveEl = document.getElementById('sumLeaveDays');
+  if (sumLeaveEl) sumLeaveEl.textContent = leaveCount;
 
   const tbody = document.getElementById('historyTableBody');
   if (records.length === 0) {
@@ -1464,10 +1521,23 @@ function loadHistory() {
     return;
   }
   tbody.innerHTML = records.map(function(r) {
+    if (r._isLeave) {
+      return '<tr style="background:#f0f7ff">' +
+        '<td>' + esc(r.date) + '</td>' +
+        '<td>' + leaveDayBadge(r._leaveType) + '</td>' +
+        '<td><span style="color:#999">--</span></td>' +
+        '<td><span style="color:#999">休假</span></td>' +
+        '<td><span style="color:#999">--</span></td>' +
+        '<td><span style="color:#999">--</span></td>' +
+        '<td>' + leaveDayBadge(r._leaveType) + '</td>' +
+        '</tr>';
+    }
     const wh = calcWorkHours(r);
     let hours = '--';
     if (wh) hours = wh.text;
     else if (r.clock_in) hours = '<span style="color:#999">工作中</span>';
+    var statusCell = statusBadge(r.status);
+    if (r._leaveType) statusCell += '<br><span style="font-size:11px">' + leaveDayBadge(r._leaveType) + '</span>';
     return '<tr>' +
       '<td>' + esc(r.date) + '</td>' +
       '<td>' + (r.clock_in ? esc(r.clock_in) : '<span style="color:#999">未打卡</span>') + '</td>' +
@@ -1475,7 +1545,7 @@ function loadHistory() {
       '<td>' + hours + '</td>' +
       '<td>' + (r.wifi_verified ? '<span class="badge badge-success">已驗證</span>' : '<span class="badge badge-warning">未驗證</span>') + '</td>' +
       '<td style="font-family:monospace;font-size:12px">' + (esc(r.ip_address) || '--') + '</td>' +
-      '<td>' + statusBadge(r.status) + '</td>' +
+      '<td>' + statusCell + '</td>' +
       '</tr>';
   }).join('');
 }
@@ -1731,6 +1801,28 @@ function loadAdminAttendance() {
   if (startDate) records = records.filter(function(r) { return r.date >= startDate; });
   if (endDate) records = records.filter(function(r) { return r.date <= endDate; });
   if (empId) records = records.filter(function(r) { return r.employee_id === empId; });
+
+  // v3.6: 合併已核准請假（逐日展開）
+  var leaveDays = getApprovedLeaveDays(empId || null, startDate || null, endDate || null);
+  var leaveMap = {};
+  leaveDays.forEach(function(ld) { leaveMap[ld.employee_id + '|' + ld.date] = ld; });
+  var attKeys = {};
+  records.forEach(function(r) {
+    var key = r.employee_id + '|' + r.date;
+    attKeys[key] = true;
+    if (leaveMap[key]) r._leaveType = leaveMap[key].leave_type;
+  });
+  leaveDays.forEach(function(ld) {
+    var key = ld.employee_id + '|' + ld.date;
+    if (!attKeys[key]) {
+      records.push({
+        date: ld.date, employee_id: ld.employee_id, employee_name: ld.employee_name,
+        department: ld.department, clock_in: null, clock_out: null, status: 'leave',
+        _isLeave: true, _leaveType: ld.leave_type
+      });
+    }
+  });
+
   records.sort(function(a, b) { if (b.date !== a.date) return b.date.localeCompare(a.date); return (b.clock_in || '').localeCompare(a.clock_in || ''); });
 
   const tbody = document.getElementById('adminAttTableBody');
@@ -1739,7 +1831,23 @@ function loadAdminAttendance() {
     return;
   }
   tbody.innerHTML = records.map(function(r) {
-    const wh = calcWorkHours(r);
+    if (r._isLeave) {
+      return '<tr style="background:#f0f7ff">' +
+        '<td>' + esc(r.date) + '</td>' +
+        '<td style="font-weight:600">' + esc(r.employee_id) + '</td>' +
+        '<td>' + (esc(r.employee_name) || '--') + '</td>' +
+        '<td>' + (esc(r.department) || '--') + '</td>' +
+        '<td>' + leaveDayBadge(r._leaveType) + '</td>' +
+        '<td><span style="color:#999">--</span></td>' +
+        '<td><span style="color:#999">休假</span></td>' +
+        '<td><span style="color:#999">--</span></td>' +
+        '<td><span style="color:#999">--</span></td>' +
+        '<td>' + leaveDayBadge(r._leaveType) + '</td>' +
+        '</tr>';
+    }
+    var wh = calcWorkHours(r);
+    var statusCell = statusBadge(r.status);
+    if (r._leaveType) statusCell += '<br><span style="font-size:11px">' + leaveDayBadge(r._leaveType) + '</span>';
     return '<tr>' +
       '<td>' + esc(r.date) + '</td>' +
       '<td style="font-weight:600">' + esc(r.employee_id) + '</td>' +
@@ -1750,7 +1858,7 @@ function loadAdminAttendance() {
       '<td style="font-weight:600;color:var(--primary)">' + (wh ? wh.text : (r.clock_in ? '<span style="color:#999;font-weight:400">工作中</span>' : '--')) + '</td>' +
       '<td>' + (r.wifi_verified ? '<span class="badge badge-success">是</span>' : '<span class="badge badge-warning">否</span>') + '</td>' +
       '<td style="font-family:monospace;font-size:12px">' + (esc(r.ip_address) || '--') + '</td>' +
-      '<td>' + statusBadge(r.status) + '</td>' +
+      '<td>' + statusCell + '</td>' +
       '</tr>';
   }).join('');
 }
@@ -1767,14 +1875,48 @@ function exportCSV() {
   if (startDate) records = records.filter(function(r) { return r.date >= startDate; });
   if (endDate) records = records.filter(function(r) { return r.date <= endDate; });
   if (empId) records = records.filter(function(r) { return r.employee_id === empId; });
+
+  // v3.6: 合併已核准請假（逐日展開）
+  var leaveDays = getApprovedLeaveDays(empId || null, startDate || null, endDate || null);
+  var leaveMap = {};
+  leaveDays.forEach(function(ld) { leaveMap[ld.employee_id + '|' + ld.date] = ld; });
+  var attKeys = {};
+  records.forEach(function(r) {
+    var key = r.employee_id + '|' + r.date;
+    attKeys[key] = true;
+    if (leaveMap[key]) r._leaveType = leaveMap[key].leave_type;
+  });
+  leaveDays.forEach(function(ld) {
+    var key = ld.employee_id + '|' + ld.date;
+    if (!attKeys[key]) {
+      records.push({
+        date: ld.date, employee_id: ld.employee_id, employee_name: ld.employee_name,
+        department: ld.department, clock_in: null, clock_out: null, status: 'leave',
+        _isLeave: true, _leaveType: ld.leave_type
+      });
+    }
+  });
   records.sort(function(a, b) { return b.date.localeCompare(a.date); });
 
   const headers = ['員工編號', '姓名', '部門', '日期', '上班時間', '下班時間', '工作時數', '工作時數(小時)', '上班IP', '下班IP', 'WiFi驗證', '狀態'];
-  const statusZh = { normal: '正常', present: '正常', late: '遲到', early: '早退', late_early: '遲到+早退', absent: '缺席' };
+  const statusZh = { normal: '正常', present: '正常', late: '遲到', early: '早退', late_early: '遲到+早退', absent: '缺席', leave: '請假' };
   const lines = [headers.join(',')];
   records.forEach(function(r) {
-    const wh = calcWorkHours(r);
-    var row = [r.employee_id, r.employee_name, r.department, r.date, r.clock_in || '', r.clock_out || '', wh ? wh.text : '', wh ? wh.hours.toFixed(2) : '', r.clock_in_ip || r.ip_address || '', r.clock_out_ip || '', r.wifi_verified ? '是' : '否', statusZh[r.status] || r.status];
+    var clockIn, clockOut, whText, whHours, ip1, ip2, wifi, status;
+    if (r._isLeave) {
+      clockIn = '請假(' + leaveTypeText(r._leaveType) + ')';
+      clockOut = ''; whText = ''; whHours = ''; ip1 = ''; ip2 = ''; wifi = '';
+      status = '請假(' + leaveTypeText(r._leaveType) + ')';
+    } else {
+      const wh = calcWorkHours(r);
+      whText = wh ? wh.text : ''; whHours = wh ? wh.hours.toFixed(2) : '';
+      clockIn = r.clock_in || ''; clockOut = r.clock_out || '';
+      ip1 = r.clock_in_ip || r.ip_address || ''; ip2 = r.clock_out_ip || '';
+      wifi = r.wifi_verified ? '是' : '否';
+      status = statusZh[r.status] || r.status;
+      if (r._leaveType) status += ' / 請假(' + leaveTypeText(r._leaveType) + ')';
+    }
+    var row = [r.employee_id, r.employee_name, r.department, r.date, clockIn, clockOut, whText, whHours, ip1, ip2, wifi, status];
     lines.push(row.map(function(v) {
       var s = String(v || '');
       return '"' + s.replace(/"/g, '""') + '"';
@@ -1789,7 +1931,7 @@ function exportCSV() {
   a.download = 'attendance_export_' + dateStr + '.csv';
   a.click();
   URL.revokeObjectURL(url);
-  showToast('CSV已匯出（共 ' + records.length + ' 筆記錄）', 'success');
+  showToast('CSV已匯出（共 ' + records.length + ' 筆記錄，含請假）', 'success');
 }
 
 // ===== WiFi Settings =====
