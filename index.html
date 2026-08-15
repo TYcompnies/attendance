@@ -596,7 +596,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.6.3 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-16)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.7 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-16)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -708,6 +708,8 @@ function loadDB() {
       if (!parsed.employees) parsed.employees = [];
       // v3.5: leave_requests (請假申請)
       if (!parsed.leave_requests) parsed.leave_requests = [];
+      // v3.7: deleted_employees (已刪除員工名單，防止雲端同步復活)
+      if (!parsed.deleted_employees) parsed.deleted_employees = [];
       if (!parsed.nextEmpId) parsed.nextEmpId = parsed.employees.length + 1;
       if (!parsed.nextAttId) parsed.nextAttId = parsed.attendance.length + 1;
       // Migration: add updated_at for cloud sync merge correctness
@@ -727,6 +729,7 @@ function loadDB() {
     }],
     attendance: [],
     leave_requests: [],
+    deleted_employees: [],
     wifiSettings: { allowed_ips: '', wifi_name: 'Office WiFi', enabled: false },
     schedule: { start_time: '09:00', end_time: '18:00', enabled: true },
     nextEmpId: 2, nextAttId: 1
@@ -1639,6 +1642,7 @@ function loadEmployees() {
       '<div class="action-btns">' +
         (e.active ? '<button class="btn btn-outline btn-sm" onclick="confirmToggleEmployee(' + e.id + ', false)">停用</button>' : '<button class="btn btn-outline btn-sm" onclick="confirmToggleEmployee(' + e.id + ', true)">啟用</button>') +
         '<button class="btn btn-outline btn-sm" onclick="openResetPasswordModal(' + e.id + ')">重設密碼</button>' +
+        '<button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger);" onclick="confirmDeleteEmployee(' + e.id + ')">刪除</button>' +
       '</div>' : '--';
     return '<tr>' +
       '<td style="font-weight:600">' + esc(e.employee_id) + '</td>' +
@@ -1670,6 +1674,33 @@ function confirmToggleEmployee(id, activate) {
 function toggleEmployee(id, activate) {
   // Legacy wrapper — now goes through confirm
   confirmToggleEmployee(id, activate);
+}
+
+// v3.7: 刪除員工（連同其所有考勤與請假記錄）
+// 刪除後寫入 deleted_employees 名單（tombstone），雲端同步合併時跳過該員工 → 刪除會同步到所有裝置且不會復活
+function confirmDeleteEmployee(id) {
+  if (!requireAdmin()) return;
+  const emp = db.employees.find(function(e) { return e.id === id; });
+  if (!emp) return;
+  if (emp.employee_id === 'admin') { showToast('系統管理員帳號不可刪除', 'error'); return; }
+  const attCount = db.attendance.filter(function(a) { return a.employee_id === emp.employee_id; }).length;
+  const leaveCount = (db.leave_requests || []).filter(function(l) { return l.employee_id === emp.employee_id; }).length;
+  const msg = '確定要刪除員工「' + emp.name + '（' + emp.employee_id + '）」嗎？\n\n' +
+    '⚠️ 此操作將一併刪除：\n' +
+    '• 考勤記錄 ' + attCount + ' 筆\n' +
+    '• 請假申請 ' + leaveCount + ' 筆\n\n' +
+    '刪除後無法復原，並會同步到所有裝置。\n' +
+    '如只需暫時停用該員工登入，建議改用「停用」。';
+  showConfirm(msg, function() {
+    db.employees = db.employees.filter(function(e) { return e.id !== id; });
+    db.attendance = db.attendance.filter(function(a) { return a.employee_id !== emp.employee_id; });
+    db.leave_requests = (db.leave_requests || []).filter(function(l) { return l.employee_id !== emp.employee_id; });
+    if (!db.deleted_employees) db.deleted_employees = [];
+    db.deleted_employees.push({ employee_id: emp.employee_id, name: emp.name, deleted_at: new Date().toISOString() });
+    saveDB();
+    showToast('員工「' + emp.name + '」已刪除', 'success');
+    refreshAllViews();
+  }, '🗑️');
 }
 
 function showAddEmployeeModal() {
@@ -2234,11 +2265,29 @@ async function doConnect(code) {
 
 function mergeDB(cloudDb) {
   if (!cloudDb) return;
+  // v3.7: 已刪除員工名單（tombstone）聯集合併 — 任一裝置刪除的員工，所有裝置都不讓他復活
+  if (!db.deleted_employees) db.deleted_employees = [];
+  const delMap = {};
+  db.deleted_employees.forEach(function(d) { if (d && d.employee_id) delMap[d.employee_id] = d; });
+  (cloudDb.deleted_employees || []).forEach(function(cd) {
+    if (!cd || !cd.employee_id) return;
+    const ld = delMap[cd.employee_id];
+    if (!ld) { delMap[cd.employee_id] = cd; return; }
+    if (cd.deleted_at && (!ld.deleted_at || cd.deleted_at > ld.deleted_at)) delMap[cd.employee_id] = cd;
+  });
+  db.deleted_employees = Object.values(delMap);
+  const isDeleted = function(empId) { return !!delMap[empId]; };
+
   // 員工：以 employee_id（業務鍵）合併，避免兩台裝置各自新增員工拿到相同數字id而互相覆蓋
   const empMap = {};
-  (db.employees || []).forEach(function(e) { if (e && e.employee_id) empMap[e.employee_id] = e; });
+  (db.employees || []).forEach(function(e) {
+    if (!e || !e.employee_id) return;
+    if (isDeleted(e.employee_id)) return; // v3.7: 其他裝置已刪除的員工，本機殘留也一併清除
+    empMap[e.employee_id] = e;
+  });
   (cloudDb.employees || []).forEach(function(ce) {
     if (!ce || !ce.employee_id) return;
+    if (isDeleted(ce.employee_id)) return; // v3.7: 已刪除的員工不從雲端復活
     const le = empMap[ce.employee_id];
     if (!le) { empMap[ce.employee_id] = ce; return; }
     if (ce.updated_at && (!le.updated_at || ce.updated_at > le.updated_at)) {
@@ -2254,9 +2303,14 @@ function mergeDB(cloudDb) {
   // 考勤：以 employee_id + date 為業務鍵合併；
   // 若本機只有上班、雲端只有下班（或相反）→ 欄位級合併成完整一筆，避免重複與缺漏
   const attMap = {};
-  (db.attendance || []).forEach(function(a) { if (a && a.employee_id && a.date) attMap[a.employee_id + '|' + a.date] = a; });
+  (db.attendance || []).forEach(function(a) {
+    if (!a || !a.employee_id || !a.date) return;
+    if (isDeleted(a.employee_id)) return; // v3.7: 已刪除員工的本機殘留考勤也清除
+    attMap[a.employee_id + '|' + a.date] = a;
+  });
   (cloudDb.attendance || []).forEach(function(ca) {
     if (!ca || !ca.employee_id || !ca.date) return;
+    if (isDeleted(ca.employee_id)) return; // v3.7: 已刪除員工的考勤不從雲端復活
     const k = ca.employee_id + '|' + ca.date;
     const la = attMap[k];
     if (!la) { attMap[k] = ca; return; }
@@ -2277,9 +2331,14 @@ function mergeDB(cloudDb) {
   // 請假：以唯一 id 為業務鍵（id = L + 時間戳 + 隨機數，全域唯一），updated_at 新者優先
   // 讓多裝置各自申請、以及管理員在不同裝置審批時，都能正確合併（以最新變更為準）
   const leaveMap = {};
-  (db.leave_requests || []).forEach(function(l) { if (l && l.id) leaveMap[l.id] = l; });
+  (db.leave_requests || []).forEach(function(l) {
+    if (!l || !l.id) return;
+    if (l.employee_id && isDeleted(l.employee_id)) return; // v3.7: 已刪除員工的本機殘留假單也清除
+    leaveMap[l.id] = l;
+  });
   (cloudDb.leave_requests || []).forEach(function(cl) {
     if (!cl || !cl.id) return;
+    if (cl.employee_id && isDeleted(cl.employee_id)) return; // v3.7: 已刪除員工的假單不從雲端復活
     const ll = leaveMap[cl.id];
     if (!ll) { leaveMap[cl.id] = cl; return; }
     if (cl.updated_at && (!ll.updated_at || cl.updated_at > ll.updated_at)) {
