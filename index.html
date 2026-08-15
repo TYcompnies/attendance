@@ -1858,7 +1858,14 @@ async function pushToCloud(silent, noBadge, skipPull) {
     if (e.name === 'AbortError') {
       msg = '連線逾時（45秒），網路可能不穩定';
     } else if (errStatus === 404) {
-      msg = '同步檔案不存在，請重新建立同步';
+      msg = '同步檔案不存在（可能已刪除），正在自動尋找正確的同步碼...';
+      // v3.3：同步碼已失效（檔案被刪除），清除並自動重新尋找
+      clearAllSyncState();
+      setSyncKey('');
+      saveLocalOnly();
+      updateSyncBadge('error');
+      if (getGitHubToken()) setTimeout(function() { autoFindSyncCode(true); }, 1500);
+      return;
     } else if (errStatus === 401 || errStatus === 403) {
       msg = 'GitHub 認證失敗（' + errStatus + '），請聯繫管理員';
     } else if (errStatus === 0 || !errStatus) {
@@ -1944,7 +1951,14 @@ async function pullFromCloud(silent) {
     if (e.name === 'AbortError') {
       msg = '連線逾時（45秒），網路可能不穩定';
     } else if (errStatus === 404) {
-      msg = '同步碼不存在或已失效';
+      msg = '同步碼不存在或已失效，正在自動尋找正確的同步碼...';
+      // v3.3：同步碼已失效（檔案被刪除），清除並自動重新尋找
+      clearAllSyncState();
+      setSyncKey('');
+      saveLocalOnly();
+      updateSyncBadge('error');
+      if (getGitHubToken()) setTimeout(function() { autoFindSyncCode(true); }, 1500);
+      return;
     } else if (errStatus === 0 || !errStatus) {
       msg = '網路連線失敗（' + (e.message || 'TypeError') + '）';
     } else if (errStatus >= 500) {
