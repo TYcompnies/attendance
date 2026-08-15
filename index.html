@@ -455,6 +455,7 @@
           <div class="action-btns" style="gap:12px;margin-top:12px;">
             <button class="btn btn-outline btn-sm" onclick="manualSync()" style="flex:1;">🔄 立即同步</button>
             <button class="btn btn-outline btn-sm" onclick="testCloudConnection()" style="flex:1;">🧪 測試連線</button>
+            <button class="btn btn-outline btn-sm" onclick="resetSyncState()" style="flex:1;color:var(--warning);border:1.5px solid var(--warning);">🔧 重置狀態</button>
             <button class="btn btn-outline btn-sm" onclick="disconnectSync()" style="flex:1;color:var(--danger);border:1.5px solid var(--danger);">斷開同步</button>
           </div>
         </div>
@@ -477,7 +478,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.10 專業版</td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.11 專業版</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -1558,14 +1559,14 @@ async function createCloudSync() {
   try {
     showToast('正在建立雲端空間...', 'info');
     const ctrl = new AbortController();
-    const t = setTimeout(function() { ctrl.abort(); }, 30000);
+    const t = setTimeout(function() { ctrl.abort(); }, 45000); // v2.11：45s 超時
     const res = await fetch(JSONSTORAGE_API, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
+      headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-cache, no-store', 'Pragma': 'no-cache' },
       body: JSON.stringify(db),
       signal: ctrl.signal,
       mode: 'cors',
-      cache: 'no-cache',
+      cache: 'no-store',
       redirect: 'follow'
     });
     clearTimeout(t);
@@ -1600,12 +1601,13 @@ async function doConnect(code) {
   try {
     showToast('正在連接雲端並下載資料...', 'info');
     const ctrl = new AbortController();
-    const t = setTimeout(function() { ctrl.abort(); }, 30000);
+    const t = setTimeout(function() { ctrl.abort(); }, 45000); // v2.11：45s 超時
     const res = await fetch(JSONSTORAGE_API + '/' + code + '?t=' + Date.now(), {
       signal: ctrl.signal,
       mode: 'cors',
-      cache: 'no-cache',
-      redirect: 'follow'
+      cache: 'no-store',
+      redirect: 'follow',
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
     });
     clearTimeout(t);
     if (res.status === 404) throw new Error('同步碼不存在或已失效');
@@ -1688,13 +1690,13 @@ function mergeDB(cloudDb) {
   if (!db.schedule) db.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
 }
 
-async function pushToCloud(silent, noBadge) {
+async function pushToCloud(silent, noBadge, skipPull) {
   const key = getSyncKey();
   if (!key) return;
   if (syncInProgress) { syncPending = true; return; }
   syncInProgress = true;
   let ok = false;
-  let errStatus = 0;  // v2.10：必須在 try 外面宣告，否則 catch 裡存不到（let 是區塊作用域）
+  let errStatus = 0;
   try {
     syncPending = false;
     const sizeKB = JSON.stringify(db).length / 1024;
@@ -1703,14 +1705,14 @@ async function pushToCloud(silent, noBadge) {
     }
     db._last_sync = new Date().toISOString();
     const ctrl = new AbortController();
-    const t = setTimeout(function() { ctrl.abort(); }, 30000);
+    const t = setTimeout(function() { ctrl.abort(); }, 45000); // v2.11：45s 超時（手機慢網路）
     const res = await fetch(JSONSTORAGE_API + '/' + key, {
       method: 'PUT',
-      headers: { 'Content-Type': 'text/plain' },
+      headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-cache, no-store', 'Pragma': 'no-cache' },
       body: JSON.stringify(db),
       signal: ctrl.signal,
       mode: 'cors',
-      cache: 'no-cache',
+      cache: 'no-store',
       redirect: 'follow'
     });
     clearTimeout(t);
@@ -1727,7 +1729,7 @@ async function pushToCloud(silent, noBadge) {
     syncPending = true;
     let msg = '';
     if (e.name === 'AbortError') {
-      msg = '連線逾時（30秒），網路可能不穩定';
+      msg = '連線逾時（45秒），網路可能不穩定或被阻擋';
     } else if (errStatus === 404) {
       msg = '同步碼不存在或已失效，請重新連接';
     } else if (errStatus === 429) {
@@ -1757,7 +1759,7 @@ async function pushToCloud(silent, noBadge) {
     }
     if (ok) {
       if (!noBadge) updateSyncBadge('synced');
-      if (!pushFromPull) setTimeout(function() { pullFromCloud(true); }, 500);
+      if (!pushFromPull && !skipPull) setTimeout(function() { pullFromCloud(true); }, 500);
     } else {
       // v2.10：push-back（noBadge=true）失敗不覆蓋徽章，避免 pull 成功但徽章顯示 error
       if (!noBadge) updateSyncBadge('error');
@@ -1777,12 +1779,13 @@ async function pullFromCloud(silent) {
     const snap = function() { return JSON.stringify({ emp: db.employees, att: db.attendance, wifi: db.wifiSettings, sched: db.schedule }); };
     const beforeSnap = snap();
     const ctrl = new AbortController();
-    const t = setTimeout(function() { ctrl.abort(); }, 30000);
+    const t = setTimeout(function() { ctrl.abort(); }, 45000); // v2.11：45s 超時
     const res = await fetch(JSONSTORAGE_API + '/' + key + '?t=' + Date.now(), {
       signal: ctrl.signal,
       mode: 'cors',
-      cache: 'no-cache',
-      redirect: 'follow'
+      cache: 'no-store',
+      redirect: 'follow',
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
     });
     clearTimeout(t);
     errStatus = res.status;  // v2.10：移除 let，用外面宣告的
@@ -1823,7 +1826,8 @@ async function pullFromCloud(silent) {
     updateSyncBadge('synced');
     lastSyncError = '';
   }
-  if (success && getSyncKey()) {
+  // v2.11：只在「資料有變化」或「本機有未推變更」時才 push-back，避免無謂的 PUT 觸發 502
+  if (success && (changed || syncPending) && getSyncKey()) {
     pushFromPull = true;
     try { await pushToCloud(true, true); } finally { pushFromPull = false; }  // noBadge=true
   }
@@ -1857,39 +1861,42 @@ function refreshAllViews() {
 async function manualSync() {
   if (!requireAdmin()) return;
   if (!getSyncKey()) { showToast('尚未啟用雲端同步', 'warning'); return; }
+  // v2.11：等待進行中的同步完成，不強制覆蓋 syncInProgress（避免 race condition）
+  if (syncInProgress) {
+    showToast('同步進行中，請稍候...', 'info');
+    return;
+  }
   showToast('正在同步...', 'info');
-  // v2.10：手動同步時重置所有錯誤狀態，避免卡在 error 不恢復
   lastSyncError = '';
   syncRetryDelay = 10000;
   if (syncRetryTimer) { clearTimeout(syncRetryTimer); syncRetryTimer = null; }
-  syncInProgress = false;
   addSyncLog('MANUAL', 'ok', '開始手動同步', 0);
-  await pushToCloud(true);    // 1. 先上傳本機變更
-  await pullFromCloud(true);  // 2. 再下載雲端資料並合併（成功時自動回推 + 全畫面刷新）
-  refreshAllViews();          // 3. 確保系統裡所有項目都顯示最新資料
+  // v2.11：先 pull（GET → merge → push-back 如有變化），再確保刷新
+  // 不再先 push 再 pull — 一次 pull 已包含 merge + push-back，減少 API 呼叫避免 502
+  await pullFromCloud(true);
+  refreshAllViews();
   showToast('同步完成：' + new Date().toLocaleTimeString('zh-TW'), 'success');
 }
 
 // ===== 自動同步引擎 =====
-// v2.9：間隔從 10s 延長到 30s，避免觸發 extendsclass.com rate limit（429）導致連續失敗；
-//       新增 autoSyncLock 互斥鎖，避免 setInterval 觸發並行同步導致 race condition；
-//       手機從背景切回畫面時仍會立即同步（全程靜默，不彈錯誤干擾）。
-// 重要：不論開啟時是否已有同步碼，都先掛上定時器與監聽器；autoSyncOnce 內部才檢查同步碼。
-// 如此一來「之後才建立/連接同步碼」的裝置也能立刻享有自動同步（否則引擎永遠不會啟動）。
+// v2.11：簡化同步流程 — 不再先 push 再 pull，改為單一 pullFromCloud（GET → merge → push-back 如有變化）
+//        一次同步最多 2 次 API 呼叫（GET + 有變化時 PUT），大幅降低 502 錯誤
+// v2.9：間隔 30 秒避免 rate limit；autoSyncLock 互斥鎖避免並行；手機切回畫面立即同步
 let autoSyncStarted = false;
 const AUTOSYNC_INTERVAL = 30000; // 30 秒自動同步一次（避免 rate limit）
 function startAutoSync() {
   if (autoSyncStarted) return;
   autoSyncStarted = true;
   async function autoSyncOnce() {
-    if (autoSyncLock) return; // 互斥鎖：前一次同步還沒完成，跳過這次
+    if (autoSyncLock) return;
     autoSyncLock = true;
     try {
       if (typeof navigator !== 'undefined' && !navigator.onLine) { updateSyncBadge('offline'); return; }
       if (!getSyncKey()) { updateSyncBadge('offline'); return; }
       updateSyncBadge('syncing');
-      if (syncPending) await pushToCloud(true);  // 有本機變更先上傳
-      await pullFromCloud(true);                  // 再拉取雲端新資料並合併
+      // v2.11：只調 pullFromCloud — 內部會 merge 並在「有變化或有未推本機變更」時自動 push-back
+      // 不再先 pushToCloud — 那會多一次 PUT，容易觸發 extendsclass.com 502
+      await pullFromCloud(true);
     } finally {
       autoSyncLock = false;
     }
@@ -1912,6 +1919,26 @@ function disconnectSync() {
     checkSyncWarning();
     showToast('已斷開雲端同步', 'success');
   }, '⚠️');
+}
+
+// v2.11：重置同步狀態 — 當同步卡在 error 不恢復時使用
+// 清除所有同步鎖、錯誤狀態、重試計時器，讓同步引擎從乾淨狀態重新開始
+function resetSyncState() {
+  if (!requireAdmin()) return;
+  syncInProgress = false;
+  syncPending = false;
+  autoSyncLock = false;
+  pushFromPull = false;
+  lastSyncError = '';
+  syncRetryDelay = 10000;
+  if (syncRetryTimer) { clearTimeout(syncRetryTimer); syncRetryTimer = null; }
+  if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
+  addSyncLog('RESET', 'ok', '同步狀態已重置', 0);
+  updateSyncBadge(getSyncKey() ? 'synced' : 'offline');
+  loadSyncSettings();
+  showToast('同步狀態已重置！正在重新同步...', 'success');
+  // 重置後立即觸發一次同步
+  if (getSyncKey()) setTimeout(function() { pullFromCloud(true); }, 500);
 }
 
 function copySyncCode() {
@@ -1951,12 +1978,13 @@ async function testCloudConnection() {
   const key = getSyncKey();
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(function() { ctrl.abort(); }, 30000);
+    const t = setTimeout(function() { ctrl.abort(); }, 45000); // v2.11：45s 超時
     const res = await fetch(JSONSTORAGE_API + '/' + key + '?t=' + Date.now(), {
       signal: ctrl.signal,
       mode: 'cors',
-      cache: 'no-cache',
-      redirect: 'follow'
+      cache: 'no-store',
+      redirect: 'follow',
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
     });
     clearTimeout(t);
     if (res.ok) {
@@ -1990,9 +2018,18 @@ function loadSyncSettings() {
   const connectSection = document.getElementById('syncConnectSection');
   if (key) {
     let diag = '';
+    // v2.11：詳細同步狀態診斷
+    var syncState = [];
+    syncState.push('同步碼: ' + key);
+    syncState.push('進行中: ' + (syncInProgress ? '是' : '否'));
+    syncState.push('待推送: ' + (syncPending ? '是' : '否'));
+    syncState.push('互斥鎖: ' + (autoSyncLock ? '是' : '否'));
+    syncState.push('重試延遲: ' + (syncRetryDelay / 1000) + 's');
+    if (typeof navigator !== 'undefined') syncState.push('網路: ' + (navigator.onLine ? '線上' : '離線'));
     if (typeof navigator !== 'undefined' && !navigator.onLine) diag += '<br><span style="color:var(--danger);">⚠️ 裝置目前離線（無網路連線），同步已暫停。</span>';
     else if (lastSyncError) diag += '<br><span style="color:var(--danger);">⚠️ 最後錯誤：' + esc(lastSyncError) + '</span>';
     else diag += '<br><span style="color:var(--success);">✅ 網路正常，自動同步運作中</span>';
+    diag += '<br><span style="color:var(--text-secondary);font-size:11px;font-family:monospace;">[' + syncState.join(' | ') + ']</span>';
     statusEl.innerHTML = '<strong style="color:var(--success)">✅ 雲端同步已啟用（自動同步中）</strong>' +
       '<br><span style="color:var(--text-secondary);font-size:12px;">每 30 秒自動同步一次；切回此頁面時也會立即同步。' +
       '<br>最後同步：' + esc(db._last_sync || '尚未同步') + ' · 資料大小：' + getDbSizeKB() + ' KB' + diag + '</span>';
