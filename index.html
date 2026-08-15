@@ -467,10 +467,12 @@
         <div id="syncConnectSection">
           <!-- v3.0: GitHub Token 設定 — 用於雲端同步推播 -->
           <div class="form-group" id="tokenSection" style="background:#fef3c7;padding:12px;border-radius:8px;margin-bottom:12px;">
-            <label style="font-size:13px;color:#92400e;">🔑 GitHub Token（雲端同步所需，設定一次即可）</label>
+            <label style="font-size:13px;color:#92400e;">🔑 GitHub Token（雲端同步所需，<strong>設定一次即永久記住</strong>，換裝置/瀏覽器才需重新輸入）</label>
             <div style="display:flex;gap:8px;margin-top:6px;">
               <input type="password" id="githubTokenInput" placeholder="ghp_... 或 gho_..." style="flex:1;font-family:monospace;font-size:13px;">
+              <button class="btn btn-outline btn-sm" id="tokenToggleBtn" onclick="toggleTokenVisibility()" title="顯示/隱藏 Token">👁</button>
               <button class="btn btn-primary btn-sm" onclick="saveGitHubTokenUI()">儲存</button>
+              <button class="btn btn-outline btn-sm" onclick="clearGitHubTokenUI()" title="清除已儲存的 Token">🗑</button>
             </div>
             <div style="font-size:11px;color:#92400e;margin-top:4px;">
               <span id="tokenStatus">尚未設定</span> ·
@@ -479,10 +481,13 @@
             </div>
           </div>
           <div class="form-group">
-            <label>在另一台裝置使用此系統？輸入同步碼連接</label>
+            <label>在另一台裝置使用此系統？輸入同步碼連接，或按「自動尋找」</label>
             <div style="display:flex;gap:8px;">
               <input type="text" id="syncCodeInput" placeholder="貼上同步碼" style="flex:1;font-family:monospace;" maxlength="64">
               <button class="btn btn-primary" onclick="connectCloudSync()">連接</button>
+            </div>
+            <div style="margin-top:8px;">
+              <button class="btn btn-outline btn-sm" onclick="autoFindSyncCode(false)" id="autoFindBtn" style="width:100%;">🔗 自動尋找雲端同步碼並連接（免輸入）</button>
             </div>
           </div>
           <button class="btn btn-outline btn-sm" onclick="createCloudSync()" style="margin-top:12px;">✨ 建立雲端同步（取得同步碼）</button>
@@ -496,7 +501,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.1 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -2154,23 +2159,79 @@ async function testCloudConnection() {
   loadSyncSettings();
 }
 
+// v3.1：Token 遮罩顯示（避免每次登入都要輸入，同時不讓旁人看到完整 Token）
+function maskToken(t) {
+  if (!t) return '';
+  if (t.length <= 10) return t.substring(0, 4) + '••••';
+  return t.substring(0, 4) + '••••••••' + t.substring(t.length - 4);
+}
+function tokenInputFilled() {
+  var input = document.getElementById('githubTokenInput');
+  if (!input) return false;
+  return !!(input.value && input.value.trim());
+}
+function fillTokenInput() {
+  var input = document.getElementById('githubTokenInput');
+  if (!input) return;
+  var t = getGitHubToken();
+  if (t) {
+    input.value = maskToken(t);
+    input.setAttribute('data-masked', '1');
+  } else {
+    input.value = '';
+    input.removeAttribute('data-masked');
+  }
+}
+// v3.1：顯示/隱藏 Token（切換遮罩與完整顯示）
+function toggleTokenVisibility() {
+  var input = document.getElementById('githubTokenInput');
+  var btn = document.getElementById('tokenToggleBtn');
+  if (!input) return;
+  if (input.getAttribute('data-masked') === '1') {
+    input.value = getGitHubToken();
+    input.removeAttribute('data-masked');
+    input.type = 'text';
+    if (btn) btn.textContent = '🙈';
+  } else {
+    fillTokenInput();
+    input.type = 'password';
+    if (btn) btn.textContent = '👁';
+  }
+}
+// v3.1：清除已儲存的 Token
+function clearGitHubTokenUI() {
+  showConfirm('確定要清除已儲存的 GitHub Token 嗎？清除後需要重新輸入才能同步。', function() {
+    setGitHubToken('');
+    fillTokenInput();
+    updateTokenStatus();
+    showToast('Token 已清除', 'info');
+  }, '🗑');
+}
+
 // v3.0：儲存 GitHub Token
 function saveGitHubTokenUI() {
   var input = document.getElementById('githubTokenInput');
-  var token = (input.value || '').trim();
-  if (!token) { showToast('請輸入 Token', 'error'); return; }
-  if (!token.match(/^gh[pousr]_/)) { showToast('Token 格式不正確（應以 ghp_ 或 gho_ 開頭）', 'error'); return; }
-  setGitHubToken(token);
-  input.value = '';
+  var raw = (input.value || '').trim();
+  // 若欄位目前是遮罩狀態且未修改 → 沿用已儲存的 token
+  if (input.getAttribute('data-masked') === '1' && raw === maskToken(getGitHubToken())) {
+    showToast('Token 已設定（未變更）', 'success');
+    loadSyncSettings();
+    return;
+  }
+  if (!raw) { showToast('請輸入 Token', 'error'); return; }
+  if (!raw.match(/^gh[pousr]_/)) { showToast('Token 格式不正確（應以 ghp_ 或 gho_ 開頭）', 'error'); return; }
+  setGitHubToken(raw);
+  fillTokenInput(); // v3.1：儲存後以遮罩顯示，不再清空 → 之後登入不需重新輸入
   updateTokenStatus();
-  showToast('Token 已儲存！現在可以建立或連接雲端同步', 'success');
-  loadSyncSettings();
+  showToast('Token 已儲存並記住！現在可以建立或自動連接雲端同步', 'success');
+  // v3.1：儲存後若尚未連接，自動尋找雲端同步碼
+  if (!getSyncKey()) setTimeout(function() { autoFindSyncCode(true); }, 800);
 }
 function updateTokenStatus() {
   var el = document.getElementById('tokenStatus');
   if (!el) return;
   if (getGitHubToken()) {
-    el.textContent = '✅ 已設定';
+    el.textContent = '✅ 已設定 ' + maskToken(getGitHubToken());
     el.style.color = '#059669';
   } else {
     el.textContent = '❌ 尚未設定';
@@ -2181,6 +2242,7 @@ function updateTokenStatus() {
 function loadSyncSettings() {
   if (!requireAdmin()) return;
   updateTokenStatus();
+  fillTokenInput(); // v3.1：已有 Token 時自動帶入欄位（遮罩顯示），不需每次輸入
   const key = getSyncKey();
   const statusEl = document.getElementById('syncStatusText');
   const codeSection = document.getElementById('syncCodeSection');
@@ -2225,6 +2287,85 @@ function loadSyncSettings() {
     } else {
       logSection.style.display = 'none';
     }
+  }
+  // v3.1：未連接同步但有 Token 時，自動靜默搜尋雲端同步碼並連接（免手動輸入）
+  if (!key && getGitHubToken()) autoFindSyncCode(true);
+}
+
+// v3.1：自動尋找雲端同步碼並連接（透過 GitHub API 列出 sync/ 目錄）
+var _autoFindInProgress = false;
+var _lastAutoFindAt = 0;
+async function autoFindSyncCode(silent) {
+  if (!requireAdmin()) return;
+  if (_autoFindInProgress) return;
+  if (!getGitHubToken()) {
+    if (!silent) { showToast('請先設定 GitHub Token', 'warning'); document.getElementById('githubTokenInput').focus(); }
+    return;
+  }
+  // 靜默模式 30 秒內不重複嘗試（避免每次進設定頁都打 API）
+  var now = Date.now();
+  if (silent && _lastAutoFindAt && (now - _lastAutoFindAt) < 30000) return;
+  _lastAutoFindAt = now;
+  _autoFindInProgress = true;
+  var btn = document.getElementById('autoFindBtn');
+  if (btn && !silent) btn.disabled = true;
+  if (!silent) showToast('正在搜尋雲端同步碼...', 'info');
+  try {
+    var ctrl = new AbortController();
+    var t = setTimeout(function() { ctrl.abort(); }, 20000);
+    var res = await fetch(GITHUB_API_BASE, {
+      signal: ctrl.signal,
+      mode: 'cors',
+      headers: {
+        'Authorization': 'token ' + getGitHubToken(),
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    clearTimeout(t);
+    if (res.status === 404) {
+      if (!silent) showToast('雲端還沒有任何同步碼，請先按「建立雲端同步」', 'warning');
+      return;
+    }
+    if (!res.ok) {
+      if (!silent) showToast('搜尋失敗（' + res.status + '），請檢查 Token 是否有效', 'error');
+      return;
+    }
+    var files = await res.json();
+    if (!Array.isArray(files)) {
+      if (!silent) showToast('雲端回應格式異常', 'error');
+      return;
+    }
+    var jsonFiles = files.filter(function(f) { return f.name && /\.json$/.test(f.name); });
+    if (!jsonFiles.length) {
+      if (!silent) showToast('雲端還沒有同步資料，請先按「建立雲端同步」', 'warning');
+      return;
+    }
+    // 依最後更新時間排序，取最新的同步碼
+    jsonFiles.sort(function(a, b) { return new Date(b.updated_at || 0) - new Date(a.updated_at || 0); });
+    var code = jsonFiles[0].name.replace(/\.json$/, '');
+    if (!/^[A-Za-z0-9_-]{4,64}$/.test(code)) {
+      if (!silent) showToast('偵測到的同步碼格式異常', 'error');
+      return;
+    }
+    addSyncLog('AUTOFIND', 'ok', '找到同步碼 ' + code, 0);
+    if (getSyncKey()) {
+      if (!silent) showToast('已連接同步碼：' + code, 'success');
+      loadSyncSettings();
+      return;
+    }
+    // 自動填入並連接
+    document.getElementById('syncCodeInput').value = code;
+    if (!silent) showToast('🔗 找到同步碼 ' + code + '，正在自動連接...', 'success');
+    connectCloudSync();
+  } catch(e) {
+    if (e.name === 'AbortError') {
+      if (!silent) showToast('搜尋逾時，請檢查網路', 'error');
+    } else if (!silent) {
+      showToast('搜尋失敗：' + (e.message || '網路錯誤'), 'error');
+    }
+  } finally {
+    _autoFindInProgress = false;
+    if (btn) btn.disabled = false;
   }
 }
 
