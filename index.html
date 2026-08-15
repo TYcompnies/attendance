@@ -1552,8 +1552,7 @@ function getGitHubToken() { return localStorage.getItem('attendance_github_token
 function setGitHubToken(t) { if (t) localStorage.setItem('attendance_github_token', t); else localStorage.removeItem('attendance_github_token'); }
 const GITHUB_API_BASE = 'https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/sync/';
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/sync/';
-// 舊版 extendsclass API 保留為 fallback（唯讀）
-const JSONSTORAGE_API = 'https://extendsclass.com/api/json-storage/bin';
+// v3.0：舊版 extendsclass.com API 已完全移除（OPTIONS preflight 回應 500，瀏覽器無法使用）
 let syncInProgress = false;
 let pushFromPull = false;  // v2.7：標記「這次 push 是 pullFromCloud 觸發的」，避免 push→pull→push 無限循環
 let lastSyncError = '';    // v2.8：記錄最後一次同步錯誤訊息，顯示在徽章 title 中
