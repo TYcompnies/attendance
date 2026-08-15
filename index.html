@@ -501,7 +501,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.2 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.3 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -1604,6 +1604,43 @@ async function createCloudSync() {
   if (!requireAdmin()) return;
   if (!getGitHubToken()) { showToast('請先在下方設定 GitHub Token', 'warning'); document.getElementById('githubTokenInput').focus(); return; }
   if (getSyncKey()) { showToast('已啟用雲端同步，無需重複建立', 'warning'); loadSyncSettings(); return; }
+  // v3.3：建立前先檢查 GitHub 上是否已有同步檔案
+  // 防止手機等新設備誤建新同步碼（只有預設 admin），導致同步混亂
+  try {
+    var checkCtrl = new AbortController();
+    var checkT = setTimeout(function() { checkCtrl.abort(); }, 15000);
+    var checkRes = await fetch(GITHUB_API_BASE, {
+      signal: checkCtrl.signal,
+      mode: 'cors',
+      headers: { 'Authorization': 'token ' + getGitHubToken(), 'Accept': 'application/vnd.github.v3+json' }
+    });
+    clearTimeout(checkT);
+    if (checkRes.ok) {
+      var existingFiles = await checkRes.json();
+      if (Array.isArray(existingFiles)) {
+        var existingJson = existingFiles.filter(function(f) { return f.name && /\.json$/.test(f.name); });
+        if (existingJson.length > 0) {
+          // 雲端已有同步檔案 → 提示用戶連接現有的，而非建立新的
+          var existingCode = existingJson[0].name.replace(/\.json$/, '');
+          showConfirm(
+            '雲端已有同步碼 ' + existingCode + '（共 ' + existingJson.length + ' 個同步檔案）。\n\n' +
+            '建議「連接」現有同步碼而非建立新的，避免同步資料分裂。\n\n' +
+            '點擊確認 → 自動連接同步碼 ' + existingCode + '\n' +
+            '點擊取消 → 仍要建立新的同步碼',
+            function() {
+              document.getElementById('syncCodeInput').value = existingCode;
+              doConnect(existingCode);
+            },
+            '⚠️'
+          );
+          return;
+        }
+      }
+    }
+  } catch(e) {
+    // 檢查失敗不阻塞建立流程
+    console.log('Pre-create check failed:', e.message);
+  }
   clearAllSyncState();
   try {
     showToast('正在建立雲端空間...', 'info');
@@ -2364,16 +2401,31 @@ async function autoFindSyncCode(silent) {
         return { name: f.name, lastSync: '', empCount: 0 };
       }
     }));
-    // 依 _last_sync 降序排列（最新的在最前面）
+    // v3.3：先依 _last_sync 降序排列
     fileInfos.sort(function(a, b) {
       return (b.lastSync || '').localeCompare(a.lastSync || '');
     });
-    var code = fileInfos[0].name.replace(/\.json$/, '');
+    // v3.3：員工數量保護 — 如果時間戳最新的檔案員工數遠少於其他檔案，
+    // 可能是手機等新設備誤建的空同步檔案，應優先選員工數最多的
+    // 規則：如果最新檔案的員工數 < 其他檔案的最大員工數的一半，改選員工數最多的
+    var maxEmpCount = 0;
+    for (var i = 0; i < fileInfos.length; i++) {
+      if (fileInfos[i].empCount > maxEmpCount) maxEmpCount = fileInfos[i].empCount;
+    }
+    var pickedIndex = 0;
+    if (fileInfos.length > 1 && fileInfos[0].empCount < maxEmpCount / 2 && maxEmpCount >= 2) {
+      // 最新檔案員工數太少，找員工數最多的
+      for (var j = 0; j < fileInfos.length; j++) {
+        if (fileInfos[j].empCount === maxEmpCount) { pickedIndex = j; break; }
+      }
+      addSyncLog('AUTOFIND', 'warn', '時間戳最新的 ' + fileInfos[0].name + ' 只有 ' + fileInfos[0].empCount + ' 名員工，改選 ' + fileInfos[pickedIndex].name + '（' + maxEmpCount + ' 名員工）', 0);
+    }
+    var code = fileInfos[pickedIndex].name.replace(/\.json$/, '');
     if (!/^[A-Za-z0-9_-]{4,64}$/.test(code)) {
       if (!silent) showToast('偵測到的同步碼格式異常', 'error');
       return;
     }
-    addSyncLog('AUTOFIND', 'ok', '找到同步碼 ' + code + '（員工 ' + (fileInfos[0].empCount || 0) + ' 人，同步 ' + (fileInfos[0].lastSync || '未知') + '）', 0);
+    addSyncLog('AUTOFIND', 'ok', '找到同步碼 ' + code + '（員工 ' + (fileInfos[pickedIndex].empCount || 0) + ' 人，同步 ' + (fileInfos[pickedIndex].lastSync || '未知') + '）', 0);
     // v3.2：若目前同步碼與找到的相同 → 已連接，不需重複
     if (getSyncKey() === code) {
       if (!silent) showToast('已連接同步碼：' + code, 'success');
@@ -2382,7 +2434,7 @@ async function autoFindSyncCode(silent) {
     }
     // v3.2：自動填入並連接（包含從舊/已刪除同步碼切換到新同步碼的情況）
     document.getElementById('syncCodeInput').value = code;
-    if (!silent) showToast('🔗 找到同步碼 ' + code + '（' + (fileInfos[0].empCount || 0) + ' 名員工），正在自動連接...', 'success');
+    if (!silent) showToast('🔗 找到同步碼 ' + code + '（' + (fileInfos[pickedIndex].empCount || 0) + ' 名員工），正在自動連接...', 'success');
     // 若已有不同的同步碼：靜默模式直接切換，非靜默模式走 connectCloudSync（有確認對話框）
     if (getSyncKey() && getSyncKey() !== code && silent) {
       doConnect(code);
