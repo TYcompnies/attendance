@@ -188,6 +188,16 @@
     .schedule-row .form-group { flex: 1; margin-bottom: 0; }
     .hint-text { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
     .action-btns { display: flex; gap: 6px; }
+    .leave-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .leave-days-preview { padding: 10px 12px; background: var(--bg); border-radius: 8px; font-weight: 700; color: var(--primary); font-size: 16px; }
+    .leave-days-preview.invalid { color: var(--danger); }
+    .btn-approve { background: var(--success); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .btn-approve:hover { opacity: 0.85; }
+    .btn-reject { background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .btn-reject:hover { opacity: 0.85; }
+    .btn-cancel-leave { background: #e5e7eb; color: #374151; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .btn-cancel-leave:hover { background: #d1d5db; }
+    .review-note-cell { max-width: 160px; color: var(--text-secondary); font-size: 12px; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -228,9 +238,11 @@
       <div class="nav-tabs" id="navTabs">
         <button class="nav-tab active" data-page="clock">打卡</button>
         <button class="nav-tab" data-page="history">我的記錄</button>
+        <button class="nav-tab" data-page="leave">請假</button>
         <button class="nav-tab admin-only" data-page="admin-stats" style="display:none">統計概覽</button>
         <button class="nav-tab admin-only" data-page="admin-employees" style="display:none">員工管理</button>
         <button class="nav-tab admin-only" data-page="admin-attendance" style="display:none">考勤記錄</button>
+        <button class="nav-tab admin-only" data-page="admin-leave" style="display:none">請假審批</button>
         <button class="nav-tab admin-only" data-page="admin-wifi" style="display:none">WiFi設定</button>
         <button class="nav-tab admin-only" data-page="admin-settings" style="display:none">系統設定</button>
       </div>
@@ -317,6 +329,59 @@
       </div>
     </div>
 
+    <!-- Leave Page (Employee) -->
+    <div id="page-leave" class="page">
+      <div class="section-title">請假申請</div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📝 提出請假申請</div></div>
+        <div class="info-banner blue" style="margin-bottom: 20px;">
+          <span>ℹ️</span>
+          <span>請選擇假別、填寫起訖日期與原因，送出後需由管理員審批核准才算生效。天數將依起訖日期自動計算（含首尾日）。</span>
+        </div>
+        <div class="leave-form-grid">
+          <div class="form-group">
+            <label>假別 *</label>
+            <select id="leaveTypeSelect">
+              <option value="annual">特休（年假）</option>
+              <option value="personal">事假</option>
+              <option value="sick">病假</option>
+              <option value="marriage">婚假</option>
+              <option value="bereavement">喪假</option>
+              <option value="parental">產假 / 陪產假</option>
+              <option value="menstrual">生理假</option>
+              <option value="other">其他</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>開始日期 *</label>
+            <input type="date" id="leaveStartDate" onchange="updateLeaveDaysPreview()">
+          </div>
+          <div class="form-group">
+            <label>結束日期 *</label>
+            <input type="date" id="leaveEndDate" onchange="updateLeaveDaysPreview()">
+          </div>
+          <div class="form-group">
+            <label>請假天數</label>
+            <div class="leave-days-preview" id="leaveDaysPreview">--</div>
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label>請假原因 *</label>
+            <textarea id="leaveReasonInput" rows="3" placeholder="請簡述請假原因..." maxlength="200"></textarea>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="submitLeaveRequest()" style="margin-top: 16px;">送出申請</button>
+      </div>
+      <div class="card" style="margin-top: 20px;">
+        <div class="card-header"><div class="card-title">我的請假記錄</div></div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>申請日期</th><th>假別</th><th>起訖日期</th><th>天數</th><th>原因</th><th>狀態</th><th>操作</th></tr></thead>
+            <tbody id="myLeaveTableBody"><tr><td colspan="7" class="empty-state">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- Admin Stats -->
     <div id="page-admin-stats" class="page">
       <div class="section-title">統計概覽</div>
@@ -371,6 +436,40 @@
         <div class="table-wrapper">
           <table><thead><tr><th>日期</th><th>員工編號</th><th>姓名</th><th>部門</th><th>上班</th><th>下班</th><th>工作時數</th><th>WiFi</th><th>IP</th><th>狀態</th></tr></thead>
           <tbody id="adminAttTableBody"><tr><td colspan="10" class="empty-state">請點擊查詢載入資料</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Leave Approval -->
+    <div id="page-admin-leave" class="page">
+      <div class="section-title">請假審批管理</div>
+      <div class="summary-grid" style="margin-bottom: 20px;">
+        <div class="summary-card"><div class="val" id="leavePendingCount" style="color:#f59e0b">-</div><div class="lbl">待審批</div></div>
+        <div class="summary-card"><div class="val" id="leaveApprovedMonth" style="color:var(--success)">-</div><div class="lbl">本月核准天數</div></div>
+        <div class="summary-card"><div class="val" id="leaveReqMonth" style="color:var(--primary)">-</div><div class="lbl">本月申請件數</div></div>
+        <div class="summary-card"><div class="val" id="leaveTotal" style="color:#7c3aed">-</div><div class="lbl">累計申請</div></div>
+      </div>
+      <div class="card">
+        <div class="filter-bar">
+          <div class="form-group"><label>狀態</label>
+            <select id="adminLeaveStatusFilter">
+              <option value="">全部狀態</option>
+              <option value="pending">⏳ 待審批</option>
+              <option value="approved">✅ 已核准</option>
+              <option value="rejected">❌ 已拒絕</option>
+              <option value="cancelled">🚫 已取消</option>
+            </select>
+          </div>
+          <div class="form-group"><label>員工編號</label><input type="text" id="adminLeaveEmpFilter" placeholder="留空查全部"></div>
+          <div class="form-group"><label>開始日期</label><input type="date" id="adminLeaveStartDate"></div>
+          <div class="form-group"><label>結束日期</label><input type="date" id="adminLeaveEndDate"></div>
+          <button class="btn btn-primary btn-sm" onclick="loadAdminLeaves()">查詢</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>申請人</th><th>部門</th><th>假別</th><th>起訖日期</th><th>天數</th><th>原因</th><th>狀態</th><th>申請時間</th><th>審批</th></tr></thead>
+            <tbody id="adminLeaveTableBody"><tr><td colspan="9" class="empty-state">請點擊查詢載入資料</td></tr></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -501,7 +600,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.4 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.5 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -514,9 +613,11 @@
   <div class="mobile-nav" id="mobileNav">
     <button class="active" data-page="clock">打卡</button>
     <button data-page="history">記錄</button>
+    <button data-page="leave">請假</button>
     <button class="admin-only" data-page="admin-stats" style="display:none">統計</button>
     <button class="admin-only" data-page="admin-employees" style="display:none">員工</button>
     <button class="admin-only" data-page="admin-attendance" style="display:none">考勤</button>
+    <button class="admin-only" data-page="admin-leave" style="display:none">假單</button>
     <button class="admin-only" data-page="admin-wifi" style="display:none">WiFi</button>
     <button class="admin-only" data-page="admin-settings" style="display:none">設定</button>
   </div>
@@ -609,12 +710,15 @@ function loadDB() {
       if (!parsed.schedule) parsed.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
       if (!parsed.attendance) parsed.attendance = [];
       if (!parsed.employees) parsed.employees = [];
+      // v3.5: leave_requests (請假申請)
+      if (!parsed.leave_requests) parsed.leave_requests = [];
       if (!parsed.nextEmpId) parsed.nextEmpId = parsed.employees.length + 1;
       if (!parsed.nextAttId) parsed.nextAttId = parsed.attendance.length + 1;
       // Migration: add updated_at for cloud sync merge correctness
       const nowISO = new Date().toISOString();
       (parsed.employees || []).forEach(function(e) { if (!e.updated_at) e.updated_at = nowISO; });
       (parsed.attendance || []).forEach(function(a) { if (!a.updated_at) a.updated_at = nowISO; });
+      (parsed.leave_requests || []).forEach(function(l) { if (!l.updated_at) l.updated_at = nowISO; });
       return parsed;
     }
   } catch(e) {}
@@ -626,6 +730,7 @@ function loadDB() {
       role: 'admin', created_at: now, active: 1
     }],
     attendance: [],
+    leave_requests: [],
     wifiSettings: { allowed_ips: '', wifi_name: 'Office WiFi', enabled: false },
     schedule: { start_time: '09:00', end_time: '18:00', enabled: true },
     nextEmpId: 2, nextAttId: 1
@@ -735,6 +840,248 @@ function calcWorkHours(record) {
   else if (m === 0) text = h + '小時';
   else text = h + '小時' + m + '分';
   return { text: text, hours: totalMin / 60, minutes: totalMin };
+}
+
+// ===== Leave Management (v3.5) =====
+const LEAVE_TYPES = {
+  annual: '特休',
+  personal: '事假',
+  sick: '病假',
+  marriage: '婚假',
+  bereavement: '喪假',
+  parental: '產假/陪產假',
+  menstrual: '生理假',
+  other: '其他'
+};
+
+function leaveTypeText(t) { return LEAVE_TYPES[t] || (t ? String(t) : '--'); }
+
+// 計算請假天數（含首尾日），日期不合法或結束早於開始回傳 0
+function calcLeaveDays(startDate, endDate) {
+  if (!startDate || !endDate) return 0;
+  const s = new Date(startDate + 'T00:00:00');
+  const e = new Date(endDate + 'T00:00:00');
+  if (isNaN(s.getTime()) || isNaN(e.getTime()) || e < s) return 0;
+  return Math.round((e - s) / 86400000) + 1;
+}
+
+function leaveStatusBadge(status) {
+  const map = {
+    'pending': '<span class="badge badge-warning">⏳ 待審批</span>',
+    'approved': '<span class="badge badge-success">✅ 已核准</span>',
+    'rejected': '<span class="badge badge-danger">❌ 已拒絕</span>',
+    'cancelled': '<span class="badge" style="background:#e5e7eb;color:#6b7280">🚫 已取消</span>'
+  };
+  return map[status] || esc(status);
+}
+
+// 天數預覽（申請表單）
+function updateLeaveDaysPreview() {
+  const el = document.getElementById('leaveDaysPreview');
+  if (!el) return;
+  const s = document.getElementById('leaveStartDate').value;
+  const e = document.getElementById('leaveEndDate').value;
+  if (!s || !e) { el.textContent = '--'; el.classList.remove('invalid'); return; }
+  const days = calcLeaveDays(s, e);
+  if (days <= 0) { el.textContent = '日期有誤（結束須 ≥ 開始）'; el.classList.add('invalid'); }
+  else { el.textContent = days + ' 天'; el.classList.remove('invalid'); }
+}
+
+// 員工：送出請假申請
+function submitLeaveRequest() {
+  if (!requireLogin()) return;
+  const type = document.getElementById('leaveTypeSelect').value;
+  const startDate = document.getElementById('leaveStartDate').value;
+  const endDate = document.getElementById('leaveEndDate').value;
+  const reason = trim(document.getElementById('leaveReasonInput').value);
+  if (!type) { showToast('請選擇假別', 'warning'); return; }
+  if (!startDate || !endDate) { showToast('請選擇請假起訖日期', 'warning'); return; }
+  const days = calcLeaveDays(startDate, endDate);
+  if (days <= 0) { showToast('結束日期不能早於開始日期', 'error'); return; }
+  if (days > 60) { showToast('單次請假最多 60 天', 'error'); return; }
+  if (!reason) { showToast('請填寫請假原因', 'warning'); return; }
+
+  const nowISO = new Date().toISOString();
+  const request = {
+    id: 'L' + Date.now() + '-' + Math.floor(Math.random() * 100000), // 全域唯一，避免多裝置合併衝突
+    employee_id: currentUser.employeeId,
+    employee_name: currentUser.name,
+    department: currentUser.department || '',
+    leave_type: type,
+    start_date: startDate,
+    end_date: endDate,
+    days: days,
+    reason: reason,
+    status: 'pending',
+    created_at: nowISO,
+    reviewed_at: null,
+    reviewed_by: null,
+    review_note: '',
+    updated_at: nowISO
+  };
+  db.leave_requests.push(request);
+  saveDB();
+  // 清空表單
+  document.getElementById('leaveStartDate').value = '';
+  document.getElementById('leaveEndDate').value = '';
+  document.getElementById('leaveReasonInput').value = '';
+  updateLeaveDaysPreview();
+  showToast('請假申請已送出，待管理員審批', 'success');
+  loadMyLeaves();
+}
+
+// 員工：取消自己的待審批申請
+function cancelLeaveRequest(id) {
+  if (!requireLogin()) return;
+  const req = (db.leave_requests || []).find(function(l) { return l.id === id; });
+  if (!req) { showToast('找不到該申請', 'error'); return; }
+  if (req.employee_id !== currentUser.employeeId) { showToast('只能取消自己的申請', 'error'); return; }
+  if (req.status !== 'pending') { showToast('僅待審批的申請可以取消', 'warning'); return; }
+  showConfirm('確定要取消這筆請假申請嗎？（' + leaveTypeText(req.leave_type) + ' ' + req.start_date + ' ~ ' + req.end_date + '）', function() {
+    req.status = 'cancelled';
+    req.updated_at = new Date().toISOString();
+    saveDB();
+    showToast('已取消申請', 'success');
+    loadMyLeaves();
+    if (currentUser.role === 'admin') loadAdminLeaves();
+  }, '🚫');
+}
+
+// 員工：我的請假記錄
+function loadMyLeaves() {
+  if (!requireLogin()) return;
+  const tbody = document.getElementById('myLeaveTableBody');
+  if (!tbody) return;
+  let list = (db.leave_requests || []).filter(function(l) { return l.employee_id === currentUser.employeeId; });
+  list.sort(function(a, b) {
+    const d = b.start_date.localeCompare(a.start_date);
+    if (d !== 0) return d;
+    return (b.created_at || '').localeCompare(a.created_at || '');
+  });
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="icon">📭</div>尚無請假記錄</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(function(l) {
+    const canCancel = l.status === 'pending';
+    return '<tr>' +
+      '<td>' + esc((l.created_at || '').substring(0, 10)) + '</td>' +
+      '<td><strong>' + esc(leaveTypeText(l.leave_type)) + '</strong></td>' +
+      '<td>' + esc(l.start_date) + ' ~ ' + esc(l.end_date) + '</td>' +
+      '<td style="font-weight:600;color:var(--primary)">' + l.days + ' 天</td>' +
+      '<td class="review-note-cell">' + esc(l.reason) + '</td>' +
+      '<td>' + leaveStatusBadge(l.status) + '</td>' +
+      '<td>' + (canCancel
+        ? '<button class="btn-cancel-leave" onclick="cancelLeaveRequest(\'' + l.id + '\')">取消申請</button>'
+        : (l.status === 'rejected' && l.review_note ? '<span class="review-note-cell">' + esc(l.review_note) + '</span>' : '<span style="color:#999">--</span>')) +
+      '</td></tr>';
+  }).join('');
+}
+
+// 管理員：請假審批列表（含統計）
+function loadAdminLeaves() {
+  if (!requireAdmin()) return;
+  const statusFilter = document.getElementById('adminLeaveStatusFilter').value;
+  const empFilter = trim(document.getElementById('adminLeaveEmpFilter').value);
+  const startDate = document.getElementById('adminLeaveStartDate').value;
+  const endDate = document.getElementById('adminLeaveEndDate').value;
+  let list = (db.leave_requests || []).slice();
+  if (statusFilter) list = list.filter(function(l) { return l.status === statusFilter; });
+  if (empFilter) list = list.filter(function(l) { return l.employee_id.indexOf(empFilter) >= 0 || (l.employee_name || '').indexOf(empFilter) >= 0; });
+  if (startDate) list = list.filter(function(l) { return l.start_date >= startDate; });
+  if (endDate) list = list.filter(function(l) { return l.start_date <= endDate; });
+  // 排序：待審批優先，其餘依申請時間新到舊
+  const stRank = { pending: 0, approved: 1, rejected: 2, cancelled: 3 };
+  list.sort(function(a, b) {
+    const r = (stRank[a.status] || 9) - (stRank[b.status] || 9);
+    if (r !== 0) return r;
+    return (b.created_at || '').localeCompare(a.created_at || '');
+  });
+
+  // 統計
+  const now = new Date();
+  const monthPrefix = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  let pendingCount = 0, approvedMonthDays = 0, reqMonthCount = 0;
+  (db.leave_requests || []).forEach(function(l) {
+    if (l.status === 'pending') pendingCount++;
+    if (l.status === 'approved' && (l.created_at || '').indexOf(monthPrefix) === 0) approvedMonthDays += (l.days || 0);
+    if ((l.created_at || '').indexOf(monthPrefix) === 0) reqMonthCount++;
+  });
+  document.getElementById('leavePendingCount').textContent = pendingCount;
+  document.getElementById('leaveApprovedMonth').textContent = approvedMonthDays + '天';
+  document.getElementById('leaveReqMonth').textContent = reqMonthCount + '件';
+  document.getElementById('leaveTotal').textContent = (db.leave_requests || []).length + '件';
+
+  const tbody = document.getElementById('adminLeaveTableBody');
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="icon">📭</div>無符合條件的請假記錄</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(function(l) {
+    let ops = '<span style="color:#999">--</span>';
+    if (l.status === 'pending') {
+      ops = '<div class="action-btns">' +
+        '<button class="btn-approve" onclick="approveLeave(\'' + l.id + '\')">✓ 核准</button>' +
+        '<button class="btn-reject" onclick="rejectLeave(\'' + l.id + '\')">✗ 拒絕</button>' +
+        '</div>';
+    } else if (l.status === 'approved') {
+      ops = '<span style="color:#16a34a;font-size:12px">已核准' + (l.reviewed_by ? ' · ' + esc(l.reviewed_by) : '') + '</span>' +
+        (l.review_note ? '<div class="review-note-cell">' + esc(l.review_note) + '</div>' : '');
+    } else if (l.status === 'rejected') {
+      ops = '<span style="color:#dc2626;font-size:12px">已拒絕' + (l.reviewed_by ? ' · ' + esc(l.reviewed_by) : '') + '</span>' +
+        (l.review_note ? '<div class="review-note-cell">' + esc(l.review_note) + '</div>' : '');
+    } else {
+      ops = '<span style="color:#9ca3af;font-size:12px">已取消</span>';
+    }
+    return '<tr>' +
+      '<td><strong>' + esc(l.employee_name || l.employee_id) + '</strong><br><span style="color:#999;font-size:12px">' + esc(l.employee_id) + '</span></td>' +
+      '<td>' + esc(l.department || '--') + '</td>' +
+      '<td><strong>' + esc(leaveTypeText(l.leave_type)) + '</strong></td>' +
+      '<td>' + esc(l.start_date) + ' ~ ' + esc(l.end_date) + '</td>' +
+      '<td style="font-weight:600;color:var(--primary)">' + l.days + ' 天</td>' +
+      '<td class="review-note-cell">' + esc(l.reason) + '</td>' +
+      '<td>' + leaveStatusBadge(l.status) + '</td>' +
+      '<td style="font-size:12px;color:#999">' + esc((l.created_at || '').replace('T', ' ').substring(0, 16)) + '</td>' +
+      '<td>' + ops + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+// 管理員：核准申請（可輸入備註）
+function approveLeave(id) {
+  if (!requireAdmin()) return;
+  const req = (db.leave_requests || []).find(function(l) { return l.id === id; });
+  if (!req) { showToast('找不到該申請', 'error'); return; }
+  if (req.status !== 'pending') { showToast('該申請已處理', 'warning'); return; }
+  const note = prompt('核准備註（可留空）：', '');
+  if (note === null) return; // 取消
+  req.status = 'approved';
+  req.reviewed_at = new Date().toISOString();
+  req.reviewed_by = currentUser.employeeId;
+  req.review_note = note || '';
+  req.updated_at = new Date().toISOString();
+  saveDB();
+  showToast('已核准 ' + (req.employee_name || req.employee_id) + ' 的請假申請', 'success');
+  loadAdminLeaves();
+}
+
+// 管理員：拒絕申請（須填原因）
+function rejectLeave(id) {
+  if (!requireAdmin()) return;
+  const req = (db.leave_requests || []).find(function(l) { return l.id === id; });
+  if (!req) { showToast('找不到該申請', 'error'); return; }
+  if (req.status !== 'pending') { showToast('該申請已處理', 'warning'); return; }
+  const note = prompt('請填寫拒絕原因（員工會看到）：', '');
+  if (note === null) return; // 取消
+  if (!trim(note)) { showToast('拒絕時必須填寫原因', 'error'); return; }
+  req.status = 'rejected';
+  req.reviewed_at = new Date().toISOString();
+  req.reviewed_by = currentUser.employeeId;
+  req.review_note = trim(note);
+  req.updated_at = new Date().toISOString();
+  saveDB();
+  showToast('已拒絕 ' + (req.employee_name || req.employee_id) + ' 的請假申請', 'success');
+  loadAdminLeaves();
 }
 
 function statusBadge(status) {
@@ -1789,6 +2136,20 @@ function mergeDB(cloudDb) {
   });
   db.attendance = Object.values(attMap);
 
+  // 請假：以唯一 id 為業務鍵（id = L + 時間戳 + 隨機數，全域唯一），updated_at 新者優先
+  // 讓多裝置各自申請、以及管理員在不同裝置審批時，都能正確合併（以最新變更為準）
+  const leaveMap = {};
+  (db.leave_requests || []).forEach(function(l) { if (l && l.id) leaveMap[l.id] = l; });
+  (cloudDb.leave_requests || []).forEach(function(cl) {
+    if (!cl || !cl.id) return;
+    const ll = leaveMap[cl.id];
+    if (!ll) { leaveMap[cl.id] = cl; return; }
+    if (cl.updated_at && (!ll.updated_at || cl.updated_at > ll.updated_at)) {
+      Object.keys(cl).forEach(function(k) { ll[k] = cl[k]; });
+    }
+  });
+  db.leave_requests = Object.values(leaveMap);
+
   // 重新編號：避免兩台裝置各自新增時數字 id 衝突（員工以 employee_id、考勤以 employee_id+date 為業務鍵）
   db.employees.forEach(function(e, i) { e.id = i + 1; });
   db.attendance.forEach(function(a, i) { a.id = i + 1; });
@@ -2030,10 +2391,12 @@ function refreshAllViews() {
   if (!currentUser) return;
   loadClockStatus();   // 打卡頁：今日上下班狀態、WiFi 狀態（所有人）
   loadHistory();       // 個人考勤紀錄（所有人）
+  loadMyLeaves();      // 個人請假紀錄（所有人）
   if (currentUser.role === 'admin') {
     loadAdminStats();       // 管理統計與圖表
     loadEmployees();        // 員工管理列表
     loadAdminAttendance();  // 管理考勤紀錄
+    loadAdminLeaves();      // 請假審批列表
     loadWifiSettings();     // WiFi 設定（IP白名單）
     loadScheduleSettings(); // 排班設定
     loadSyncSettings();     // 雲端同步狀態
@@ -2522,7 +2885,7 @@ function checkSyncWarning() {
 }
 
 // ===== Navigation =====
-const ADMIN_PAGES = ['admin-stats', 'admin-employees', 'admin-attendance', 'admin-wifi', 'admin-settings'];
+const ADMIN_PAGES = ['admin-stats', 'admin-employees', 'admin-attendance', 'admin-leave', 'admin-wifi', 'admin-settings'];
 
 // 切換頁面時順帶拉取雲端最新資料（節流，避免頻繁切頁狂打 API）
 // 讓使用者切到「員工」「考勤」等頁面時，能立刻看到其他裝置剛新增/打卡的內容
@@ -2549,9 +2912,11 @@ function switchPage(pageName) {
   document.querySelectorAll('[data-page="' + pageName + '"]').forEach(function(t) { t.classList.add('active'); });
   if (pageName === 'clock') loadClockStatus();
   if (pageName === 'history') loadHistory();
+  if (pageName === 'leave') loadMyLeaves();
   if (pageName === 'admin-stats') loadAdminStats();
   if (pageName === 'admin-employees') loadEmployees();
   if (pageName === 'admin-attendance') loadAdminAttendance();
+  if (pageName === 'admin-leave') loadAdminLeaves();
   if (pageName === 'admin-wifi') loadWifiSettings();
   if (pageName === 'admin-settings') { loadScheduleSettings(); loadSyncSettings(); }
 }
