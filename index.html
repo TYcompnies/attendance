@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="專業WiFi打卡出勤管理系統，支援IP白名單驗證、即時打卡、考勤記錄與統計分析">
+  <!-- v2.12：防止手機瀏覽器快取舊版 HTML — 這是手機同步失敗的最大根因 -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏰</text></svg>">
   <title>智能出勤管理系統 | WiFi打卡</title>
   <style>
@@ -454,6 +458,7 @@
           </div>
           <div class="action-btns" style="gap:12px;margin-top:12px;">
             <button class="btn btn-outline btn-sm" onclick="manualSync()" style="flex:1;">🔄 立即同步</button>
+            <button class="btn btn-outline btn-sm" onclick="deepSync()" style="flex:1;">📥 深度同步</button>
             <button class="btn btn-outline btn-sm" onclick="testCloudConnection()" style="flex:1;">🧪 測試連線</button>
             <button class="btn btn-outline btn-sm" onclick="resetSyncState()" style="flex:1;color:var(--warning);border:1.5px solid var(--warning);">🔧 重置狀態</button>
             <button class="btn btn-outline btn-sm" onclick="disconnectSync()" style="flex:1;color:var(--danger);border:1.5px solid var(--danger);">斷開同步</button>
@@ -478,7 +483,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.11 專業版</td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v2.12 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -1620,7 +1625,7 @@ async function doConnect(code) {
     db._last_sync = new Date().toISOString();
     saveLocalOnly();
     // 合併結果回推雲端：本機既有資料不會被覆蓋，兩邊紀錄合而為一
-    await pushToCloud(true);
+    await pushToCloud(true, false, true); // v2.12：skipPull=true — 剛 GET 完不需要再 pull
     showToast('連接成功！已合併雲端資料（考勤 ' + beforeCount + ' → ' + db.attendance.length + ' 筆）', 'success');
     addSyncLog('CONNECT', 'ok', '同步碼 ' + code + ' 考勤 ' + beforeCount + '→' + db.attendance.length, 200);
     startAutoSync();      // 確保自動同步引擎啟動（手動輸入同步碼連接的情況）
@@ -1721,6 +1726,7 @@ async function pushToCloud(silent, noBadge, skipPull) {
     saveLocalOnly();
     ok = true;
     lastSyncError = '';
+    syncFailCount = 0; // v2.12：成功 → 重置失敗計數
     syncRetryDelay = 10000;
     if (syncRetryTimer) { clearTimeout(syncRetryTimer); syncRetryTimer = null; }
     addSyncLog('PUT', 'ok', '大小 ' + sizeKB.toFixed(1) + 'KB', 200);
@@ -1742,6 +1748,7 @@ async function pushToCloud(silent, noBadge, skipPull) {
       msg = e.message;
     }
     lastSyncError = '推播失敗：' + msg;
+    syncFailCount++; // v2.12：累計失敗次數
     addSyncLog('PUT', 'err', msg, errStatus);
     if (!silent && !noBadge) showToast('同步失敗：' + msg + '（' + Math.round(syncRetryDelay/1000) + '秒後自動重試）', 'error');
     if (!syncRetryTimer) {
@@ -1767,19 +1774,25 @@ async function pushToCloud(silent, noBadge, skipPull) {
   }
 }
 
+// v2.12：用 pendingPull 旗標取代無限遞迴 setTimeout — 避免 syncInProgress 為 true 時堆積大量重試
+let pendingPull = false;
+// v2.12：連續失敗計數器 — 超過 3 次自動重置同步狀態
+let syncFailCount = 0;
+
 async function pullFromCloud(silent) {
   const key = getSyncKey();
   if (!key) return;
-  if (syncInProgress) { setTimeout(function() { pullFromCloud(silent); }, 1500); return; }
+  // v2.12：如果同步進行中，標記 pendingPull 並返回（不再無限遞迴 setTimeout）
+  if (syncInProgress) { pendingPull = true; return; }
   syncInProgress = true;
   let changed = false, success = false;
-  let errStatus = 0;  // v2.10：必須在 try 外面宣告，否則 catch 裡存不到
+  let errStatus = 0;
   try {
     // 快照：比較「整個資料庫」是否變化（員工/考勤/WiFi/排班任一項目變更都要觸發刷新）
     const snap = function() { return JSON.stringify({ emp: db.employees, att: db.attendance, wifi: db.wifiSettings, sched: db.schedule }); };
     const beforeSnap = snap();
     const ctrl = new AbortController();
-    const t = setTimeout(function() { ctrl.abort(); }, 45000); // v2.11：45s 超時
+    const t = setTimeout(function() { ctrl.abort(); }, 45000);
     const res = await fetch(JSONSTORAGE_API + '/' + key + '?t=' + Date.now(), {
       signal: ctrl.signal,
       mode: 'cors',
@@ -1788,7 +1801,7 @@ async function pullFromCloud(silent) {
       headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
     });
     clearTimeout(t);
-    errStatus = res.status;  // v2.10：移除 let，用外面宣告的
+    errStatus = res.status;
     if (!res.ok) throw new Error('伺服器回應 ' + res.status);
     const cloudDb = await res.json();
     if (cloudDb && cloudDb.employees) {
@@ -1797,12 +1810,13 @@ async function pullFromCloud(silent) {
       saveLocalOnly();
       changed = snap() !== beforeSnap;
       success = true;
+      syncFailCount = 0; // v2.12：成功 → 重置失敗計數
       addSyncLog('GET', 'ok', changed ? '資料有更新' : '資料一致', 200);
     }
   } catch(e) {
     let msg = '';
     if (e.name === 'AbortError') {
-      msg = '連線逾時（30秒），網路可能不穩定';
+      msg = '連線逾時（45秒），網路可能不穩定或被阻擋';
     } else if (errStatus === 404) {
       msg = '同步碼不存在或已失效';
     } else if (errStatus === 429) {
@@ -1815,30 +1829,49 @@ async function pullFromCloud(silent) {
       msg = e.message;
     }
     lastSyncError = '拉取失敗：' + msg;
+    syncFailCount++; // v2.12：累計失敗次數
     addSyncLog('GET', 'err', msg, errStatus);
     if (!silent) showToast('雲端拉取失敗：' + msg, 'error');
     updateSyncBadge('error');
+    // v2.12：連續失敗超過 3 次 → 自動重置同步狀態
+    if (syncFailCount >= 3) {
+      addSyncLog('AUTO-RESET', 'ok', '連續失敗 ' + syncFailCount + ' 次，自動重置', 0);
+      syncInProgress = false;
+      syncPending = false;
+      syncFailCount = 0;
+      lastSyncError = '';
+      syncRetryDelay = 10000;
+      if (syncRetryTimer) { clearTimeout(syncRetryTimer); syncRetryTimer = null; }
+      updateSyncBadge('synced');
+      setTimeout(function() { pullFromCloud(true); }, 2000);
+      return;
+    }
   } finally {
     syncInProgress = false;
   }
-  // v2.10：pull 成功 → 先設徽章 synced + 清除錯誤，再執行 push-back（靜默、不影響徽章）
-  if (success && currentUser) {
+  // v2.12：pull 成功 → 設徽章 synced（不論是否有 currentUser，避免 session 過期時徽章卡在 syncing）
+  if (success) {
     updateSyncBadge('synced');
     lastSyncError = '';
   }
   // v2.11：只在「資料有變化」或「本機有未推變更」時才 push-back，避免無謂的 PUT 觸發 502
   if (success && (changed || syncPending) && getSyncKey()) {
     pushFromPull = true;
-    try { await pushToCloud(true, true); } finally { pushFromPull = false; }  // noBadge=true
+    try { await pushToCloud(true, true, true); } finally { pushFromPull = false; }  // v2.12：noBadge=true, skipPull=true
   }
   if (success && currentUser) {
     if (changed) {
       refreshAllViews();
     } else {
-      if (currentUser && currentUser.role === 'admin') loadSyncSettings();
+      if (currentUser.role === 'admin') loadSyncSettings();
     }
   }
   if (!silent && changed) showToast('已從雲端更新資料', 'success');
+  // v2.12：如果有 pendingPull（之前 syncInProgress 時被擋下的），現在執行
+  if (success && pendingPull) {
+    pendingPull = false;
+    setTimeout(function() { pullFromCloud(true); }, 500);
+  }
 }
 
 // ===== 全畫面刷新 =====
@@ -1929,6 +1962,8 @@ function resetSyncState() {
   syncPending = false;
   autoSyncLock = false;
   pushFromPull = false;
+  pendingPull = false; // v2.12
+  syncFailCount = 0;   // v2.12
   lastSyncError = '';
   syncRetryDelay = 10000;
   if (syncRetryTimer) { clearTimeout(syncRetryTimer); syncRetryTimer = null; }
@@ -1939,6 +1974,37 @@ function resetSyncState() {
   showToast('同步狀態已重置！正在重新同步...', 'success');
   // 重置後立即觸發一次同步
   if (getSyncKey()) setTimeout(function() { pullFromCloud(true); }, 500);
+}
+
+// v2.12：深度同步 — 強制完整重新拉取雲端資料
+// 與 manualSync 的差別：deepSync 先清除所有鎖定狀態（syncInProgress/autoSyncLock/pendingPull 等），
+// 確保即使同步引擎卡死也能強制執行。適用於「同步看起來在運作但資料不更新」的情況。
+async function deepSync() {
+  if (!requireAdmin()) return;
+  if (!getSyncKey()) { showToast('尚未啟用雲端同步', 'warning'); return; }
+  // 強制清除所有鎖定
+  syncInProgress = false;
+  syncPending = false;
+  autoSyncLock = false;
+  pushFromPull = false;
+  pendingPull = false;
+  syncFailCount = 0;
+  lastSyncError = '';
+  syncRetryDelay = 10000;
+  if (syncRetryTimer) { clearTimeout(syncRetryTimer); syncRetryTimer = null; }
+  if (syncTimer) { clearTimeout(syncTimer); syncTimer = null; }
+  showToast('正在深度同步（強制重新拉取）...', 'info');
+  updateSyncBadge('syncing');
+  addSyncLog('DEEP', 'ok', '開始深度同步', 0);
+  try {
+    await pullFromCloud(true);
+    refreshAllViews();
+    showToast('深度同步完成：' + new Date().toLocaleTimeString('zh-TW'), 'success');
+    addSyncLog('DEEP', 'ok', '深度同步完成', 200);
+  } catch(e) {
+    showToast('深度同步失敗：' + e.message, 'error');
+    addSyncLog('DEEP', 'err', e.message, 0);
+  }
 }
 
 function copySyncCode() {
@@ -2024,6 +2090,7 @@ function loadSyncSettings() {
     syncState.push('進行中: ' + (syncInProgress ? '是' : '否'));
     syncState.push('待推送: ' + (syncPending ? '是' : '否'));
     syncState.push('互斥鎖: ' + (autoSyncLock ? '是' : '否'));
+    syncState.push('失敗計數: ' + syncFailCount);
     syncState.push('重試延遲: ' + (syncRetryDelay / 1000) + 's');
     if (typeof navigator !== 'undefined') syncState.push('網路: ' + (navigator.onLine ? '線上' : '離線'));
     if (typeof navigator !== 'undefined' && !navigator.onLine) diag += '<br><span style="color:var(--danger);">⚠️ 裝置目前離線（無網路連線），同步已暫停。</span>';
@@ -2032,7 +2099,8 @@ function loadSyncSettings() {
     diag += '<br><span style="color:var(--text-secondary);font-size:11px;font-family:monospace;">[' + syncState.join(' | ') + ']</span>';
     statusEl.innerHTML = '<strong style="color:var(--success)">✅ 雲端同步已啟用（自動同步中）</strong>' +
       '<br><span style="color:var(--text-secondary);font-size:12px;">每 30 秒自動同步一次；切回此頁面時也會立即同步。' +
-      '<br>最後同步：' + esc(db._last_sync || '尚未同步') + ' · 資料大小：' + getDbSizeKB() + ' KB' + diag + '</span>';
+      '<br>最後同步：' + esc(db._last_sync || '尚未同步') + ' · 資料大小：' + getDbSizeKB() + ' KB' + diag + '</span>' +
+      '<br><span style="color:var(--text-secondary);font-size:11px;margin-top:4px;display:block;">💡 手機同步不正常？請在手機瀏覽器「清除快取」或長按重新整理按鈕選擇「強制重新載入」。</span>';
     document.getElementById('syncCodeDisplay').value = key;
     codeSection.style.display = '';
     connectSection.style.display = 'none';
