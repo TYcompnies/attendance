@@ -369,8 +369,8 @@
           <button class="btn btn-outline btn-sm" onclick="exportCSV()">匯出CSV</button>
         </div>
         <div class="table-wrapper">
-          <table><thead><tr><th>日期</th><th>員工編號</th><th>姓名</th><th>部門</th><th>上班</th><th>下班</th><th>WiFi</th><th>IP</th><th>狀態</th></tr></thead>
-          <tbody id="adminAttTableBody"><tr><td colspan="9" class="empty-state">請點擊查詢載入資料</td></tr></tbody></table>
+          <table><thead><tr><th>日期</th><th>員工編號</th><th>姓名</th><th>部門</th><th>上班</th><th>下班</th><th>工作時數</th><th>WiFi</th><th>IP</th><th>狀態</th></tr></thead>
+          <tbody id="adminAttTableBody"><tr><td colspan="10" class="empty-state">請點擊查詢載入資料</td></tr></tbody></table>
         </div>
       </div>
     </div>
@@ -501,7 +501,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.3 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.4 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-08-15)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -718,6 +718,23 @@ function calcAttendanceStatus(clockIn, clockOut) {
     status = status === 'late' ? 'late_early' : 'early';
   }
   return status;
+}
+
+// v3.4：計算工作時數（下班 - 上班），回傳 { text, hours } 或 null（未打完整卡）
+function calcWorkHours(record) {
+  if (!record || !record.clock_in || !record.clock_out || !record.date) return null;
+  const inT = new Date(record.date + 'T' + record.clock_in);
+  const outT = new Date(record.date + 'T' + record.clock_out);
+  let diffMs = outT - inT;
+  if (isNaN(diffMs) || diffMs < 0) return null; // 時間異常（含跨日負值）
+  const totalMin = Math.round(diffMs / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  let text;
+  if (h === 0) text = m + '分';
+  else if (m === 0) text = h + '小時';
+  else text = h + '小時' + m + '分';
+  return { text: text, hours: totalMin / 60, minutes: totalMin };
 }
 
 function statusBadge(status) {
@@ -1082,11 +1099,8 @@ function loadHistory() {
   let totalMinutes = 0;
   let lateCount = 0;
   records.forEach(function(r) {
-    if (r.clock_in && r.clock_out) {
-      const inT = new Date(r.date + 'T' + r.clock_in);
-      const outT = new Date(r.date + 'T' + r.clock_out);
-      totalMinutes += (outT - inT) / 60000;
-    }
+    const wh = calcWorkHours(r);
+    if (wh) totalMinutes += wh.minutes;
     if (r.status === 'late' || r.status === 'late_early') lateCount++;
   });
   const totalHours = (totalMinutes / 60).toFixed(1);
@@ -1103,12 +1117,10 @@ function loadHistory() {
     return;
   }
   tbody.innerHTML = records.map(function(r) {
+    const wh = calcWorkHours(r);
     let hours = '--';
-    if (r.clock_in && r.clock_out) {
-      const inT = new Date(r.date + 'T' + r.clock_in);
-      const outT = new Date(r.date + 'T' + r.clock_out);
-      hours = ((outT - inT) / 3600000).toFixed(1) + 'h';
-    }
+    if (wh) hours = wh.text;
+    else if (r.clock_in) hours = '<span style="color:#999">工作中</span>';
     return '<tr>' +
       '<td>' + esc(r.date) + '</td>' +
       '<td>' + (r.clock_in ? esc(r.clock_in) : '<span style="color:#999">未打卡</span>') + '</td>' +
@@ -1376,10 +1388,11 @@ function loadAdminAttendance() {
 
   const tbody = document.getElementById('adminAttTableBody');
   if (records.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="icon">📭</div>暫無記錄</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><div class="icon">📭</div>暫無記錄</td></tr>';
     return;
   }
   tbody.innerHTML = records.map(function(r) {
+    const wh = calcWorkHours(r);
     return '<tr>' +
       '<td>' + esc(r.date) + '</td>' +
       '<td style="font-weight:600">' + esc(r.employee_id) + '</td>' +
@@ -1387,6 +1400,7 @@ function loadAdminAttendance() {
       '<td>' + (esc(r.department) || '--') + '</td>' +
       '<td>' + (r.clock_in ? esc(r.clock_in) : '<span style="color:#999">--</span>') + '</td>' +
       '<td>' + (r.clock_out ? esc(r.clock_out) : '<span style="color:#999">--</span>') + '</td>' +
+      '<td style="font-weight:600;color:var(--primary)">' + (wh ? wh.text : (r.clock_in ? '<span style="color:#999;font-weight:400">工作中</span>' : '--')) + '</td>' +
       '<td>' + (r.wifi_verified ? '<span class="badge badge-success">是</span>' : '<span class="badge badge-warning">否</span>') + '</td>' +
       '<td style="font-family:monospace;font-size:12px">' + (esc(r.ip_address) || '--') + '</td>' +
       '<td>' + statusBadge(r.status) + '</td>' +
@@ -1408,11 +1422,12 @@ function exportCSV() {
   if (empId) records = records.filter(function(r) { return r.employee_id === empId; });
   records.sort(function(a, b) { return b.date.localeCompare(a.date); });
 
-  const headers = ['員工編號', '姓名', '部門', '日期', '上班時間', '下班時間', '上班IP', '下班IP', 'WiFi驗證', '狀態'];
+  const headers = ['員工編號', '姓名', '部門', '日期', '上班時間', '下班時間', '工作時數', '工作時數(小時)', '上班IP', '下班IP', 'WiFi驗證', '狀態'];
   const statusZh = { normal: '正常', present: '正常', late: '遲到', early: '早退', late_early: '遲到+早退', absent: '缺席' };
   const lines = [headers.join(',')];
   records.forEach(function(r) {
-    var row = [r.employee_id, r.employee_name, r.department, r.date, r.clock_in || '', r.clock_out || '', r.clock_in_ip || r.ip_address || '', r.clock_out_ip || '', r.wifi_verified ? '是' : '否', statusZh[r.status] || r.status];
+    const wh = calcWorkHours(r);
+    var row = [r.employee_id, r.employee_name, r.department, r.date, r.clock_in || '', r.clock_out || '', wh ? wh.text : '', wh ? wh.hours.toFixed(2) : '', r.clock_in_ip || r.ip_address || '', r.clock_out_ip || '', r.wifi_verified ? '是' : '否', statusZh[r.status] || r.status];
     lines.push(row.map(function(v) {
       var s = String(v || '');
       return '"' + s.replace(/"/g, '""') + '"';
