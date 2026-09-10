@@ -2500,13 +2500,19 @@ function mergeDB(cloudDb) {
 // 主通道（免憑證）成功後，順手把資料備份回 GitHub repo（每 5 分鐘最多一次）。
 // 全程靜默：任何失敗（Token 過期、額度限制、網路問題）都只記一筆日誌，絕不影響使用者看到的同步狀態。
 let _lastMirrorAt = 0;
+let _lastMirrorHash = '';  // v4.0.1：上次備份的內容快照，避免內容未變仍重複 commit 洗版
 function mirrorToGitHub(key) {
   try {
     if (!key || !validToken(getGitHubToken())) return;
     if (localStorage.getItem('attendance_no_mirror')) return; // 進階：停用 GitHub 背景備份
     var now = Date.now();
-    if (_lastMirrorAt && (now - _lastMirrorAt) < 5 * 60 * 1000) return;
+    // v4.0.1：節流由 5 分鐘提高至 60 分鐘 — 每次備份都會在 repo 產生一個 commit，
+    // 過於頻繁會洗版並讓 GitHub Pages 不斷重建。
+    if (_lastMirrorAt && (now - _lastMirrorAt) < 60 * 60 * 1000) return;
+    var _payload = JSON.stringify(db);
+    if (_payload === _lastMirrorHash) return;  // v4.0.1：內容完全沒變 → 不需再備份
     _lastMirrorAt = now;
+    _lastMirrorHash = _payload;
     var doPut = function(bodyObj) {
       return fetch(GITHUB_API_BASE + key + '.json', {
         method: 'PUT',
@@ -2515,7 +2521,7 @@ function mirrorToGitHub(key) {
         body: JSON.stringify(bodyObj)
       });
     };
-    var bodyObj = { message: 'Sync mirror: ' + new Date().toISOString(), content: encodeBase64(JSON.stringify(db)) };
+    var bodyObj = { message: 'Sync mirror: ' + new Date().toISOString(), content: encodeBase64(_payload) };
     var sha = getSyncSha();
     if (sha) bodyObj.sha = sha;
     // v4.0：本機沒記住 SHA 時，先取回雲端檔案 SHA（否則首次 PUT 必定 422，且會在 console 留下錯誤噪音）
