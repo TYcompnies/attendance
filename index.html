@@ -2133,17 +2133,24 @@ const FREE_CHANNELS = [
   'ty-attendance-bk2b7a90f4'
 ];
 // 進階：可用 localStorage.attendance_free_store_id 指向其他通道（如分公司各自獨立、或自動化測試專用）
+// 進階：可用 localStorage.attendance_free_channels 指定「逗號分隔的通道清單」覆寫預設三通道
 function freeChannelList() {
   var o = localStorage.getItem('attendance_free_store_id');
   if (o && o.trim()) return [o.trim()];  // 測試/分店模式：只用指定通道
+  var multi = localStorage.getItem('attendance_free_channels');
+  if (multi && multi.trim()) {
+    var arr = multi.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+    if (arr.length) return arr;
+  }
   return FREE_CHANNELS.slice();
 }
 function freeStoreURL(id) {
   return 'https://textdb.dev/api/data/' + (id || FREE_STORE_ID);
 }
 function freeChannelName(id) {
-  var i = FREE_CHANNELS.indexOf(id);
-  return i < 0 ? '自訂通道' : ('通道 ' + 'ABC'.charAt(i));
+  var i = freeChannelList().indexOf(id);
+  if (i < 0) return '自訂通道';
+  return '通道 ' + (i < 3 ? 'ABC'.charAt(i) : String(i + 1));
 }
 // v4.0.1：讀取 — 依序嘗試所有通道，回傳「_last_sync 最新」且格式正確的那一份
 async function freePull() {
