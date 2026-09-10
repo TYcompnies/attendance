@@ -2543,11 +2543,14 @@ function mirrorToGitHub(key) {
       }
       return r;
     }).then(function(r) {
-      if (!r || !r.ok) { addSyncLog('MIRROR', 'warn', 'GitHub 備份略過（' + (r ? r.status : '無回應') + '）', r ? r.status : 0); return null; }
+      // v4.0.1：鏡像失敗完全靜默 — 它是「背景備份」，不影響主通道同步，
+      // 記錄失敗只會讓使用者看到無害卻令人緊張的錯誤訊息。
+      if (!r || !r.ok) return null;
       return r.json();
     }).then(function(d) {
-      if (d && d.content && d.content.sha) setSyncSha(d.content.sha);
-      if (d) addSyncLog('MIRROR', 'ok', 'GitHub 備份已更新', 200);
+      if (!d) return;
+      if (d.content && d.content.sha) setSyncSha(d.content.sha);
+      addSyncLog('MIRROR', 'ok', 'GitHub 備份已更新', 200);
     }).catch(function() { /* 靜默：鏡像失敗不影響主通道同步 */ });
   } catch (e) { /* 靜默 */ }
 }
