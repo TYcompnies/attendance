@@ -603,7 +603,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.8.1 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-10)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.8.2 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-10)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -2468,13 +2468,16 @@ async function pushToCloud(silent, noBadge, skipPull) {
       if (getGitHubToken()) setTimeout(function() { autoFindSyncCode(true); }, 1500);
       return;
     } else if (errStatus === 401) {
-      // v3.8.1：Token 失效自癒 — 若 localStorage 存有舊的失效 Token（過期/被輪換），
-      // 自動汰換為內建憑證並重試，使用者完全無感（401 = Bad credentials，與 403 rate limit 不同）
-      var storedTok = localStorage.getItem('attendance_github_token');
+      // v3.8.2：Token 認證失效自癒（加強版）— 三種情況都涵蓋：
+      // (a) localStorage 存有失效舊 Token (b) 曾按「清除 Token」導致無 Token/停用內建憑證 (c) 兩者皆非但認證仍被拒
+      // 一律切換為內建憑證重試；sessionStorage 旗標防止內建憑證也失效時無限循環
+      var storedTok = localStorage.getItem('attendance_github_token') || '';
       var embTok = embeddedToken();
-      if (storedTok && storedTok !== embTok) {
+      if (embTok && storedTok !== embTok && !sessionStorage.getItem('_atnd401healed')) {
+        sessionStorage.setItem('_atnd401healed', '1');
         localStorage.removeItem('attendance_github_token');
-        addSyncLog('PUT', 'ok', '偵測到失效 Token，自動汰換為內建憑證後重試', 401);
+        localStorage.removeItem('attendance_no_embedded');
+        addSyncLog('PUT', 'ok', '偵測到認證失效，自動切換為內建憑證後重試', 401);
         clearAllSyncState();
         setTimeout(function() { pushToCloud(silent, noBadge, skipPull); }, 800);
         return;
@@ -2574,12 +2577,14 @@ async function pullFromCloud(silent) {
       if (getGitHubToken()) setTimeout(function() { autoFindSyncCode(true); }, 1500);
       return;
     } else if (errStatus === 401) {
-      // v3.8.1：Token 失效自癒（同 push）— localStorage 舊 Token 失效時自動汰換為內建憑證並重試
-      var storedTokP = localStorage.getItem('attendance_github_token');
+      // v3.8.2：Token 認證失效自癒（同 push 加強版）— 含「無 Token / 停用內建憑證」情境
+      var storedTokP = localStorage.getItem('attendance_github_token') || '';
       var embTokP = embeddedToken();
-      if (storedTokP && storedTokP !== embTokP) {
+      if (embTokP && storedTokP !== embTokP && !sessionStorage.getItem('_atnd401healed')) {
+        sessionStorage.setItem('_atnd401healed', '1');
         localStorage.removeItem('attendance_github_token');
-        addSyncLog('GET', 'ok', '偵測到失效 Token，自動汰換為內建憑證後重試', 401);
+        localStorage.removeItem('attendance_no_embedded');
+        addSyncLog('GET', 'ok', '偵測到認證失效，自動切換為內建憑證後重試', 401);
         clearAllSyncState();
         setTimeout(function() { pullFromCloud(true); }, 800);
         return;
