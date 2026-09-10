@@ -603,7 +603,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.8 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-10)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.8.1 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-10)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -2094,7 +2094,7 @@ const GITHUB_BRANCH = 'main';
 // 內建憑證讓「任何新裝置 / 新瀏覽器 / 新網域」開啟頁面即自動同步，完全免手動輸入同步碼或 Token
 // （混淆方式：token 逐字元 XOR 後 base64 再切成 4 段，執行時還原）
 const _EK = 'ATNDv38K'; // XOR 金鑰
-const _ET = ['JjwhGz9wbjsQGD', 'wuHgVLfAAFBx5A', 'S10HIhwlcCN+dX', '53LHoLHUlTGA==']; // 混淆後的內建憑證
+const _ET = ['Jjw+GxhqaycSBg', 'AhJAZBOxASPQUu', 'Al49GAEfDgVEUH', 'kQH3w0JHleeg==']; // 混淆後的內建憑證（v3.8.1：改用不會輪換的傳統 PAT — 舊的 gh CLI OAuth token 會自動輪換失效造成 401）
 function embeddedToken() {
   try {
     var bin = atob(_ET.join(''));
