@@ -536,7 +536,7 @@
         <div class="card-header"><div class="card-title">☁️ 雲端同步（跨裝置）</div></div>
         <div class="info-banner blue">
           <span>ℹ️</span>
-          <span>把資料同步到免費雲端空間，<strong>所有紀錄不會遺失</strong>。啟用後<strong>每 30 秒自動同步</strong>、手機切回畫面立即同步，<strong>同步後系統裡所有項目（員工、考勤、統計、WiFi、排班）都會自動更新</strong>。換裝置步驟：① 在此頁點「複製連結」→ ② 在手機瀏覽器開啟該連結 → ③ 自動連接完成。</span>
+          <span>資料會自動同步到雲端（免憑證、免設定），<strong>所有紀錄不會遺失</strong>。啟用後<strong>每 30 秒自動同步</strong>、手機切回畫面立即同步，<strong>同步後系統裡所有項目（員工、考勤、統計、WiFi、排班）都會自動更新</strong>。換裝置只需：在新裝置打開本網址，<strong>約 2 秒自動連接完成，免輸入任何代碼</strong>。</span>
         </div>
         <div id="syncStatusBox" style="padding:14px 16px;background:var(--bg);border-radius:10px;margin-bottom:16px;font-size:14px;">
           <span id="syncStatusText">載入中...</span>
@@ -560,41 +560,27 @@
           </div>
         </div>
         <div id="syncConnectSection">
-          <!-- v3.8: 零設定自動同步 — 內建憑證，任何裝置開啟即自動連接，不需手動輸入 -->
+          <!-- v4.0：免憑證雲端同步 — 完全零設定，沒有任何會過期的金鑰 -->
           <div class="form-group" style="background:#ecfdf5;padding:12px;border-radius:8px;margin-bottom:12px;border:1px solid #a7f3d0;">
-            <label style="font-size:13px;color:#065f46;">⚡ 零設定自動同步（v3.8）</label>
+            <label style="font-size:13px;color:#065f46;">⚡ 零設定自動同步（v4.0 免憑證）</label>
             <div style="font-size:12px;color:#065f46;margin-top:4px;">
-              本系統已內建雲端同步憑證 — <strong>任何裝置、任何瀏覽器、任何網域</strong>開啟網頁後約 1 秒會自動連接雲端並下載最新資料，<strong>完全不需手動輸入同步碼或 Token</strong>。若下方顯示已連接，表示自動同步運作中。
-            </div>
-          </div>
-          <!-- v3.0: GitHub Token 設定 — 用於雲端同步推播 -->
-          <div class="form-group" id="tokenSection" style="background:#fef3c7;padding:12px;border-radius:8px;margin-bottom:12px;">
-            <label style="font-size:13px;color:#92400e;">🔑 GitHub Token（選用 — 內建憑證已可同步，僅在需要更換帳號時才需設定）</label>
-            <div style="display:flex;gap:8px;margin-top:6px;">
-              <input type="password" id="githubTokenInput" placeholder="ghp_... 或 gho_..." style="flex:1;font-family:monospace;font-size:13px;">
-              <button class="btn btn-outline btn-sm" id="tokenToggleBtn" onclick="toggleTokenVisibility()" title="顯示/隱藏 Token">👁</button>
-              <button class="btn btn-primary btn-sm" onclick="saveGitHubTokenUI()">儲存</button>
-              <button class="btn btn-outline btn-sm" onclick="clearGitHubTokenUI()" title="清除已儲存的 Token">🗑</button>
-            </div>
-            <div style="font-size:11px;color:#92400e;margin-top:4px;">
-              <span id="tokenStatus">尚未設定</span> ·
-              <a href="https://github.com/settings/tokens/new?scopes=repo&description=Attendance-Sync" target="_blank" style="color:#92400e;text-decoration:underline;">按此建立 Token</a>
-              · 設定後即可建立/連接同步
+              本系統使用<strong>免憑證雲端通道</strong>：不需 Token、不需輸入同步碼。<strong>任何裝置、任何瀏覽器、任何網域</strong>開啟網頁後約 1 秒會自動連接並下載最新資料，之後每 30 秒自動雙向同步。<br>
+              同時會在背景把資料備份一份到 GitHub（失敗不影響同步）。
             </div>
           </div>
           <div class="form-group">
-            <label>在另一台裝置使用此系統？輸入同步碼連接，或按「自動尋找」</label>
+            <label>在另一台裝置使用此系統？輸入同步碼連接，或按「自動連接」</label>
             <div style="display:flex;gap:8px;">
               <input type="text" id="syncCodeInput" placeholder="貼上同步碼" style="flex:1;font-family:monospace;" maxlength="64">
               <button class="btn btn-primary" onclick="connectCloudSync()">連接</button>
             </div>
             <div style="margin-top:8px;">
-              <button class="btn btn-outline btn-sm" onclick="autoFindSyncCode(false)" id="autoFindBtn" style="width:100%;">🔗 自動尋找雲端同步碼並連接（免輸入）</button>
+              <button class="btn btn-outline btn-sm" onclick="autoFindSyncCode(false)" id="autoFindBtn" style="width:100%;">🔗 自動連接雲端（免輸入，推薦）</button>
             </div>
           </div>
           <button class="btn btn-outline btn-sm" onclick="createCloudSync()" style="margin-top:12px;">✨ 建立雲端同步（取得同步碼）</button>
         </div>
-        <div class="hint-text" id="syncHint" style="margin-top:10px;">同步碼等同於資料庫鑰匙，請妥善保管，勿隨意分享。免費雲端空間有容量與每月請求次數限制，請定期使用「匯出全部資料」備份。</div>
+        <div class="hint-text" id="syncHint" style="margin-top:10px;">系統已內建免憑證雲端通道，無需任何金鑰。建議仍定期使用「匯出全部資料」保存備份。</div>
         <div id="syncLogSection" style="margin-top:16px;display:none;">
           <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">📋 最近同步紀錄（調試用）</div>
           <div id="syncLogBox" style="background:var(--bg);border-radius:8px;padding:10px;max-height:180px;overflow-y:auto;font-size:12px;"></div>
@@ -603,7 +589,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v3.8.2 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-10)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-10 · 免憑證同步)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -2082,6 +2068,9 @@ function importFullData(event) {
 
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
+// v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
+const BUILD_ID = '4.0.20260910';
+const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
 // GitHub API 正確回應 204 給 OPTIONS preflight，所有 HTTP method 均可從瀏覽器使用。
@@ -2103,16 +2092,69 @@ function embeddedToken() {
     return out;
   } catch (e) { return ''; }
 }
+// v4.0：Token 格式驗證 — 防止「遮罩字串 / 空字串 / 殘留雜訊」被當成憑證送出而導致 401 卡死
+function validToken(t) {
+  return !!(t && /^(ghp_|gho_|ghs_|ghr_|github_pat_)[A-Za-z0-9_]{10,}$/.test(t));
+}
+// v4.0：統一組裝 GitHub 請求標頭 — Token 無效時「完全不帶 Authorization」，避免送出 "token " 空憑證被判定 401
+function ghHeaders() {
+  var t = getGitHubToken();
+  if (validToken(t)) return { 'Authorization': 'token ' + t, 'Accept': 'application/vnd.github.v3+json' };
+  return { 'Accept': 'application/vnd.github.v3+json' };
+}
 function getGitHubToken() {
-  var t = localStorage.getItem('attendance_github_token');
-  if (t) return t;
-  // v3.8：使用者若曾明確「清除 Token」，尊重其意願不再使用內建憑證
-  if (localStorage.getItem('attendance_no_embedded')) return '';
+  var t = localStorage.getItem('attendance_github_token') || '';
+  if (validToken(t)) return t;
+  // 格式異常（例如舊版遮罩殘留 "ghp_••••RJf1"）→ 直接清除，改用內建憑證
+  if (t) localStorage.removeItem('attendance_github_token');
+  // v4.0：移除舊版「停用內建憑證」旗標 — 該旗標曾造成送上空憑證 → 401 卡死
+  if (localStorage.getItem('attendance_no_embedded')) localStorage.removeItem('attendance_no_embedded');
   return embeddedToken();
 }
 function setGitHubToken(t) {
-  if (t) { localStorage.setItem('attendance_github_token', t); localStorage.removeItem('attendance_no_embedded'); }
-  else { localStorage.removeItem('attendance_github_token'); localStorage.setItem('attendance_no_embedded', '1'); }
+  if (validToken(t)) localStorage.setItem('attendance_github_token', t);
+  else localStorage.removeItem('attendance_github_token');
+  localStorage.removeItem('attendance_no_embedded');
+}
+// ===== v4.0：免憑證雲端主通道（textdb.dev）=====
+// 為什麼要換：把 GitHub Token 內建在公開網頁裡，一旦 Token 到期（本次 PAT 於 2026-09-14 到期）或被撤銷，
+// 所有裝置會同時失效且無法自救。textdb.dev 免帳號、免金鑰、CORS 全開、不會過期，
+// 因此改為「免憑證通道」為主要同步管道，GitHub 降級為背景鏡像備份（失敗完全不影響同步）。
+const FREE_STORE_ID = 'ty-attendance-main-a7f3c9d2';
+// 進階：可用 localStorage.attendance_free_store_id 指向其他通道（如分公司各自獨立、或自動化測試專用）
+function freeStoreURL() {
+  var o = localStorage.getItem('attendance_free_store_id');
+  return 'https://textdb.dev/api/data/' + (o || FREE_STORE_ID);
+}
+async function freePull() {
+  var ctrl = new AbortController();
+  var t = setTimeout(function() { ctrl.abort(); }, 20000);
+  try {
+    var res = await fetch(freeStoreURL() + '?_=' + Date.now(), { signal: ctrl.signal, mode: 'cors', cache: 'no-store' });
+    clearTimeout(t);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var txt = await res.text();
+    if (!txt || !txt.trim()) throw new Error('雲端尚無資料');
+    var obj = JSON.parse(txt);
+    if (!obj || !obj.employees) throw new Error('雲端資料格式異常');
+    return obj;
+  } finally { clearTimeout(t); }
+}
+async function freePush(obj) {
+  var ctrl = new AbortController();
+  var t = setTimeout(function() { ctrl.abort(); }, 30000);
+  try {
+    var res = await fetch(freeStoreURL(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(obj),
+      signal: ctrl.signal,
+      mode: 'cors'
+    });
+    clearTimeout(t);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return true;
+  } finally { clearTimeout(t); }
 }
 const GITHUB_API_BASE = 'https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/sync/';
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/sync/';
@@ -2161,7 +2203,7 @@ function saveLocalOnly() { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
 
 async function createCloudSync() {
   if (!requireAdmin()) return;
-  if (!getGitHubToken()) { showToast('請先在下方設定 GitHub Token', 'warning'); document.getElementById('githubTokenInput').focus(); return; }
+  if (!getGitHubToken()) { showToast('雲端同步憑證未就緒，請重新整理頁面', 'warning'); return; }
   if (getSyncKey()) { showToast('已啟用雲端同步，無需重複建立', 'warning'); loadSyncSettings(); return; }
   // v3.3：建立前先檢查 GitHub 上是否已有同步檔案
   // 防止手機等新設備誤建新同步碼（只有預設 admin），導致同步混亂
@@ -2171,7 +2213,7 @@ async function createCloudSync() {
     var checkRes = await fetch(GITHUB_API_BASE, {
       signal: checkCtrl.signal,
       mode: 'cors',
-      headers: { 'Authorization': 'token ' + getGitHubToken(), 'Accept': 'application/vnd.github.v3+json' }
+      headers: { ...ghHeaders(), 'Accept': 'application/vnd.github.v3+json' }
     });
     clearTimeout(checkT);
     if (checkRes.ok) {
@@ -2214,7 +2256,7 @@ async function createCloudSync() {
     var res = await fetch(GITHUB_API_BASE + code + '.json', {
       method: 'PUT',
       headers: {
-        'Authorization': 'token ' + getGitHubToken(),
+        ...ghHeaders(),
         'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json'
       },
@@ -2243,7 +2285,7 @@ async function createCloudSync() {
 
 async function connectCloudSync() {
   if (!requireAdmin()) return;
-  if (!getGitHubToken()) { showToast('請先設定 GitHub Token', 'warning'); document.getElementById('githubTokenInput').focus(); return; }
+  if (!getGitHubToken()) { showToast('雲端同步憑證未就緒，請重新整理頁面', 'warning'); return; }
   const code = trim(document.getElementById('syncCodeInput').value);
   if (!code) { showToast('請輸入同步碼', 'error'); return; }
   if (getSyncKey() && getSyncKey() !== code) {
@@ -2264,7 +2306,7 @@ async function doConnect(code) {
       signal: ctrl.signal,
       mode: 'cors',
       headers: {
-        'Authorization': 'token ' + getGitHubToken(),
+        ...ghHeaders(),
         'Accept': 'application/vnd.github.v3+json'
       }
     });
@@ -2392,6 +2434,51 @@ function mergeDB(cloudDb) {
   if (!db.schedule) db.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
 }
 
+// ===== v4.0：GitHub 背景鏡像 =====
+// 主通道（免憑證）成功後，順手把資料備份回 GitHub repo（每 5 分鐘最多一次）。
+// 全程靜默：任何失敗（Token 過期、額度限制、網路問題）都只記一筆日誌，絕不影響使用者看到的同步狀態。
+let _lastMirrorAt = 0;
+function mirrorToGitHub(key) {
+  try {
+    if (!key || !validToken(getGitHubToken())) return;
+    if (localStorage.getItem('attendance_no_mirror')) return; // 進階：停用 GitHub 背景備份
+    var now = Date.now();
+    if (_lastMirrorAt && (now - _lastMirrorAt) < 5 * 60 * 1000) return;
+    _lastMirrorAt = now;
+    var doPut = function(bodyObj) {
+      return fetch(GITHUB_API_BASE + key + '.json', {
+        method: 'PUT',
+        mode: 'cors',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, ghHeaders()),
+        body: JSON.stringify(bodyObj)
+      });
+    };
+    var bodyObj = { message: 'Sync mirror: ' + new Date().toISOString(), content: encodeBase64(JSON.stringify(db)) };
+    var sha = getSyncSha();
+    if (sha) bodyObj.sha = sha;
+    doPut(bodyObj).then(function(r) {
+      if (r.status === 409 || r.status === 422) {
+        // SHA 缺失或過期 → 先取回雲端檔案 SHA 再重試一次
+        return fetch(GITHUB_API_BASE + key + '.json', { mode: 'cors', headers: ghHeaders() })
+          .then(function(rr) { return rr.ok ? rr.json() : null; })
+          .then(function(dd) {
+            if (!dd || !dd.sha) return null;
+            setSyncSha(dd.sha);
+            bodyObj.sha = dd.sha;
+            return doPut(bodyObj);
+          });
+      }
+      return r;
+    }).then(function(r) {
+      if (!r || !r.ok) { addSyncLog('MIRROR', 'warn', 'GitHub 備份略過（' + (r ? r.status : '無回應') + '）', r ? r.status : 0); return null; }
+      return r.json();
+    }).then(function(d) {
+      if (d && d.content && d.content.sha) setSyncSha(d.content.sha);
+      if (d) addSyncLog('MIRROR', 'ok', 'GitHub 備份已更新', 200);
+    }).catch(function() { /* 靜默：鏡像失敗不影響主通道同步 */ });
+  } catch (e) { /* 靜默 */ }
+}
+
 async function pushToCloud(silent, noBadge, skipPull) {
   var key = getSyncKey();
   if (!key) return;
@@ -2406,7 +2493,23 @@ async function pushToCloud(silent, noBadge, skipPull) {
       showToast('⚠️ 資料量已達 ' + Math.round(sizeKB) + 'KB，請定期匯出備份', 'warning');
     }
     db._last_sync = new Date().toISOString();
-    // v3.0：GitHub Contents API PUT — 正確 CORS preflight（204）
+    // ===== v4.0：免憑證主通道優先（永不過期、免設定）=====
+    try {
+      await freePush(db);
+      ok = true;
+      lastSyncError = '';
+      syncFailCount = 0;
+      syncRetryDelay = 10000;
+      if (syncRetryTimer) { clearTimeout(syncRetryTimer); syncRetryTimer = null; }
+      saveLocalOnly();
+      addSyncLog('PUT', 'ok', '免憑證通道｜' + sizeKB.toFixed(1) + 'KB', 200);
+      if (!silent) showToast('同步完成：' + new Date().toLocaleTimeString('zh-TW'), 'success');
+      mirrorToGitHub(key); // 背景鏡像備份（失敗不影響同步結果）
+      return;
+    } catch (eFree) {
+      addSyncLog('PUT', 'warn', '免憑證通道失敗（' + (eFree.message || eFree.name || '') + '），改用 GitHub 備援', 0);
+    }
+    // v3.0：GitHub Contents API PUT — 正確 CORS preflight（204）（v4.0 起僅作為備援通道）
     var putBody = {
       message: 'Sync push: ' + new Date().toISOString(),
       content: encodeBase64(JSON.stringify(db))
@@ -2418,7 +2521,7 @@ async function pushToCloud(silent, noBadge, skipPull) {
     var res = await fetch(GITHUB_API_BASE + key + '.json', {
       method: 'PUT',
       headers: {
-        'Authorization': 'token ' + getGitHubToken(),
+        ...ghHeaders(),
         'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json'
       },
@@ -2459,13 +2562,11 @@ async function pushToCloud(silent, noBadge, skipPull) {
     if (e.name === 'AbortError') {
       msg = '連線逾時（45秒），網路可能不穩定';
     } else if (errStatus === 404) {
-      msg = '同步檔案不存在（可能已刪除），正在自動尋找正確的同步碼...';
-      // v3.3：同步碼已失效（檔案被刪除），清除並自動重新尋找
+      // v4.0：GitHub 備援檔案不存在 → 主通道（免憑證）不受影響，改用預設同步碼重試即可
+      msg = 'GitHub 備援檔案不存在，改用預設同步碼重試';
+      setSyncKey(DEFAULT_SYNC_KEY);
       clearAllSyncState();
-      setSyncKey('');
-      saveLocalOnly();
-      updateSyncBadge('error');
-      if (getGitHubToken()) setTimeout(function() { autoFindSyncCode(true); }, 1500);
+      setTimeout(function() { pushToCloud(silent, noBadge, skipPull); }, 1500);
       return;
     } else if (errStatus === 401) {
       // v3.8.2：Token 認證失效自癒（加強版）— 三種情況都涵蓋：
@@ -2482,7 +2583,7 @@ async function pushToCloud(silent, noBadge, skipPull) {
         setTimeout(function() { pushToCloud(silent, noBadge, skipPull); }, 800);
         return;
       }
-      msg = 'GitHub 認證失敗（' + errStatus + '），請聯繫管理員';
+      msg = 'GitHub 備援認證失敗（' + errStatus + '）— 免憑證通道亦無回應';
     } else if (errStatus === 403) {
       msg = 'GitHub 存取被拒（403，可能為 API 速率限制），稍後自動重試';
     } else if (errStatus === 0 || !errStatus) {
@@ -2534,6 +2635,18 @@ async function pullFromCloud(silent) {
   try {
     var snap = function() { return JSON.stringify({ emp: db.employees, att: db.attendance, wifi: db.wifiSettings, sched: db.schedule }); };
     var beforeSnap = snap();
+    var cloudDb = null;
+    var channel = '';
+    // ===== v4.0：免憑證主通道優先（永不過期、免設定）=====
+    try {
+      cloudDb = await freePull();
+      channel = '免憑證通道';
+      errStatus = 200;
+    } catch (eFree) {
+      addSyncLog('GET', 'warn', '免憑證通道無回應（' + (eFree.message || eFree.name || '') + '），改用 GitHub 備援', 0);
+      cloudDb = null;
+    }
+    if (!cloudDb) {
     var ctrl = new AbortController();
     var t = setTimeout(function() { ctrl.abort(); }, 45000);
     // v3.0：GitHub API GET — 無 CDN 快取問題，即時取得最新資料
@@ -2542,7 +2655,7 @@ async function pullFromCloud(silent) {
       signal: ctrl.signal,
       mode: 'cors',
       headers: {
-        'Authorization': 'token ' + getGitHubToken(),
+        ...ghHeaders(),
         'Accept': 'application/vnd.github.v3+json'
       }
     });
@@ -2552,8 +2665,10 @@ async function pullFromCloud(silent) {
     // v3.0：GitHub API 回應格式 { content: Base64, sha: ... } — 需解碼
     var ghData = await res.json();
     var sha = ghData.sha || '';
-    var cloudDb = JSON.parse(decodeBase64(ghData.content.replace(/\n/g, '')));
-    if (sha) setSyncSha(sha); // 更新 SHA 供下次 push 用
+    cloudDb = JSON.parse(decodeBase64(ghData.content.replace(/\n/g, '')));
+    if (sha) setSyncSha(sha); // 更新 SHA 供下次 mirror 用
+    channel = 'GitHub 備援';
+    }
     if (cloudDb && cloudDb.employees) {
       mergeDB(cloudDb);
       db._last_sync = new Date().toISOString();
@@ -2561,20 +2676,19 @@ async function pullFromCloud(silent) {
       changed = snap() !== beforeSnap;
       success = true;
       syncFailCount = 0;
-      addSyncLog('GET', 'ok', changed ? '資料有更新' : '資料一致', 200);
+      addSyncLog('GET', 'ok', channel + '｜' + (changed ? '資料有更新' : '資料一致'), 200);
     }
   } catch(e) {
     var msg = '';
     if (e.name === 'AbortError') {
       msg = '連線逾時（45秒），網路可能不穩定';
     } else if (errStatus === 404) {
-      msg = '同步碼不存在或已失效，正在自動尋找正確的同步碼...';
-      // v3.3：同步碼已失效（檔案被刪除），清除並自動重新尋找
-      clearAllSyncState();
-      setSyncKey('');
-      saveLocalOnly();
-      updateSyncBadge('error');
-      if (getGitHubToken()) setTimeout(function() { autoFindSyncCode(true); }, 1500);
+      // v4.0：GitHub 備援檔案不存在 → 不改動主通道的同步碼，稍後自動重試
+      msg = 'GitHub 備援檔案不存在，稍後自動重試';
+      lastSyncError = '拉取失敗：' + msg;
+      addSyncLog('GET', 'warn', msg, 404);
+      syncInProgress = false;
+      setTimeout(function() { pullFromCloud(true); }, 3000);
       return;
     } else if (errStatus === 401) {
       // v3.8.2：Token 認證失效自癒（同 push 加強版）— 含「無 Token / 停用內建憑證」情境
@@ -2589,7 +2703,7 @@ async function pullFromCloud(silent) {
         setTimeout(function() { pullFromCloud(true); }, 800);
         return;
       }
-      msg = 'GitHub 認證失敗（' + errStatus + '），請聯繫管理員';
+      msg = 'GitHub 備援認證失敗（' + errStatus + '）— 免憑證通道亦無回應';
     } else if (errStatus === 0 || !errStatus) {
       msg = '網路連線失敗（' + (e.message || 'TypeError') + '）';
     } else if (errStatus >= 500) {
@@ -2807,6 +2921,20 @@ async function testCloudConnection() {
   if (!getSyncKey()) { showToast('尚未啟用同步', 'warning'); return; }
   showToast('正在測試雲端連線...', 'info');
   var key = getSyncKey();
+  // v4.0：先測免憑證主通道（實際同步所用的通道）
+  try {
+    var cd = await freePull();
+    if (cd && cd.employees) {
+      showToast('✅ 免憑證雲端通道正常！（雲端員工 ' + cd.employees.length + ' 人）', 'success');
+      lastSyncError = '';
+      updateSyncBadge('synced');
+      addSyncLog('TEST', 'ok', '免憑證通道正常｜雲端員工 ' + cd.employees.length + ' 人', 200);
+      return;
+    }
+    throw new Error('資料格式異常');
+  } catch (eFree) {
+    addSyncLog('TEST', 'warn', '免憑證通道異常（' + (eFree.message || '') + '），改測 GitHub 備援', 0);
+  }
   try {
     var ctrl = new AbortController();
     var t = setTimeout(function() { ctrl.abort(); }, 45000);
@@ -2815,7 +2943,7 @@ async function testCloudConnection() {
       signal: ctrl.signal,
       mode: 'cors',
       headers: {
-        'Authorization': 'token ' + getGitHubToken(),
+        ...ghHeaders(),
         'Accept': 'application/vnd.github.v3+json'
       }
     });
@@ -2982,15 +3110,34 @@ var _lastAutoFindAt = 0;
 async function autoFindSyncCode(silent) {
   // v3.8：移除 requireAdmin 限制 — 任何裝置（含未登入/員工身分）都要能自動連接雲端同步
   if (_autoFindInProgress) return;
-  if (!getGitHubToken()) {
-    if (!silent) { showToast('請先設定 GitHub Token', 'warning'); var _ti = document.getElementById('githubTokenInput'); if (_ti) _ti.focus(); }
-    return;
-  }
   // 靜默模式 30 秒內不重複嘗試（避免每次進設定頁都打 API）
   var now = Date.now();
   if (silent && _lastAutoFindAt && (now - _lastAutoFindAt) < 30000) return;
   _lastAutoFindAt = now;
   _autoFindInProgress = true;
+  var btnFast = document.getElementById('autoFindBtn');
+  if (btnFast && !silent) btnFast.disabled = true;
+  try {
+    // ===== v4.0：免憑證通道不需要「尋找同步碼」— 固定通道直接連 =====
+    // 舊版要列出 GitHub sync/ 目錄、逐一比對時間戳才能找到同步碼，任一環節 401 就會整體失敗。
+    if (!silent) showToast('正在連接雲端（免設定）...', 'info');
+    setSyncKey(DEFAULT_SYNC_KEY);
+    addSyncLog('AUTOFIND', 'ok', '使用內建免憑證通道 ' + DEFAULT_SYNC_KEY, 0);
+    await pullFromCloud(true);
+    _autoFindInProgress = false;
+    if (btnFast) btnFast.disabled = false;
+    if (!silent) showToast('已連接雲端並完成同步', 'success');
+    return;
+  } catch (e) {
+    _autoFindInProgress = false;
+    if (btnFast) btnFast.disabled = false;
+    if (!silent) showToast('連接失敗：' + (e.message || '未知錯誤'), 'error');
+    return;
+  }
+}
+// eslint-disable-next-line no-unreachable
+async function _autoFindSyncCodeLegacy(silent) {
+  if (_autoFindInProgress) return;
   var btn = document.getElementById('autoFindBtn');
   if (btn && !silent) btn.disabled = true;
   if (!silent) showToast('正在搜尋雲端同步碼...', 'info');
@@ -3001,7 +3148,7 @@ async function autoFindSyncCode(silent) {
       signal: ctrl.signal,
       mode: 'cors',
       headers: {
-        'Authorization': 'token ' + getGitHubToken(),
+        ...ghHeaders(),
         'Accept': 'application/vnd.github.v3+json'
       }
     });
@@ -3032,7 +3179,7 @@ async function autoFindSyncCode(silent) {
         var r2 = await fetch(f.url, {
           mode: 'cors',
           headers: {
-            'Authorization': 'token ' + getGitHubToken(),
+            ...ghHeaders(),
             'Accept': 'application/vnd.github.v3+json'
           }
         });
@@ -3224,15 +3371,36 @@ document.querySelectorAll('[data-page]').forEach(function(el) {
   }
 
   if (getSyncKey() && !syncFlowPending) doInitialSync();
-  // v3.8：零設定自動同步 — 尚未連接的裝置（新瀏覽器 / 新手機 / 新網域 / 清過快取）
-  // 自動尋找雲端同步碼並連接（內建憑證 + 免輸入同步碼），連上後員工名單與考勤資料即時下載
+  // v4.0：零設定自動同步 — 尚未連接的裝置（新瀏覽器 / 新手機 / 新網域 / 清過快取）
+  // 免憑證通道採固定通道，不需搜尋同步碼，直接綁定後立即拉取雲端最新資料
   if (!getSyncKey() && !syncFlowPending) {
-    setTimeout(function() { autoFindSyncCode(true); }, 800);
+    setSyncKey(DEFAULT_SYNC_KEY);
+    doInitialSync();
   }
   startAutoSync(); // 開啟自動同步引擎：每 30 秒 + 手機切回畫面時自動同步
   // v2.7：初始同步徽章狀態
   updateSyncBadge(getSyncKey() ? 'synced' : 'offline');
   checkSyncWarning();
+  // ===== v4.0：版本新鮮度守衛 =====
+  // 背景問題：GitHub Pages 對 index.html 有 10 分鐘 CDN/瀏覽器快取，使用者按一般重新整理可能仍載到舊版程式，
+  // 造成「明明已修好卻還看到舊錯誤」的鬼打牆。此守衛會比對線上建置碼，發現新版立即自動切換過去。
+  (function versionGuard() {
+    try {
+      if (location.protocol === 'file:') return; // 本機測試不需要
+      if (sessionStorage.getItem('_atnd_guard_done') === BUILD_ID) return;
+      sessionStorage.setItem('_atnd_guard_done', BUILD_ID);
+      fetch('index.html?_=' + Date.now(), { cache: 'no-store' }).then(function(r) {
+        return r.ok ? r.text() : null;
+      }).then(function(txt) {
+        if (!txt) return;
+        var m = txt.match(/const BUILD_ID = '([^']+)'/);
+        if (m && m[1] && m[1] !== BUILD_ID) {
+          showToast('偵測到新版本，正在自動更新…', 'info');
+          setTimeout(function() { location.replace(location.pathname + '?v=' + m[1]); }, 800);
+        }
+      }).catch(function() {});
+    } catch (e) {}
+  })();
 })();
 </script>
 </body>
