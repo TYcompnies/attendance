@@ -302,6 +302,19 @@
             </div>
             <div style="font-size:12px;color:#15803d;margin-top:8px;">💰 目前可用補休餘額：<strong id="compBalanceText">--</strong></div>
           </div>
+          <!-- v4.0.4 補班抵扣（平日請假 ↔ 假日補班） -->
+          <div id="makeupPanel" style="display:none;margin-top:12px;padding:12px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;">
+            <div style="font-size:13px;font-weight:600;color:#92400e;margin-bottom:8px;">📅 補班日（上班抵扣平日請假）</div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#92400e;cursor:pointer;">
+              <input type="checkbox" id="makeupCheck" onchange="onMakeupToggle()">
+              <span>今日為補班日，出勤抵扣之前的請假</span>
+            </label>
+            <div id="makeupSelectWrap" style="display:none;margin-top:10px;">
+              <select id="makeupLeaveSelect" style="width:100%;padding:6px 8px;border:1px solid #fcd34d;border-radius:6px;font-size:13px;background:#fff;"></select>
+              <div style="font-size:12px;color:#b45309;margin-top:6px;">ℹ️ 補班日工時以正常工時計薪（不加倍發加班費）；被抵扣的請假日不再扣薪、不計入請假天數。</div>
+            </div>
+            <div id="makeupHint" style="font-size:12px;color:#b45309;margin-top:6px;"></div>
+          </div>
         </div>
         <div class="info-banner blue">
           <span>ℹ️</span>
@@ -647,7 +660,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.3 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資 + 補休)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.4 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資 + 補休 + 補班抵扣)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -1444,6 +1457,7 @@ async function loadClockStatus() {
   document.getElementById('clockInBtn').disabled = !!(record && record.clock_in);
   document.getElementById('clockOutBtn').disabled = !!(record && record.clock_out) || !(record && record.clock_in);
   updateCompInfo(record); // v4.0.3 補休餘額與加班提示
+  updateMakeupInfo(record); // v4.0.4 補班抵扣面板
 }
 
 // ===== v4.0.3 補休（Compensatory Leave） =====
@@ -1485,6 +1499,79 @@ function updateCompInfo(record) {
   }
 }
 
+// ===== v4.0.4 補班抵扣（平日請假 ↔ 假日補班） =====
+// 可抵扣假別：會扣薪／計假的假別（半薪＋不支薪）；支薪假（特休/婚/喪/產/補休）不需抵扣
+const MAKEUP_OFFSETABLE = ['personal', 'sick', 'menstrual', 'other'];
+
+// 該員工所有「補班抵扣」紀錄：{ 請假日: 補班打卡紀錄 }
+function getMakeupOffsets(empId) {
+  const map = {};
+  (db.attendance || []).forEach(function(a) {
+    if (a.employee_id === empId && a.makeup_type === 'leave_offset' && a.offset_leave_date) {
+      map[a.offset_leave_date] = a;
+    }
+  });
+  return map;
+}
+
+// 可抵扣的請假日清單：已核准 + 可抵假別 + 尚未被抵扣 + 非今日
+function getOffsetableLeaveDays(empId) {
+  const offsets = getMakeupOffsets(empId);
+  const today = new Date().toLocaleDateString('en-CA');
+  return getApprovedLeaveDays(empId, null, null).filter(function(ld) {
+    return MAKEUP_OFFSETABLE.indexOf(ld.leave_type) !== -1 && ld.date !== today && !offsets[ld.date];
+  });
+}
+
+function makeupOffsetBadge() {
+  return '<span class="badge" style="background:#fef3c7;color:#b45309">📅 補班抵扣</span>';
+}
+
+// 打卡頁：補班面板顯示／狀態（僅週六、週日顯示；已登記補班則唯讀顯示）
+function updateMakeupInfo(record) {
+  const panelEl = document.getElementById('makeupPanel');
+  const checkEl = document.getElementById('makeupCheck');
+  const wrapEl = document.getElementById('makeupSelectWrap');
+  const hintEl = document.getElementById('makeupHint');
+  if (!panelEl || !checkEl || !hintEl) return;
+  if (currentUser.role === 'admin') { panelEl.style.display = 'none'; return; } // admin 不列入薪資
+  // 今日已登記補班 → 唯讀顯示抵扣結果
+  if (record && record.makeup_type === 'leave_offset') {
+    panelEl.style.display = '';
+    checkEl.checked = true;
+    checkEl.disabled = true;
+    if (wrapEl) wrapEl.style.display = 'none';
+    const lv = (db.leave_requests || []).find(function(l) { return l.id === record.offset_leave_id; });
+    hintEl.textContent = '✅ 今日已登記為補班日，抵扣 ' + record.offset_leave_date + ' 的' + leaveTypeText(lv ? (lv.leave_type || lv.type) : '') + '。';
+    return;
+  }
+  checkEl.disabled = false;
+  const dow = new Date().getDay();
+  const isWeekend = dow === 0 || dow === 6; // 國定假日補班多落在週六，週日一併支援
+  panelEl.style.display = isWeekend ? '' : 'none';
+  if (!isWeekend) { checkEl.checked = false; if (wrapEl) wrapEl.style.display = 'none'; hintEl.textContent = ''; return; }
+  const cnt = getOffsetableLeaveDays(currentUser.employeeId).length;
+  hintEl.textContent = cnt > 0
+    ? '今日為休假日。若公司安排補班，請勾選並選擇要抵扣的請假日（目前有 ' + cnt + ' 天可抵扣）。'
+    : '今日為休假日。若公司安排補班，請勾選；目前沒有可抵扣的請假日（僅事假／病假／生理假／其他等已核准假單可抵扣）。';
+}
+
+// 勾選補班 → 展開可抵扣請假日下拉選單
+function onMakeupToggle() {
+  const checkEl = document.getElementById('makeupCheck');
+  const wrapEl = document.getElementById('makeupSelectWrap');
+  const selEl = document.getElementById('makeupLeaveSelect');
+  if (!checkEl || !wrapEl || !selEl) return;
+  if (!checkEl.checked) { wrapEl.style.display = 'none'; return; }
+  const days = getOffsetableLeaveDays(currentUser.employeeId);
+  selEl.innerHTML = days.length === 0
+    ? '<option value="">（沒有可抵扣的請假日）</option>'
+    : days.map(function(ld) {
+        return '<option value="' + esc(ld.leave_id) + '|' + ld.date + '">' + ld.date + ' ' + leaveTypeText(ld.leave_type) + '</option>';
+      }).join('');
+  wrapEl.style.display = '';
+}
+
 function clockIn() {
   if (!requireLogin()) return;
   const today = new Date().toLocaleDateString('en-CA');
@@ -1505,6 +1592,25 @@ function clockIn() {
     return;
   }
 
+  // v4.0.4 補班抵扣：勾選「今日為補班日」時，須選擇要抵扣的請假日（先驗證後寫入）
+  let makeupInfo = null;
+  const makeupCheck = document.getElementById('makeupCheck');
+  if (makeupCheck && makeupCheck.checked && !isAdmin) {
+    const sel = document.getElementById('makeupLeaveSelect');
+    const chosen = sel ? sel.value : '';
+    if (!chosen) { showToast('請選擇要抵扣的請假日，或取消勾選補班', 'error'); return; }
+    const mp = chosen.split('|'); // leave_id|請假日期
+    const leave = (db.leave_requests || []).find(function(l) { return l.id === mp[0] && l.status === 'approved'; });
+    if (!leave) { showToast('找不到可抵扣的核准假單，請重新整理後再試', 'error'); return; }
+    if (MAKEUP_OFFSETABLE.indexOf(leave.leave_type || leave.type) === -1) { showToast('該假別（支薪假）不需補班抵扣', 'error'); return; }
+    const dup = (db.attendance || []).find(function(a) {
+      return a.employee_id === currentUser.employeeId && a.makeup_type === 'leave_offset' &&
+        a.offset_leave_id === mp[0] && a.offset_leave_date === mp[1] && a.date !== today;
+    });
+    if (dup) { showToast('該請假日已由 ' + dup.date + ' 的補班抵扣', 'error'); return; }
+    makeupInfo = { leave_id: mp[0], leave_date: mp[1], leave_type: leave.leave_type || leave.type };
+  }
+
   const status = calcAttendanceStatus(now, null);
   const nowISO = new Date().toISOString();
   if (record) {
@@ -1514,6 +1620,11 @@ function clockIn() {
     record.wifi_verified = wifiVerified ? 1 : 0;
     record.status = status;
     record.updated_at = nowISO;
+    if (makeupInfo) {
+      record.makeup_type = 'leave_offset';
+      record.offset_leave_id = makeupInfo.leave_id;
+      record.offset_leave_date = makeupInfo.leave_date;
+    }
   } else {
     db.attendance.push({
       id: db.nextAttId++, employee_id: currentUser.employeeId,
@@ -1521,13 +1632,17 @@ function clockIn() {
       ip_address: currentIP, clock_in_ip: currentIP, clock_out_ip: null,
       wifi_verified: wifiVerified ? 1 : 0,
       status: status, created_at: new Date().toLocaleString('zh-TW'),
-      updated_at: nowISO
+      updated_at: nowISO,
+      makeup_type: makeupInfo ? 'leave_offset' : undefined,
+      offset_leave_id: makeupInfo ? makeupInfo.leave_id : undefined,
+      offset_leave_date: makeupInfo ? makeupInfo.leave_date : undefined
     });
   }
   saveDB();
   const lateMsg = status === 'late' ? '（遲到）' : '';
   const adminMsg = isAdmin ? '（管理員不受WiFi管制）' : '';
-  showToast('上班打卡成功！時間：' + now + lateMsg + adminMsg, 'success');
+  const makeupMsg = makeupInfo ? '，已登記補班抵扣 ' + makeupInfo.leave_date + ' 的' + leaveTypeText(makeupInfo.leave_type) : '';
+  showToast('上班打卡成功！時間：' + now + lateMsg + makeupMsg + adminMsg, 'success');
   loadClockStatus();
 }
 
@@ -1610,6 +1725,7 @@ function loadHistory() {
   var leaveDays = getApprovedLeaveDays(currentUser.employeeId, startDate || null, endDate || null);
   var leaveMap = {};
   leaveDays.forEach(function(ld) { leaveMap[ld.date] = ld; });
+  var offsetMapMe = getMakeupOffsets(currentUser.employeeId); // v4.0.4 補班抵扣對照
   var attDates = {};
   records.forEach(function(r) {
     attDates[r.date] = true;
@@ -1660,6 +1776,7 @@ function loadHistory() {
   }
   tbody.innerHTML = records.map(function(r) {
     if (r._isLeave) {
+      var offsetCell = offsetMapMe[r.date] ? '<br>' + makeupOffsetBadge() : '';
       return '<tr style="background:#f0f7ff">' +
         '<td>' + esc(r.date) + '</td>' +
         '<td>' + leaveDayBadge(r._leaveType) + '</td>' +
@@ -1667,7 +1784,7 @@ function loadHistory() {
         '<td><span style="color:#999">休假</span></td>' +
         '<td><span style="color:#999">--</span></td>' +
         '<td><span style="color:#999">--</span></td>' +
-        '<td>' + leaveDayBadge(r._leaveType) + '</td>' +
+        '<td>' + leaveDayBadge(r._leaveType) + offsetCell + '</td>' +
         '</tr>';
     }
     const wh = calcWorkHours(r);
@@ -1676,6 +1793,7 @@ function loadHistory() {
     else if (r.clock_in) hours = '<span style="color:#999">工作中</span>';
     var statusCell = statusBadge(r.status);
     if (r._leaveType) statusCell += '<br><span style="font-size:11px">' + leaveDayBadge(r._leaveType) + '</span>';
+    if (r.makeup_type === 'leave_offset') statusCell += '<br><span style="font-size:11px">' + makeupOffsetBadge() + '</span>';
     return '<tr>' +
       '<td>' + esc(r.date) + '</td>' +
       '<td>' + (r.clock_in ? esc(r.clock_in) : '<span style="color:#999">未打卡</span>') + '</td>' +
@@ -1972,6 +2090,11 @@ function loadAdminAttendance() {
   var leaveDays = getApprovedLeaveDays(empId || null, startDate || null, endDate || null);
   var leaveMap = {};
   leaveDays.forEach(function(ld) { leaveMap[ld.employee_id + '|' + ld.date] = ld; });
+  // v4.0.4: 補班抵扣對照（員工|請假日 → 補班紀錄）
+  var offsetMap = {};
+  (db.attendance || []).forEach(function(a) {
+    if (a.makeup_type === 'leave_offset' && a.offset_leave_date) offsetMap[a.employee_id + '|' + a.offset_leave_date] = a;
+  });
   var attKeys = {};
   records.forEach(function(r) {
     var key = r.employee_id + '|' + r.date;
@@ -1998,6 +2121,7 @@ function loadAdminAttendance() {
   }
   tbody.innerHTML = records.map(function(r) {
     if (r._isLeave) {
+      var offsetCell = offsetMap[r.employee_id + '|' + r.date] ? '<br>' + makeupOffsetBadge() : '';
       return '<tr style="background:#f0f7ff">' +
         '<td>' + esc(r.date) + '</td>' +
         '<td style="font-weight:600">' + esc(r.employee_id) + '</td>' +
@@ -2008,12 +2132,13 @@ function loadAdminAttendance() {
         '<td><span style="color:#999">休假</span></td>' +
         '<td><span style="color:#999">--</span></td>' +
         '<td><span style="color:#999">--</span></td>' +
-        '<td>' + leaveDayBadge(r._leaveType) + '</td>' +
+        '<td>' + leaveDayBadge(r._leaveType) + offsetCell + '</td>' +
         '</tr>';
     }
     var wh = calcWorkHours(r);
     var statusCell = statusBadge(r.status);
     if (r._leaveType) statusCell += '<br><span style="font-size:11px">' + leaveDayBadge(r._leaveType) + '</span>';
+    if (r.makeup_type === 'leave_offset') statusCell += '<br><span style="font-size:11px">' + makeupOffsetBadge() + '</span>';
     return '<tr>' +
       '<td>' + esc(r.date) + '</td>' +
       '<td style="font-weight:600">' + esc(r.employee_id) + '</td>' +
@@ -2046,6 +2171,10 @@ function exportCSV() {
   var leaveDays = getApprovedLeaveDays(empId || null, startDate || null, endDate || null);
   var leaveMap = {};
   leaveDays.forEach(function(ld) { leaveMap[ld.employee_id + '|' + ld.date] = ld; });
+  var offsetMapCSV = {}; // v4.0.4 補班抵扣對照
+  (db.attendance || []).forEach(function(a) {
+    if (a.makeup_type === 'leave_offset' && a.offset_leave_date) offsetMapCSV[a.employee_id + '|' + a.offset_leave_date] = a;
+  });
   var attKeys = {};
   records.forEach(function(r) {
     var key = r.employee_id + '|' + r.date;
@@ -2070,9 +2199,10 @@ function exportCSV() {
   records.forEach(function(r) {
     var clockIn, clockOut, whText, whHours, ip1, ip2, wifi, status;
     if (r._isLeave) {
-      clockIn = '請假(' + leaveTypeText(r._leaveType) + ')';
+      var csvOffset = offsetMapCSV[r.employee_id + '|' + r.date] ? '+已補班抵扣' : '';
+      clockIn = '請假(' + leaveTypeText(r._leaveType) + ')' + csvOffset;
       clockOut = ''; whText = ''; whHours = ''; ip1 = ''; ip2 = ''; wifi = '';
-      status = '請假(' + leaveTypeText(r._leaveType) + ')';
+      status = '請假(' + leaveTypeText(r._leaveType) + ')' + csvOffset;
     } else {
       const wh = calcWorkHours(r);
       whText = wh ? wh.text : ''; whHours = wh ? wh.hours.toFixed(2) : '';
@@ -2081,6 +2211,7 @@ function exportCSV() {
       wifi = r.wifi_verified ? '是' : '否';
       status = statusZh[r.status] || r.status;
       if (r._leaveType) status += ' / 請假(' + leaveTypeText(r._leaveType) + ')';
+      if (r.makeup_type === 'leave_offset') status += ' / 補班抵扣(' + (r.offset_leave_date || '') + ')';
     }
     var row = [r.employee_id, r.employee_name, r.department, r.date, clockIn, clockOut, whText, whHours, ip1, ip2, wifi, status];
     lines.push(row.map(function(v) {
@@ -2229,11 +2360,26 @@ function calcPayrollForEmployee(emp, ym) {
   });
   otCompHours = Math.min(otCompHours, otHours);
 
-  // 已核准請假（逐日展開）→ 給薪分類；同日有打卡以出勤為準不扣薪
+  // v4.0.4 補班抵扣：補班日（makeup_type=leave_offset）可抵扣一天平日請假
+  const offsetDates = {};
+  let makeupDays = 0;
+  (db.attendance || []).forEach(function(a) {
+    if (a.employee_id !== emp.employee_id) return;
+    if (a.makeup_type === 'leave_offset' && a.offset_leave_date) {
+      makeupDays++;
+      if (a.offset_leave_date >= range.start && a.offset_leave_date <= range.end) {
+        offsetDates[a.offset_leave_date] = true;
+      }
+    }
+  });
+
+  // 已核准請假（逐日展開）→ 給薪分類；同日有打卡以出勤為準不扣薪；已被補班抵扣者不計請假、不扣薪
   const leaveDays = getApprovedLeaveDays(emp.employee_id, range.start, range.end);
   const payCount = { paid: 0, half: 0, unpaid: 0 };
   const netCount = { paid: 0, half: 0, unpaid: 0 };
+  let leaveOffsetDays = 0;
   leaveDays.forEach(function(ld) {
+    if (offsetDates[ld.date]) { leaveOffsetDays++; return; } // v4.0.4 已由補班日抵扣
     const rule = LEAVE_PAY_RULES[ld.leave_type] || 'unpaid';
     payCount[rule]++;
     if (!clockedDates[ld.date]) netCount[rule]++;
@@ -2274,6 +2420,7 @@ function calcPayrollForEmployee(emp, ym) {
     ot_comp_hours: Math.round(otCompHours * 100) / 100,
     comp_taken_hours: compTakenHours,
     leave_paid: payCount.paid, leave_half: payCount.half, leave_unpaid: payCount.unpaid,
+    leave_offset_days: leaveOffsetDays, makeup_days: makeupDays,
     net_leave_half: netCount.half, net_leave_unpaid: netCount.unpaid,
     base_pay: basePay, ot_pay: otPay, comp_leave_pay: compLeavePay, leave_deduct: leaveDeduct, gross_pay: grossPay,
     ot_multiplier: cfg.ot_multiplier, standard_daily_hours: stdH
@@ -2412,7 +2559,8 @@ function calcAndRenderPayroll(silent) {
       '<td>' + fmtHours(r.total_hours) + ' 小時</td>' +
       '<td>' + fmtHours(r.ot_hours) + ' 小時</td>' +
       '<td style="font-size:12px">' + fmtHours(r.ot_comp_hours) + ' / ' + fmtHours(r.comp_taken_hours) + ' 小時</td>' +
-      '<td style="font-size:12px">' + r.leave_paid + ' / ' + r.leave_half + ' / ' + r.leave_unpaid + ' 天</td>' +
+      '<td style="font-size:12px">' + r.leave_paid + ' / ' + r.leave_half + ' / ' + r.leave_unpaid + ' 天' +
+        (r.leave_offset_days > 0 ? '<br><span style="color:#b45309">📅 補班抵扣 ' + r.leave_offset_days + ' 天</span>' : '') + '</td>' +
       '<td>' + fmtMoney(r.base_pay) + '</td>' +
       '<td>' + fmtMoney(r.ot_pay) + '</td>' +
       '<td>' + (r.comp_leave_pay > 0 ? fmtMoney(r.comp_leave_pay) : '--') + '</td>' +
@@ -2432,12 +2580,12 @@ function exportPayrollCSV() {
   if (!_lastPayrollRows || _lastPayrollRows.length === 0) { showToast('請先計算薪資再匯出', 'warning'); return; }
   const ym = _lastPayrollMonth || document.getElementById('payrollMonthInput').value;
   const headers = ['員工編號', '姓名', '部門', '計薪月份', '薪資制', '出勤天數', '總工時(小時)', '加班時數(小時)', '加班轉補休(小時)', '補休使用(小時)',
-    '請假-支薪(天)', '請假-半薪(天)', '請假-不支薪(天)', '本薪', '加班費', '補休給薪', '請假扣款', '應發薪資', '加班倍率', '標準每日工時'];
+    '請假-支薪(天)', '請假-半薪(天)', '請假-不支薪(天)', '補班抵扣(天)', '本薪', '加班費', '補休給薪', '請假扣款', '應發薪資', '加班倍率', '標準每日工時'];
   const lines = [headers.join(',')];
   _lastPayrollRows.forEach(function(r) {
     const row = [r.employee_id, r.name, r.department, ym, r.pay_type_text, r.present_days, r.total_hours, r.ot_hours,
       r.ot_comp_hours, r.comp_taken_hours,
-      r.leave_paid, r.leave_half, r.leave_unpaid,
+      r.leave_paid, r.leave_half, r.leave_unpaid, r.leave_offset_days,
       Math.round(r.base_pay * 100) / 100, Math.round(r.ot_pay * 100) / 100, Math.round(r.comp_leave_pay * 100) / 100,
       Math.round(r.leave_deduct * 100) / 100,
       Math.round(r.gross_pay * 100) / 100, r.ot_multiplier, r.standard_daily_hours];
@@ -2516,7 +2664,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '4.0.3.20260914';
+const BUILD_ID = '4.0.4.20260914';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
@@ -2896,6 +3044,13 @@ function mergeDB(cloudDb) {
       la.updated_at = ca.updated_at;
       if (ca.status) la.status = ca.status;
       if (typeof ca.wifi_verified !== 'undefined') la.wifi_verified = ca.wifi_verified;
+      // v4.0.4: 欄位級合併補齊 — 加班轉補休與補班抵扣欄位也要跨裝置傳播
+      if (typeof ca.comp_hours !== 'undefined') la.comp_hours = ca.comp_hours;
+      if (ca.makeup_type) {
+        la.makeup_type = ca.makeup_type;
+        la.offset_leave_id = ca.offset_leave_id;
+        la.offset_leave_date = ca.offset_leave_date;
+      }
       changed = true;
     }
     if (changed && !la.updated_at) la.updated_at = new Date().toISOString();
