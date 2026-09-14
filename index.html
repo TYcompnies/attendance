@@ -29,6 +29,23 @@
     .login-logo .icon { width: 72px; height: 72px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 36px; margin-bottom: 16px; }
     .login-logo h1 { font-size: 24px; font-weight: 700; }
     .login-logo p { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+    /* v4.0.7 登入首頁：系統時程 + 系統流程 + 使用辦法 */
+    .login-schedule-banner { margin-top: 20px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 12.5px; color: var(--text-secondary); }
+    .phase-badge { padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .phase-test { background: #fef9c3; color: #854d0e; }
+    .phase-live { background: #dcfce7; color: #166534; }
+    .phase-pre { background: #dbeafe; color: #1e40af; }
+    .phase-building { background: #e5e7eb; color: #374151; }
+    .login-guide { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 4px; text-align: left; }
+    .login-guide details { border-bottom: 1px solid var(--border); }
+    .login-guide details:last-child { border-bottom: none; }
+    .login-guide summary { cursor: pointer; font-size: 13.5px; font-weight: 600; padding: 10px 2px; list-style-position: inside; color: var(--text-primary); }
+    .login-guide summary:hover { color: var(--primary); }
+    .guide-body { font-size: 12.5px; color: var(--text-secondary); line-height: 1.75; padding: 2px 2px 14px 20px; }
+    .guide-body strong { color: var(--text-primary); }
+    .guide-step { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
+    .guide-step .n { flex: none; width: 20px; height: 20px; margin-top: 2px; background: var(--primary); color: #fff; border-radius: 50%; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .guide-tag { display: inline-block; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 1px 8px; font-size: 11.5px; margin: 1px 2px 1px 0; }
     .form-group { margin-bottom: 20px; }
     .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
     .form-group input, .form-group select { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 15px; outline: none; transition: border-color 0.2s; }
@@ -219,6 +236,39 @@
       </div>
       <button type="submit" class="btn btn-primary">登入系統</button>
     </form>
+    <!-- v4.0.7 系統時程（管理員可於「系統設定 → 系統時程」設定測試/上線日期） -->
+    <div class="login-schedule-banner" id="loginScheduleBanner"></div>
+    <!-- v4.0.7 系統流程 -->
+    <div class="login-guide">
+      <details>
+        <summary>📋 系統流程</summary>
+        <div class="guide-body">
+          <div class="guide-step"><span class="n">1</span><span><strong>員工登入</strong> — 輸入公司配發的員工編號與密碼登入系統。</span></div>
+          <div class="guide-step"><span class="n">2</span><span><strong>上下班打卡</strong> — 於公司 WiFi／網路環境按下「上班打卡／下班打卡」（管理員不受 WiFi 管制）。系統自動記錄時間、IP 與遲到早退。</span></div>
+          <div class="guide-step"><span class="n">3</span><span><strong>請假申請</strong> — 於「請假」頁填寫假別、日期與原因送出（特休、病假、生理假、事假、婚假、喪假、產假、其他）。</span></div>
+          <div class="guide-step"><span class="n">4</span><span><strong>管理員審批</strong> — 管理員於「請假審批」頁核准或駁回，員工即時看到結果。</span></div>
+          <div class="guide-step"><span class="n">5</span><span><strong>統計與薪資</strong> — 管理員於「統計概覽」查看全員出勤，於「薪資計算」頁自動試算每月薪資（加班費、請假扣款、補班抵扣）。</span></div>
+        </div>
+      </details>
+      <details>
+        <summary>📖 使用辦法</summary>
+        <div class="guide-body">
+          <strong>🕘 打卡規則</strong><br>
+          · 每日各一次上班、下班打卡；打卡需在公司網路（WiFi/IP 白名單）環境下進行。<br>
+          · 系統依排班時間自動判定遲到／早退；工作時數自動計算，超過標準每日工時的部分計為加班。<br>
+          · 補班日（國定假日／週六日出勤）打卡時，勾選「補班」並選擇要抵扣的平日請假，即可自動抵扣、不重複扣薪；忘記勾選可於當日下班後使用「📝 補登記」補登記。<br>
+          <strong>📝 請假規則</strong><br>
+          · 假單送出後為「待審核」狀態，經管理員核准後生效。<br>
+          · 給薪規則：<span class="guide-tag">支薪</span>特休、婚假、喪假、產假 ／ <span class="guide-tag">半薪</span>病假、生理假 ／ <span class="guide-tag">不支薪</span>事假、其他。<br>
+          · 同一天同時有打卡紀錄與假單時，以實際出勤為準、不重複扣薪。<br>
+          <strong>☁️ 資料同步</strong><br>
+          · 所有資料每 30 秒自動雲端同步，任何裝置開啟本網址即自動取得最新資料，無需輸入任何代碼。<br>
+          <strong>🔐 管理員</strong><br>
+          · 預設帳號 admin／admin123，首次登入後請立即於「員工管理」修改密碼。<br>
+          · 管理功能：統計概覽、員工管理、考勤記錄、請假審批、薪資計算、WiFi 設定、系統設定。
+        </div>
+      </details>
+    </div>
   </div>
 </div>
 
@@ -577,6 +627,20 @@
         </div>
         <button class="btn btn-primary" onclick="saveScheduleSettings()">儲存排班設定</button>
       </div>
+      <!-- v4.0.7 系統時程：測試日期 / 上線日期（顯示於登入首頁） -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">📅 系統時程（測試 / 上線日期）</div></div>
+        <div class="info-banner blue">
+          <span>ℹ️</span>
+          <span>設定系統的<strong>測試日期</strong>與<strong>上線日期</strong>後，登入首頁會顯示目前系統階段徽章（⚙️ 建置中 → 🟡 測試階段 → 🚀 上線倒數 → 🟢 正式營運）與倒數天數，讓全體員工一目瞭然。設定會自動雲端同步到所有裝置。</span>
+        </div>
+        <div class="schedule-row" style="margin-bottom: 20px;">
+          <div class="form-group"><label>🧪 測試日期（系統開始測試）</label><input type="date" id="systemTestDate"></div>
+          <div class="form-group"><label>🚀 上線日期（正式營運）</label><input type="date" id="systemLaunchDate"></div>
+        </div>
+        <div class="hint-text" id="systemSchedulePreview" style="margin-bottom: 12px;"></div>
+        <button class="btn btn-primary" onclick="saveSystemSchedule()">儲存系統時程</button>
+      </div>
       <div class="card">
         <div class="card-header"><div class="card-title">資料備份與還原</div></div>
         <div class="info-banner blue">
@@ -650,7 +714,8 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.6 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.7 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程)</span></td></tr>
+          <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -768,6 +833,8 @@ function loadDB() {
       // v4.0.2: 人資模組（薪資計算參數 + 員工薪資設定）
       if (!parsed.payrollConfig) parsed.payrollConfig = { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' };
       if (!parsed.salary_settings) parsed.salary_settings = {};
+      // v4.0.7: 系統時程（測試日期 / 上線日期）
+      if (!parsed.systemSchedule) parsed.systemSchedule = { test_date: '', launch_date: '', updated_at: '' };
       if (!parsed.nextEmpId) parsed.nextEmpId = parsed.employees.length + 1;
       if (!parsed.nextAttId) parsed.nextAttId = parsed.attendance.length + 1;
       // Migration: add updated_at for cloud sync merge correctness
@@ -792,6 +859,7 @@ function loadDB() {
     schedule: { start_time: '09:00', end_time: '18:00', enabled: true },
     payrollConfig: { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' },
     salary_settings: {},
+    systemSchedule: { test_date: '', launch_date: '', updated_at: '' },
     nextEmpId: 2, nextAttId: 1
   };
   localStorage.setItem(DB_KEY, JSON.stringify(defaultDB));
@@ -1469,6 +1537,7 @@ function updateMakeupInfo(record) {
   const hintEl = document.getElementById('makeupHint');
   const regBtn = document.getElementById('makeupRegisterBtn');
   if (!panelEl || !checkEl || !hintEl) return;
+  if (!currentUser) return; // 防禦：loadClockStatus 在 await detectIP 期間使用者登出（v4.0.7 修補的 race）
   if (currentUser.role === 'admin') { panelEl.style.display = 'none'; _makeupRegArmed = false; return; } // admin 不列入薪資
   panelEl.style.display = ''; // v4.0.5 不再限定週六/週日
   const regBtnIdle = function() { if (regBtn) { regBtn.style.display = 'none'; regBtn.textContent = '補登記為補班日'; } };
@@ -2277,6 +2346,81 @@ function saveScheduleSettings() {
   showToast('排班設定已儲存！', 'success');
 }
 
+// ===== v4.0.7 系統時程（測試日期 / 上線日期，顯示於登入首頁） =====
+function getSystemSchedule() {
+  const s = db.systemSchedule || {};
+  return { test_date: s.test_date || '', launch_date: s.launch_date || '' };
+}
+
+// 依今天日期計算系統階段（登入首頁橫幅與設定頁預覽共用）
+// 階段：⚙️ 建置中（未設日期）→ 🟡 測試階段 → 🚀 上線倒數 → 🟢 正式營運
+function calcSystemPhase(todayStr) {
+  const today = todayStr || new Date().toLocaleDateString('en-CA');
+  const s = getSystemSchedule();
+  if (s.launch_date && today >= s.launch_date) return { key: 'live', badge: '🟢 正式營運', cls: 'phase-live', test_date: s.test_date, launch_date: s.launch_date };
+  if (s.test_date && today >= s.test_date) return { key: 'test', badge: '🟡 測試階段', cls: 'phase-test', test_date: s.test_date, launch_date: s.launch_date };
+  if (s.launch_date) return { key: 'pre', badge: '🚀 上線倒數', cls: 'phase-pre', test_date: s.test_date, launch_date: s.launch_date };
+  return { key: 'building', badge: '⚙️ 系統建置中', cls: 'phase-building', test_date: s.test_date, launch_date: s.launch_date };
+}
+
+// 登入首頁時程橫幅（init / 雲端同步合併後刷新）
+function renderLoginScheduleInfo() {
+  const el = document.getElementById('loginScheduleBanner');
+  if (!el) return;
+  const ph = calcSystemPhase();
+  let html = '<span class="phase-badge ' + ph.cls + '">' + ph.badge + '</span>';
+  if (ph.test_date) html += '<span>🧪 測試日期：' + ph.test_date + '</span>';
+  if (ph.launch_date) html += '<span>🚀 上線日期：' + ph.launch_date + '</span>';
+  const today = new Date().toLocaleDateString('en-CA');
+  if (ph.launch_date && today < ph.launch_date) {
+    const days = Math.round((new Date(ph.launch_date) - new Date(today)) / 86400000);
+    html += '<span>⏳ 距正式上線還有 <strong>' + days + '</strong> 天</span>';
+  }
+  if (!ph.test_date && !ph.launch_date) html += '<span>日期尚未設定（管理員：系統設定 → 📅 系統時程）</span>';
+  el.innerHTML = html;
+}
+
+// 設定頁：載入欄位 + 階段預覽
+function loadSystemScheduleFields() {
+  if (!requireAdmin()) return;
+  const s = getSystemSchedule();
+  const tEl = document.getElementById('systemTestDate');
+  const lEl = document.getElementById('systemLaunchDate');
+  if (tEl) tEl.value = s.test_date;
+  if (lEl) lEl.value = s.launch_date;
+  renderSchedulePreview();
+}
+
+function renderSchedulePreview() {
+  const pv = document.getElementById('systemSchedulePreview');
+  if (!pv) return;
+  const ph = calcSystemPhase();
+  pv.textContent = (ph.key === 'building' && !ph.test_date && !ph.launch_date)
+    ? '尚未設定日期 — 登入首頁將顯示「⚙️ 系統建置中」'
+    : '目前階段：' + ph.badge;
+  // 系統資訊表格同步顯示
+  const info = document.getElementById('systemInfoSchedule');
+  if (info) {
+    let txt = ph.badge;
+    if (ph.test_date) txt += '（測試：' + ph.test_date + '）';
+    if (ph.launch_date) txt += '（上線：' + ph.launch_date + '）';
+    if (!ph.test_date && !ph.launch_date) txt = '未設定（系統設定 → 📅 系統時程）';
+    info.textContent = txt;
+  }
+}
+
+function saveSystemSchedule() {
+  if (!requireAdmin()) return;
+  const test = document.getElementById('systemTestDate').value;
+  const launch = document.getElementById('systemLaunchDate').value;
+  if (test && launch && test > launch) { showToast('測試日期不可晚於上線日期', 'error'); return; }
+  db.systemSchedule = { test_date: test, launch_date: launch, updated_at: new Date().toISOString() };
+  saveDB();
+  showToast('系統時程已儲存！登入首頁將顯示最新階段', 'success');
+  renderSchedulePreview();
+  renderLoginScheduleInfo();
+}
+
 // ===== Payroll / HR Module (v4.0.2 人資模組) =====
 // 假別給薪規則：paid=支薪、half=半薪、unpaid=不支薪
 const LEAVE_PAY_RULES = {
@@ -2612,6 +2756,7 @@ function importFullData(event) {
         if (!db.schedule) db.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
         if (!db.payrollConfig) db.payrollConfig = { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' };
         if (!db.salary_settings) db.salary_settings = {};
+        if (!db.systemSchedule) db.systemSchedule = { test_date: '', launch_date: '', updated_at: '' }; // v4.0.7
         if (!db.nextEmpId) db.nextEmpId = db.employees.length + 1;
         if (!db.nextAttId) db.nextAttId = db.attendance.length + 1;
         // 補上 updated_at，確保匯入後與雲端合併時新舊判定正確
@@ -2621,6 +2766,8 @@ function importFullData(event) {
         saveDB();
         showToast('資料還原成功！', 'success');
         loadEmployees();
+        loadSystemScheduleFields(); // v4.0.7 還原後刷新系統時程欄位
+        renderLoginScheduleInfo();
       } catch(err) {
         showToast('檔案解析失敗：' + err.message, 'error');
       }
@@ -2633,7 +2780,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '4.0.6.20260914';
+const BUILD_ID = '4.0.7.20260914';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
@@ -3078,6 +3225,14 @@ function mergeDB(cloudDb) {
     });
   })();
   db.salary_settings = salMap;
+
+  // v4.0.7: 系統時程合併 — updated_at 新者為準（管理員任一裝置改日期，全部裝置登入首頁同步更新）
+  if (!db.systemSchedule) db.systemSchedule = { test_date: '', launch_date: '', updated_at: '' };
+  if (cloudDb.systemSchedule) {
+    const ssLts = db.systemSchedule.updated_at || '', ssCts = cloudDb.systemSchedule.updated_at || '';
+    if (ssCts && (!ssLts || ssCts > ssLts)) db.systemSchedule = cloudDb.systemSchedule;
+  }
+  renderLoginScheduleInfo(); // 未登入狀態下的自動同步也要刷新登入首頁橫幅
 }
 
 // ===== v4.0：GitHub 背景鏡像 =====
@@ -3422,6 +3577,7 @@ function refreshAllViews() {
   loadClockStatus();   // 打卡頁：今日上下班狀態、WiFi 狀態（所有人）
   loadHistory();       // 個人考勤紀錄（所有人）
   loadMyLeaves();      // 個人請假紀錄（所有人）
+  renderLoginScheduleInfo(); // v4.0.7 系統時程（雲端同步後登出仍會看到最新階段）
   if (currentUser.role === 'admin') {
     loadAdminStats();       // 管理統計與圖表
     loadEmployees();        // 員工管理列表
@@ -3430,6 +3586,7 @@ function refreshAllViews() {
     refreshPayrollViews();  // v4.0.2 薪資設定與試算
     loadWifiSettings();     // WiFi 設定（IP白名單）
     loadScheduleSettings(); // 排班設定
+    loadSystemScheduleFields(); // v4.0.7 系統時程設定欄位
     loadSyncSettings();     // 雲端同步狀態
   }
 }
@@ -3984,7 +4141,7 @@ function switchPage(pageName) {
   if (pageName === 'admin-leave') loadAdminLeaves();
   if (pageName === 'admin-payroll') loadPayrollPage();
   if (pageName === 'admin-wifi') loadWifiSettings();
-  if (pageName === 'admin-settings') { loadScheduleSettings(); loadSyncSettings(); }
+  if (pageName === 'admin-settings') { loadScheduleSettings(); loadSystemScheduleFields(); loadSyncSettings(); }
 }
 
 document.querySelectorAll('[data-page]').forEach(function(el) {
@@ -4025,6 +4182,7 @@ document.querySelectorAll('[data-page]').forEach(function(el) {
       localStorage.removeItem(SESSION_KEY);
     }
   }
+  renderLoginScheduleInfo(); // v4.0.7 登入首頁系統時程橫幅
 
   // 啟動後從雲端拉取最新資料 → 合併 → 回推 → 自動重整所有項目畫面（靜默：失敗不彈窗）
   function doInitialSync() {
