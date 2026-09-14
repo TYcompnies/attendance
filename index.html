@@ -247,7 +247,6 @@
           <div class="guide-step"><span class="n">2</span><span><strong>上下班打卡</strong> — 於公司 WiFi／網路環境按下「上班打卡／下班打卡」（管理員不受 WiFi 管制）。系統自動記錄時間、IP 與遲到早退。</span></div>
           <div class="guide-step"><span class="n">3</span><span><strong>請假申請</strong> — 於「請假」頁填寫假別、日期與原因送出（特休、病假、生理假、事假、婚假、喪假、產假、其他）。</span></div>
           <div class="guide-step"><span class="n">4</span><span><strong>管理員審批</strong> — 管理員於「請假審批」頁核准或駁回，員工即時看到結果。</span></div>
-          <div class="guide-step"><span class="n">5</span><span><strong>統計與薪資</strong> — 管理員於「統計概覽」查看全員出勤，於「薪資計算」頁自動試算每月薪資（加班費、請假扣款、補班抵扣）。</span></div>
         </div>
       </details>
       <details>
@@ -729,7 +728,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.9 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資）)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.10 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資）)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
@@ -2844,7 +2843,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '4.0.9.20260914';
+const BUILD_ID = '4.0.10.20260914';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
