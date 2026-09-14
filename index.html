@@ -302,9 +302,9 @@
             </div>
             <div style="font-size:12px;color:#15803d;margin-top:8px;">💰 目前可用補休餘額：<strong id="compBalanceText">--</strong></div>
           </div>
-          <!-- v4.0.4 補班抵扣（平日請假 ↔ 假日補班） -->
+          <!-- v4.0.5 補班抵扣（平日請假 ↔ 補班日出勤）；任何上班日皆顯示 -->
           <div id="makeupPanel" style="display:none;margin-top:12px;padding:12px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;">
-            <div style="font-size:13px;font-weight:600;color:#92400e;margin-bottom:8px;">📅 補班日（上班抵扣平日請假）</div>
+            <div style="font-size:13px;font-weight:600;color:#92400e;margin-bottom:8px;">📅 補班日（出勤抵扣平日請假）</div>
             <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#92400e;cursor:pointer;">
               <input type="checkbox" id="makeupCheck" onchange="onMakeupToggle()">
               <span>今日為補班日，出勤抵扣之前的請假</span>
@@ -314,6 +314,7 @@
               <div style="font-size:12px;color:#b45309;margin-top:6px;">ℹ️ 補班日工時以正常工時計薪（不加倍發加班費）；被抵扣的請假日不再扣薪、不計入請假天數。</div>
             </div>
             <div id="makeupHint" style="font-size:12px;color:#b45309;margin-top:6px;"></div>
+            <button class="btn btn-primary" id="makeupRegisterBtn" onclick="registerMakeup()" style="display:none;margin-top:10px;font-size:13px;padding:6px 14px;">補登記為補班日</button>
           </div>
         </div>
         <div class="info-banner blue">
@@ -660,7 +661,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.4 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資 + 補休 + 補班抵扣)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.5 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資 + 補休 + 補班抵扣 · 補班全日開放 + 補登記)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -1457,7 +1458,7 @@ async function loadClockStatus() {
   document.getElementById('clockInBtn').disabled = !!(record && record.clock_in);
   document.getElementById('clockOutBtn').disabled = !!(record && record.clock_out) || !(record && record.clock_in);
   updateCompInfo(record); // v4.0.3 補休餘額與加班提示
-  updateMakeupInfo(record); // v4.0.4 補班抵扣面板
+  updateMakeupInfo(record); // v4.0.5 補班抵扣面板（任何上班日皆顯示）
 }
 
 // ===== v4.0.3 補休（Compensatory Leave） =====
@@ -1499,7 +1500,7 @@ function updateCompInfo(record) {
   }
 }
 
-// ===== v4.0.4 補班抵扣（平日請假 ↔ 假日補班） =====
+// ===== v4.0.5 補班抵扣（平日請假 ↔ 補班日出勤；任何上班日皆可登記，已打卡可補登記） =====
 // 可抵扣假別：會扣薪／計假的假別（半薪＋不支薪）；支薪假（特休/婚/喪/產/補休）不需抵扣
 const MAKEUP_OFFSETABLE = ['personal', 'sick', 'menstrual', 'other'];
 
@@ -1527,17 +1528,21 @@ function makeupOffsetBadge() {
   return '<span class="badge" style="background:#fef3c7;color:#b45309">📅 補班抵扣</span>';
 }
 
-// 打卡頁：補班面板顯示／狀態（僅週六、週日顯示；已登記補班則唯讀顯示）
+// 打卡頁：補班面板顯示／狀態（v4.0.5：任何上班日皆可登記；已登記則唯讀顯示）
 function updateMakeupInfo(record) {
   const panelEl = document.getElementById('makeupPanel');
   const checkEl = document.getElementById('makeupCheck');
   const wrapEl = document.getElementById('makeupSelectWrap');
   const hintEl = document.getElementById('makeupHint');
+  const regBtn = document.getElementById('makeupRegisterBtn');
   if (!panelEl || !checkEl || !hintEl) return;
-  if (currentUser.role === 'admin') { panelEl.style.display = 'none'; return; } // admin 不列入薪資
+  if (currentUser.role === 'admin') { panelEl.style.display = 'none'; _makeupRegArmed = false; return; } // admin 不列入薪資
+  panelEl.style.display = ''; // v4.0.5 不再限定週六/週日
+  const regBtnIdle = function() { if (regBtn) { regBtn.style.display = 'none'; regBtn.textContent = '補登記為補班日'; } };
   // 今日已登記補班 → 唯讀顯示抵扣結果
   if (record && record.makeup_type === 'leave_offset') {
-    panelEl.style.display = '';
+    _makeupRegArmed = false;
+    regBtnIdle();
     checkEl.checked = true;
     checkEl.disabled = true;
     if (wrapEl) wrapEl.style.display = 'none';
@@ -1545,15 +1550,39 @@ function updateMakeupInfo(record) {
     hintEl.textContent = '✅ 今日已登記為補班日，抵扣 ' + record.offset_leave_date + ' 的' + leaveTypeText(lv ? (lv.leave_type || lv.type) : '') + '。';
     return;
   }
-  checkEl.disabled = false;
-  const dow = new Date().getDay();
-  const isWeekend = dow === 0 || dow === 6; // 國定假日補班多落在週六，週日一併支援
-  panelEl.style.display = isWeekend ? '' : 'none';
-  if (!isWeekend) { checkEl.checked = false; if (wrapEl) wrapEl.style.display = 'none'; hintEl.textContent = ''; return; }
   const cnt = getOffsetableLeaveDays(currentUser.employeeId).length;
+  // 今日已上班打卡但未登記補班、且有可抵扣假 → 可補登記
+  if (record && record.clock_in && cnt > 0) {
+    if (_makeupRegArmed) {
+      // 補登記進行中 → 維持展開狀態（避免 auto-sync 刷新把畫面重置）
+      checkEl.disabled = false;
+      checkEl.checked = true;
+      onMakeupToggle();
+      if (wrapEl) wrapEl.style.display = '';
+      if (regBtn) { regBtn.style.display = ''; regBtn.textContent = '確認補登記'; }
+      return;
+    }
+    regBtnIdle();
+    checkEl.checked = false;
+    checkEl.disabled = true;
+    if (wrapEl) wrapEl.style.display = 'none';
+    hintEl.textContent = '今日已完成上班打卡（' + record.clock_in + '），未登記補班。若今日確實為公司排定的補班日，請按下方按鈕補登記（目前有 ' + cnt + ' 天可抵扣）。';
+    if (regBtn) regBtn.style.display = '';
+    return;
+  }
+  _makeupRegArmed = false;
+  regBtnIdle();
+  checkEl.disabled = false;
+  checkEl.checked = false;
+  if (record && record.clock_in) {
+    checkEl.disabled = true;
+    if (wrapEl) wrapEl.style.display = 'none';
+    hintEl.textContent = '今日已完成上班打卡（' + record.clock_in + '），未登記補班。目前沒有可抵扣的請假日（僅事假／病假／生理假／其他等已核准假單可抵扣）。';
+    return;
+  }
   hintEl.textContent = cnt > 0
-    ? '今日為休假日。若公司安排補班，請勾選並選擇要抵扣的請假日（目前有 ' + cnt + ' 天可抵扣）。'
-    : '今日為休假日。若公司安排補班，請勾選；目前沒有可抵扣的請假日（僅事假／病假／生理假／其他等已核准假單可抵扣）。';
+    ? '一般上班日請勿勾選。若今日為公司排定的補班日（含國定假日、週六／週日），請勾選並選擇要抵扣的請假日（目前有 ' + cnt + ' 天可抵扣）。'
+    : '一般上班日請勿勾選。若今日為公司排定的補班日，請勾選；目前沒有可抵扣的請假日（僅事假／病假／生理假／其他等已核准假單可抵扣）。';
 }
 
 // 勾選補班 → 展開可抵扣請假日下拉選單
@@ -1570,6 +1599,62 @@ function onMakeupToggle() {
         return '<option value="' + esc(ld.leave_id) + '|' + ld.date + '">' + ld.date + ' ' + leaveTypeText(ld.leave_type) + '</option>';
       }).join('');
   wrapEl.style.display = '';
+}
+
+// 驗證下拉選單的補班抵扣選擇 → { ok:true, info:{leave_id,leave_date,leave_type} } 或 { ok:false, msg }
+function buildMakeupSelection() {
+  const sel = document.getElementById('makeupLeaveSelect');
+  const chosen = sel ? sel.value : '';
+  if (!chosen) return { ok: false, msg: '請選擇要抵扣的請假日，或取消勾選補班' };
+  const mp = chosen.split('|'); // leave_id|請假日期
+  const leave = (db.leave_requests || []).find(function(l) { return l.id === mp[0] && l.status === 'approved'; });
+  if (!leave) return { ok: false, msg: '找不到可抵扣的核准假單，請重新整理後再試' };
+  if (MAKEUP_OFFSETABLE.indexOf(leave.leave_type || leave.type) === -1) return { ok: false, msg: '該假別（支薪假）不需補班抵扣' };
+  const dup = (db.attendance || []).find(function(a) {
+    return a.employee_id === currentUser.employeeId && a.makeup_type === 'leave_offset' &&
+      a.offset_leave_id === mp[0] && a.offset_leave_date === mp[1] && a.date !== new Date().toLocaleDateString('en-CA');
+  });
+  if (dup) return { ok: false, msg: '該請假日已由 ' + dup.date + ' 的補班抵扣' };
+  return { ok: true, info: { leave_id: mp[0], leave_date: mp[1], leave_type: leave.leave_type || leave.type } };
+}
+
+// v4.0.5 補登記：已上班打卡但忘記勾選補班時，事後補登記（規則與打卡時相同；兩段式操作）
+var _makeupRegArmed = false; // 補登記兩段式操作狀態（var 宣告避免 TDZ）
+function registerMakeup() {
+  if (!requireLogin()) return;
+  if (currentUser.role === 'admin') { showToast('管理員不列入薪資計算，無需補班登記', 'warning'); return; }
+  const today = new Date().toLocaleDateString('en-CA');
+  const record = db.attendance.find(function(a) { return a.employee_id === currentUser.employeeId && a.date === today; });
+  if (!record || !record.clock_in) { showToast('請先完成上班打卡', 'warning'); return; }
+  if (record.makeup_type === 'leave_offset') { showToast('今日已登記為補班日', 'warning'); return; }
+  const regBtn = document.getElementById('makeupRegisterBtn');
+  const checkEl = document.getElementById('makeupCheck');
+  const wrapEl = document.getElementById('makeupSelectWrap');
+  const hintEl = document.getElementById('makeupHint');
+  // 第一次點擊：展開請假日下拉，讓使用者選擇
+  if (!_makeupRegArmed) {
+    const days = getOffsetableLeaveDays(currentUser.employeeId);
+    if (days.length === 0) { showToast('目前沒有可抵扣的請假日', 'error'); return; }
+    if (checkEl) { checkEl.disabled = false; checkEl.checked = true; }
+    onMakeupToggle();
+    if (wrapEl) wrapEl.style.display = '';
+    _makeupRegArmed = true;
+    if (regBtn) regBtn.textContent = '確認補登記';
+    if (hintEl) hintEl.textContent = '請選擇要抵扣的請假日，再按「確認補登記」送出（按錯可重新整理頁面取消）。';
+    return;
+  }
+  // 第二次點擊：驗證後才寫入
+  const r = buildMakeupSelection();
+  if (!r.ok) { showToast(r.msg, 'error'); return; }
+  if (!confirm('確定將今日 ' + today + ' 登記為補班日，並抵扣 ' + r.info.leave_date + ' 的' + leaveTypeText(r.info.leave_type) + '嗎？')) return;
+  record.makeup_type = 'leave_offset';
+  record.offset_leave_id = r.info.leave_id;
+  record.offset_leave_date = r.info.leave_date;
+  record.updated_at = new Date().toISOString();
+  _makeupRegArmed = false;
+  saveDB();
+  showToast('已補登記為補班日，抵扣 ' + r.info.leave_date + ' 的' + leaveTypeText(r.info.leave_type), 'success');
+  loadClockStatus();
 }
 
 function clockIn() {
@@ -1592,23 +1677,13 @@ function clockIn() {
     return;
   }
 
-  // v4.0.4 補班抵扣：勾選「今日為補班日」時，須選擇要抵扣的請假日（先驗證後寫入）
+  // v4.0.5 補班抵扣：勾選「今日為補班日」時，須選擇要抵扣的請假日（先驗證後寫入）
   let makeupInfo = null;
   const makeupCheck = document.getElementById('makeupCheck');
   if (makeupCheck && makeupCheck.checked && !isAdmin) {
-    const sel = document.getElementById('makeupLeaveSelect');
-    const chosen = sel ? sel.value : '';
-    if (!chosen) { showToast('請選擇要抵扣的請假日，或取消勾選補班', 'error'); return; }
-    const mp = chosen.split('|'); // leave_id|請假日期
-    const leave = (db.leave_requests || []).find(function(l) { return l.id === mp[0] && l.status === 'approved'; });
-    if (!leave) { showToast('找不到可抵扣的核准假單，請重新整理後再試', 'error'); return; }
-    if (MAKEUP_OFFSETABLE.indexOf(leave.leave_type || leave.type) === -1) { showToast('該假別（支薪假）不需補班抵扣', 'error'); return; }
-    const dup = (db.attendance || []).find(function(a) {
-      return a.employee_id === currentUser.employeeId && a.makeup_type === 'leave_offset' &&
-        a.offset_leave_id === mp[0] && a.offset_leave_date === mp[1] && a.date !== today;
-    });
-    if (dup) { showToast('該請假日已由 ' + dup.date + ' 的補班抵扣', 'error'); return; }
-    makeupInfo = { leave_id: mp[0], leave_date: mp[1], leave_type: leave.leave_type || leave.type };
+    const r = buildMakeupSelection();
+    if (!r.ok) { showToast(r.msg, 'error'); return; }
+    makeupInfo = r.info;
   }
 
   const status = calcAttendanceStatus(now, null);
@@ -2664,7 +2739,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '4.0.4.20260914';
+const BUILD_ID = '4.0.5.20260914';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
