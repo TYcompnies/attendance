@@ -238,6 +238,7 @@
         <button class="nav-tab admin-only" data-page="admin-employees" style="display:none">員工管理</button>
         <button class="nav-tab admin-only" data-page="admin-attendance" style="display:none">考勤記錄</button>
         <button class="nav-tab admin-only" data-page="admin-leave" style="display:none">請假審批</button>
+        <button class="nav-tab admin-only" data-page="admin-payroll" style="display:none">薪資計算</button>
         <button class="nav-tab admin-only" data-page="admin-wifi" style="display:none">WiFi設定</button>
         <button class="nav-tab admin-only" data-page="admin-settings" style="display:none">系統設定</button>
       </div>
@@ -470,6 +471,48 @@
       </div>
     </div>
 
+    <!-- Admin Payroll (v4.0.2 人資模組) -->
+    <div id="page-admin-payroll" class="page">
+      <div class="section-title">薪資計算（人資模組）</div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">薪資計算參數</div></div>
+        <div class="info-banner blue">
+          <span>ℹ️</span>
+          <span>計算規則：<strong>支薪假</strong>＝特休、婚假、喪假、產假；<strong>半薪假</strong>＝病假、生理假；<strong>不支薪假</strong>＝事假、其他。月薪制日薪＝月薪 ÷ 30、時薪＝日薪 ÷ 標準每日工時；加班費＝加班時數 × 時薪 × 倍率。加班時數＝每日實際工時超過標準每日工時的部分。同一天同時請假且有打卡者，以出勤為準、不重複扣薪。</span>
+        </div>
+        <div class="schedule-row" style="margin-bottom: 20px;">
+          <div class="form-group"><label>加班費倍率</label><input type="number" id="payrollOtMultiplier" value="1.34" min="1" step="0.01"></div>
+          <div class="form-group"><label>標準每日工時（小時）</label><input type="number" id="payrollStdHours" value="8" min="1" max="24" step="0.5"></div>
+        </div>
+        <button class="btn btn-primary" onclick="savePayrollConfig()">儲存計算參數</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">員工薪資設定</div></div>
+        <div class="info-banner" style="background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;">
+          <span>👑</span>
+          <span>薪資設定會自動同步到雲端與所有裝置。<strong>未設定薪資的員工不會出現在每月薪資試算中</strong>（系統管理員 admin 除外）。</span>
+        </div>
+        <div class="table-wrapper">
+          <table><thead><tr><th>員工編號</th><th>姓名</th><th>部門</th><th>薪資制</th><th>月薪（$）</th><th>時薪（$）</th><th>狀態</th></tr></thead>
+          <tbody id="salarySettingsTableBody"><tr><td colspan="7" class="empty-state">載入中...</td></tr></tbody></table>
+        </div>
+        <button class="btn btn-primary" onclick="saveSalarySettings()" style="margin-top:16px;">儲存全部薪資設定</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">每月薪資試算</div></div>
+        <div class="filter-bar">
+          <div class="form-group"><label>計薪月份</label><input type="month" id="payrollMonthInput"></div>
+          <button class="btn btn-primary btn-sm" onclick="calcAndRenderPayroll()">計算</button>
+          <button class="btn btn-outline btn-sm" onclick="exportPayrollCSV()">匯出CSV</button>
+        </div>
+        <div class="table-wrapper">
+          <table><thead><tr><th>員工編號</th><th>姓名</th><th>薪資制</th><th>出勤天數</th><th>總工時</th><th>加班時數</th><th>請假(支薪/半薪/不支薪)</th><th>本薪</th><th>加班費</th><th>請假扣款</th><th>應發薪資</th></tr></thead>
+          <tbody id="payrollTableBody"><tr><td colspan="11" class="empty-state">請選擇月份後點擊「計算」</td></tr></tbody></table>
+        </div>
+        <div class="hint-text" style="margin-top:10px;">金額僅為系統試算結果，實際發放前請再人工核對出勤與假單。</div>
+      </div>
+    </div>
+
     <!-- Admin WiFi Settings -->
     <div id="page-admin-wifi" class="page">
       <div class="section-title">WiFi打卡設定</div>
@@ -536,7 +579,7 @@
         <div class="card-header"><div class="card-title">☁️ 雲端同步（跨裝置）</div></div>
         <div class="info-banner blue">
           <span>ℹ️</span>
-          <span>資料會自動同步到雲端（免憑證、免設定），<strong>所有紀錄不會遺失</strong>。啟用後<strong>每 30 秒自動同步</strong>、手機切回畫面立即同步，<strong>同步後系統裡所有項目（員工、考勤、統計、WiFi、排班）都會自動更新</strong>。換裝置只需：在新裝置打開本網址，<strong>約 2 秒自動連接完成，免輸入任何代碼</strong>。</span>
+          <span>資料會自動同步到雲端（免憑證、免設定），<strong>所有紀錄不會遺失</strong>。啟用後<strong>每 30 秒自動同步</strong>、手機切回畫面立即同步，<strong>同步後系統裡所有項目（員工、考勤、統計、WiFi、排班、薪資設定）都會自動更新</strong>。換裝置只需：在新裝置打開本網址，<strong>約 2 秒自動連接完成，免輸入任何代碼</strong>。</span>
         </div>
         <div id="syncStatusBox" style="padding:14px 16px;background:var(--bg);border-radius:10px;margin-bottom:16px;font-size:14px;">
           <span id="syncStatusText">載入中...</span>
@@ -593,7 +636,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.1 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-10 · 免憑證多通道同步)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.2 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資模組)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -611,6 +654,7 @@
     <button class="admin-only" data-page="admin-employees" style="display:none">員工</button>
     <button class="admin-only" data-page="admin-attendance" style="display:none">考勤</button>
     <button class="admin-only" data-page="admin-leave" style="display:none">假單</button>
+    <button class="admin-only" data-page="admin-payroll" style="display:none">薪資</button>
     <button class="admin-only" data-page="admin-wifi" style="display:none">WiFi</button>
     <button class="admin-only" data-page="admin-settings" style="display:none">設定</button>
   </div>
@@ -707,6 +751,9 @@ function loadDB() {
       if (!parsed.leave_requests) parsed.leave_requests = [];
       // v3.7: deleted_employees (已刪除員工名單，防止雲端同步復活)
       if (!parsed.deleted_employees) parsed.deleted_employees = [];
+      // v4.0.2: 人資模組（薪資計算參數 + 員工薪資設定）
+      if (!parsed.payrollConfig) parsed.payrollConfig = { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' };
+      if (!parsed.salary_settings) parsed.salary_settings = {};
       if (!parsed.nextEmpId) parsed.nextEmpId = parsed.employees.length + 1;
       if (!parsed.nextAttId) parsed.nextAttId = parsed.attendance.length + 1;
       // Migration: add updated_at for cloud sync merge correctness
@@ -729,6 +776,8 @@ function loadDB() {
     deleted_employees: [],
     wifiSettings: { allowed_ips: '', wifi_name: 'Office WiFi', enabled: false },
     schedule: { start_time: '09:00', end_time: '18:00', enabled: true },
+    payrollConfig: { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' },
+    salary_settings: {},
     nextEmpId: 2, nextAttId: 1
   };
   localStorage.setItem(DB_KEY, JSON.stringify(defaultDB));
@@ -2021,6 +2070,290 @@ function saveScheduleSettings() {
   showToast('排班設定已儲存！', 'success');
 }
 
+// ===== Payroll / HR Module (v4.0.2 人資模組) =====
+// 假別給薪規則：paid=支薪、half=半薪、unpaid=不支薪
+const LEAVE_PAY_RULES = {
+  annual: 'paid', marriage: 'paid', bereavement: 'paid', parental: 'paid',
+  sick: 'half', menstrual: 'half', personal: 'unpaid', other: 'unpaid'
+};
+
+function payrollDefaults() { return { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' }; }
+
+function getPayrollConfig() {
+  const c = db.payrollConfig || {};
+  const ot = parseFloat(c.ot_multiplier);
+  const std = parseFloat(c.standard_daily_hours);
+  return {
+    ot_multiplier: (ot && ot >= 1) ? ot : 1.34,
+    standard_daily_hours: (std && std > 0 && std <= 24) ? std : 8,
+    updated_at: c.updated_at || ''
+  };
+}
+
+function getSalarySetting(empId) { return (db.salary_settings || {})[empId] || null; }
+
+// 'YYYY-MM' → { start: 'YYYY-MM-01', end: 'YYYY-MM-DD'(月底) }
+function monthRange(ym) {
+  const p = (ym || '').split('-');
+  const y = parseInt(p[0]), m = parseInt(p[1]);
+  if (!y || !m || m < 1 || m > 12) return null;
+  const last = new Date(y, m, 0).getDate();
+  return { start: ym + '-01', end: ym + '-' + String(last).padStart(2, '0') };
+}
+
+function fmtMoney(v) {
+  const n = Number(v) || 0;
+  return '$' + n.toLocaleString('zh-TW', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+function fmtHours(h) {
+  const n = Math.round((Number(h) || 0) * 100) / 100;
+  return n % 1 === 0 ? String(n) : n.toFixed(2);
+}
+
+// 單一員工單月薪資試算（未設定薪資回傳 null）
+function calcPayrollForEmployee(emp, ym) {
+  const setting = getSalarySetting(emp.employee_id);
+  if (!setting) return null;
+  const cfg = getPayrollConfig();
+  const range = monthRange(ym);
+  if (!range) return null;
+  const stdH = cfg.standard_daily_hours;
+
+  // 考勤統計（該月有打卡上班的紀錄）
+  const recs = (db.attendance || []).filter(function(a) {
+    return a.employee_id === emp.employee_id && a.date >= range.start && a.date <= range.end && a.clock_in;
+  });
+  let totalHours = 0, otHours = 0;
+  const clockedDates = {};
+  recs.forEach(function(r) {
+    clockedDates[r.date] = true;
+    const wh = calcWorkHours(r);
+    if (!wh) return;
+    totalHours += wh.hours;
+    if (wh.hours > stdH) otHours += wh.hours - stdH;
+  });
+
+  // 已核准請假（逐日展開）→ 給薪分類；同日有打卡以出勤為準不扣薪
+  const leaveDays = getApprovedLeaveDays(emp.employee_id, range.start, range.end);
+  const payCount = { paid: 0, half: 0, unpaid: 0 };
+  const netCount = { paid: 0, half: 0, unpaid: 0 };
+  leaveDays.forEach(function(ld) {
+    const rule = LEAVE_PAY_RULES[ld.leave_type] || 'unpaid';
+    payCount[rule]++;
+    if (!clockedDates[ld.date]) netCount[rule]++;
+  });
+
+  let basePay = 0, otPay = 0, leaveDeduct = 0, hourlyRate = 0;
+  if (setting.pay_type === 'hourly') {
+    hourlyRate = parseFloat(setting.hourly_rate) || 0;
+    const normalHours = Math.max(0, totalHours - otHours);
+    basePay = normalHours * hourlyRate;
+    otPay = otHours * hourlyRate * cfg.ot_multiplier;
+    // 時薪制：請假本來就不支薪，無扣款
+  } else {
+    const monthly = parseFloat(setting.monthly_salary) || 0;
+    const dayRate = monthly / 30;
+    hourlyRate = stdH > 0 ? dayRate / stdH : 0;
+    basePay = monthly;
+    otPay = otHours * hourlyRate * cfg.ot_multiplier;
+    leaveDeduct = netCount.unpaid * dayRate + netCount.half * dayRate * 0.5;
+  }
+  const grossPay = basePay + otPay - leaveDeduct;
+  return {
+    employee_id: emp.employee_id, name: emp.name, department: emp.department || '',
+    pay_type: setting.pay_type === 'hourly' ? 'hourly' : 'monthly',
+    pay_type_text: setting.pay_type === 'hourly' ? '時薪制' : '月薪制',
+    monthly_salary: parseFloat(setting.monthly_salary) || 0,
+    hourly_rate: parseFloat(setting.hourly_rate) || 0,
+    present_days: recs.length,
+    total_hours: Math.round(totalHours * 100) / 100,
+    ot_hours: Math.round(otHours * 100) / 100,
+    leave_paid: payCount.paid, leave_half: payCount.half, leave_unpaid: payCount.unpaid,
+    net_leave_half: netCount.half, net_leave_unpaid: netCount.unpaid,
+    base_pay: basePay, ot_pay: otPay, leave_deduct: leaveDeduct, gross_pay: grossPay,
+    ot_multiplier: cfg.ot_multiplier, standard_daily_hours: stdH
+  };
+}
+
+// ===== 薪資頁：畫面載入與渲染 =====
+function loadPayrollPage() {
+  if (!requireAdmin()) return;
+  loadPayrollConfigUI();
+  renderSalarySettings();
+  const monthInput = document.getElementById('payrollMonthInput');
+  if (!monthInput.value) monthInput.value = new Date().toLocaleDateString('en-CA').slice(0, 7);
+  calcAndRenderPayroll(true);
+}
+
+function loadPayrollConfigUI() {
+  if (!requireAdmin()) return;
+  const cfg = getPayrollConfig();
+  document.getElementById('payrollOtMultiplier').value = cfg.ot_multiplier;
+  document.getElementById('payrollStdHours').value = cfg.standard_daily_hours;
+}
+
+function savePayrollConfig() {
+  if (!requireAdmin()) return;
+  const ot = parseFloat(document.getElementById('payrollOtMultiplier').value);
+  const std = parseFloat(document.getElementById('payrollStdHours').value);
+  if (!ot || ot < 1) { showToast('加班費倍率需 ≥ 1', 'error'); return; }
+  if (!std || std <= 0 || std > 24) { showToast('標準每日工時需介於 1~24 小時', 'error'); return; }
+  db.payrollConfig = { ot_multiplier: ot, standard_daily_hours: std, updated_at: new Date().toISOString() };
+  saveDB();
+  showToast('薪資計算參數已儲存！', 'success');
+}
+
+const SALARY_INPUT_STYLE = 'width:110px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;';
+
+function renderSalarySettings() {
+  if (!requireAdmin()) return;
+  const tbody = document.getElementById('salarySettingsTableBody');
+  const employees = (db.employees || []).filter(function(e) { return e.active; });
+  if (employees.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="icon">👤</div>暫無在職員工</td></tr>';
+    return;
+  }
+  tbody.innerHTML = employees.map(function(e) {
+    const s = getSalarySetting(e.employee_id) || {};
+    const payType = s.pay_type === 'hourly' ? 'hourly' : 'monthly';
+    const status = s.updated_at
+      ? '<span class="badge badge-success">已設定</span>'
+      : '<span class="badge" style="background:#e5e7eb;color:#6b7280">未設定</span>';
+    return '<tr>' +
+      '<td style="font-weight:600">' + esc(e.employee_id) + '</td>' +
+      '<td>' + esc(e.name) + '</td>' +
+      '<td>' + (esc(e.department) || '--') + '</td>' +
+      '<td><select data-emp="' + esc(e.employee_id) + '" data-field="pay_type" onchange="onSalaryTypeChange(this)" style="' + SALARY_INPUT_STYLE + '">' +
+        '<option value="monthly"' + (payType === 'monthly' ? ' selected' : '') + '>月薪制</option>' +
+        '<option value="hourly"' + (payType === 'hourly' ? ' selected' : '') + '>時薪制</option>' +
+      '</select></td>' +
+      '<td><input type="number" min="0" step="100" placeholder="0" data-emp="' + esc(e.employee_id) + '" data-field="monthly_salary" value="' + (s.monthly_salary || '') + '" style="' + SALARY_INPUT_STYLE + '"></td>' +
+      '<td><input type="number" min="0" step="5" placeholder="0" data-emp="' + esc(e.employee_id) + '" data-field="hourly_rate" value="' + (s.hourly_rate || '') + '" style="' + SALARY_INPUT_STYLE + '"></td>' +
+      '<td>' + status + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+function onSalaryTypeChange(sel) {
+  const row = sel.closest('tr');
+  if (!row) return;
+  const isHourly = sel.value === 'hourly';
+  row.querySelectorAll('[data-field="monthly_salary"]').forEach(function(i) { i.disabled = isHourly; i.placeholder = isHourly ? '—' : '0'; });
+  row.querySelectorAll('[data-field="hourly_rate"]').forEach(function(i) { i.disabled = !isHourly; i.placeholder = isHourly ? '0' : '—'; });
+}
+
+function saveSalarySettings() {
+  if (!requireAdmin()) return;
+  const nowISO = new Date().toISOString();
+  const settings = {};
+  let savedCount = 0;
+  document.querySelectorAll('#salarySettingsTableBody [data-field="pay_type"]').forEach(function(sel) {
+    const empId = sel.dataset.emp;
+    if (!empId) return;
+    const row = sel.closest('tr');
+    const monthly = parseFloat((row.querySelector('[data-field="monthly_salary"]') || {}).value);
+    const hourly = parseFloat((row.querySelector('[data-field="hourly_rate"]') || {}).value);
+    const payType = sel.value;
+    if (payType === 'monthly' && (!monthly || monthly <= 0)) return; // 未填 → 不設定
+    if (payType === 'hourly' && (!hourly || hourly <= 0)) return;
+    const prev = getSalarySetting(empId) || {};
+    settings[empId] = {
+      pay_type: payType,
+      monthly_salary: payType === 'monthly' ? monthly : (parseFloat(prev.monthly_salary) || 0),
+      hourly_rate: payType === 'hourly' ? hourly : (parseFloat(prev.hourly_rate) || 0),
+      updated_at: nowISO
+    };
+    savedCount++;
+  });
+  db.salary_settings = settings;
+  saveDB();
+  showToast('已儲存 ' + savedCount + ' 位員工的薪資設定！', 'success');
+  renderSalarySettings();
+  const m = document.getElementById('payrollMonthInput').value;
+  if (m) calcAndRenderPayroll(true);
+}
+
+let _lastPayrollRows = []; // 供 CSV 匯出使用
+let _lastPayrollMonth = '';
+
+function calcAndRenderPayroll(silent) {
+  if (!requireAdmin()) return;
+  const ym = document.getElementById('payrollMonthInput').value;
+  const tbody = document.getElementById('payrollTableBody');
+  if (!ym) { if (!silent) showToast('請選擇計薪月份', 'warning'); return; }
+  const range = monthRange(ym);
+  if (!range) { showToast('月份格式有誤', 'error'); return; }
+
+  const rows = [];
+  (db.employees || []).forEach(function(e) {
+    if (e.employee_id === 'admin') return; // 系統管理員不列入薪資
+    const r = calcPayrollForEmployee(e, ym);
+    if (r) rows.push(r);
+  });
+  _lastPayrollRows = rows;
+  _lastPayrollMonth = ym;
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="11" class="empty-state">此月份沒有可計算的員工（請先在上方設定員工薪資）</td></tr>';
+    return;
+  }
+  const totalGross = rows.reduce(function(s, r) { return s + r.gross_pay; }, 0);
+  tbody.innerHTML = rows.map(function(r) {
+    return '<tr>' +
+      '<td style="font-weight:600">' + esc(r.employee_id) + '</td>' +
+      '<td>' + esc(r.name) + '</td>' +
+      '<td>' + r.pay_type_text + '</td>' +
+      '<td>' + r.present_days + ' 天</td>' +
+      '<td>' + fmtHours(r.total_hours) + ' 小時</td>' +
+      '<td>' + fmtHours(r.ot_hours) + ' 小時</td>' +
+      '<td style="font-size:12px">' + r.leave_paid + ' / ' + r.leave_half + ' / ' + r.leave_unpaid + ' 天</td>' +
+      '<td>' + fmtMoney(r.base_pay) + '</td>' +
+      '<td>' + fmtMoney(r.ot_pay) + '</td>' +
+      '<td style="color:var(--danger)">' + (r.leave_deduct > 0 ? '-' + fmtMoney(r.leave_deduct) : '--') + '</td>' +
+      '<td style="font-weight:700;color:var(--primary)">' + fmtMoney(r.gross_pay) + '</td>' +
+      '</tr>';
+  }).join('') +
+  '<tr style="background:var(--bg);font-weight:700">' +
+    '<td colspan="10" style="text-align:right">應發總額（' + rows.length + ' 人）</td>' +
+    '<td style="color:var(--primary)">' + fmtMoney(totalGross) + '</td>' +
+  '</tr>';
+  if (!silent) showToast('已計算 ' + ym + ' 薪資（' + rows.length + ' 人）', 'success');
+}
+
+function exportPayrollCSV() {
+  if (!requireAdmin()) return;
+  if (!_lastPayrollRows || _lastPayrollRows.length === 0) { showToast('請先計算薪資再匯出', 'warning'); return; }
+  const ym = _lastPayrollMonth || document.getElementById('payrollMonthInput').value;
+  const headers = ['員工編號', '姓名', '部門', '計薪月份', '薪資制', '出勤天數', '總工時(小時)', '加班時數(小時)',
+    '請假-支薪(天)', '請假-半薪(天)', '請假-不支薪(天)', '本薪', '加班費', '請假扣款', '應發薪資', '加班倍率', '標準每日工時'];
+  const lines = [headers.join(',')];
+  _lastPayrollRows.forEach(function(r) {
+    const row = [r.employee_id, r.name, r.department, ym, r.pay_type_text, r.present_days, r.total_hours, r.ot_hours,
+      r.leave_paid, r.leave_half, r.leave_unpaid,
+      Math.round(r.base_pay * 100) / 100, Math.round(r.ot_pay * 100) / 100, Math.round(r.leave_deduct * 100) / 100,
+      Math.round(r.gross_pay * 100) / 100, r.ot_multiplier, r.standard_daily_hours];
+    lines.push(row.map(function(v) { return '"' + String(v === null || typeof v === 'undefined' ? '' : v).replace(/"/g, '""') + '"'; }).join(','));
+  });
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'payroll_' + ym + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('薪資CSV已匯出（' + _lastPayrollRows.length + ' 人）', 'success');
+}
+
+// 同步後刷新薪資相關畫面（只在管理員 + 元素存在時動作）
+function refreshPayrollViews() {
+  if (!currentUser || currentUser.role !== 'admin') return;
+  if (!document.getElementById('payrollMonthInput')) return;
+  loadPayrollConfigUI();
+  renderSalarySettings();
+  if (document.getElementById('payrollMonthInput').value) calcAndRenderPayroll(true);
+}
+
 // ===== Data Backup / Restore =====
 function exportFullData() {
   if (!requireAdmin()) return;
@@ -2052,6 +2385,8 @@ function importFullData(event) {
         db = imported;
         if (!db.wifiSettings) db.wifiSettings = { allowed_ips: '', wifi_name: 'Office WiFi', enabled: false };
         if (!db.schedule) db.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
+        if (!db.payrollConfig) db.payrollConfig = { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' };
+        if (!db.salary_settings) db.salary_settings = {};
         if (!db.nextEmpId) db.nextEmpId = db.employees.length + 1;
         if (!db.nextAttId) db.nextAttId = db.attendance.length + 1;
         // 補上 updated_at，確保匯入後與雲端合併時新舊判定正確
@@ -2073,7 +2408,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '4.0.1.20260910';
+const BUILD_ID = '4.0.2.20260914';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
@@ -2494,6 +2829,24 @@ function mergeDB(cloudDb) {
   });
   if (!db.wifiSettings) db.wifiSettings = { allowed_ips: '', wifi_name: 'Office WiFi', enabled: false };
   if (!db.schedule) db.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
+
+  // v4.0.2: 人資模組合併 — 計算參數以 updated_at 新者為準；員工薪資設定以 employee_id 為業務鍵、updated_at 新者優先
+  if (!db.payrollConfig) db.payrollConfig = payrollDefaults();
+  if (cloudDb.payrollConfig) {
+    const pcLts = db.payrollConfig.updated_at || '', pcCts = cloudDb.payrollConfig.updated_at || '';
+    if (pcCts && (!pcLts || pcCts > pcLts)) db.payrollConfig = cloudDb.payrollConfig;
+  }
+  const salMap = db.salary_settings || {};
+  (function() {
+    const cloudSal = cloudDb.salary_settings || {};
+    Object.keys(cloudSal).forEach(function(k) {
+      if (!cloudSal[k] || typeof cloudSal[k] !== 'object') return;
+      const ls = salMap[k], cs = cloudSal[k];
+      if (!ls) { salMap[k] = cs; return; }
+      if (cs.updated_at && (!ls.updated_at || cs.updated_at > ls.updated_at)) salMap[k] = cs;
+    });
+  })();
+  db.salary_settings = salMap;
 }
 
 // ===== v4.0：GitHub 背景鏡像 =====
@@ -2843,6 +3196,7 @@ function refreshAllViews() {
     loadEmployees();        // 員工管理列表
     loadAdminAttendance();  // 管理考勤紀錄
     loadAdminLeaves();      // 請假審批列表
+    refreshPayrollViews();  // v4.0.2 薪資設定與試算
     loadWifiSettings();     // WiFi 設定（IP白名單）
     loadScheduleSettings(); // 排班設定
     loadSyncSettings();     // 雲端同步狀態
@@ -3365,7 +3719,7 @@ function checkSyncWarning() {
 }
 
 // ===== Navigation =====
-const ADMIN_PAGES = ['admin-stats', 'admin-employees', 'admin-attendance', 'admin-leave', 'admin-wifi', 'admin-settings'];
+const ADMIN_PAGES = ['admin-stats', 'admin-employees', 'admin-attendance', 'admin-leave', 'admin-payroll', 'admin-wifi', 'admin-settings'];
 
 // 切換頁面時順帶拉取雲端最新資料（節流，避免頻繁切頁狂打 API）
 // 讓使用者切到「員工」「考勤」等頁面時，能立刻看到其他裝置剛新增/打卡的內容
@@ -3397,6 +3751,7 @@ function switchPage(pageName) {
   if (pageName === 'admin-employees') loadEmployees();
   if (pageName === 'admin-attendance') loadAdminAttendance();
   if (pageName === 'admin-leave') loadAdminLeaves();
+  if (pageName === 'admin-payroll') loadPayrollPage();
   if (pageName === 'admin-wifi') loadWifiSettings();
   if (pageName === 'admin-settings') { loadScheduleSettings(); loadSyncSettings(); }
 }
