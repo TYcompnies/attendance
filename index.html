@@ -293,15 +293,6 @@
             <button class="btn btn-success" id="clockInBtn" onclick="clockIn()">上班打卡</button>
             <button class="btn btn-danger" id="clockOutBtn" onclick="clockOut()">下班打卡</button>
           </div>
-          <!-- v4.0.3 加班轉補休 -->
-          <div id="otCompPanel" style="margin-top:16px;padding:12px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;">
-            <div style="font-size:13px;font-weight:600;color:#166534;margin-bottom:8px;">⏱️ 加班轉補休（選填）</div>
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-              <input type="number" id="otToCompHours" min="0" step="0.5" value="0" style="width:110px;padding:6px 8px;border:1px solid #86efac;border-radius:6px;font-size:13px;">
-              <span style="font-size:12px;color:#166534;" id="otCompHint">下班打卡時，可將今日加班時數轉為補休（0 = 不轉）</span>
-            </div>
-            <div style="font-size:12px;color:#15803d;margin-top:8px;">💰 目前可用補休餘額：<strong id="compBalanceText">--</strong></div>
-          </div>
           <!-- v4.0.5 補班抵扣（平日請假 ↔ 補班日出勤）；任何上班日皆顯示 -->
           <div id="makeupPanel" style="display:none;margin-top:12px;padding:12px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;">
             <div style="font-size:13px;font-weight:600;color:#92400e;margin-bottom:8px;">📅 補班日（出勤抵扣平日請假）</div>
@@ -358,7 +349,6 @@
           <span>ℹ️</span>
           <span>請選擇假別、填寫起訖日期與原因，送出後需由管理員審批核准才算生效。天數將依起訖日期自動計算（含首尾日）。</span>
         </div>
-        <div id="compLeaveBalanceHint" style="display:none;margin-bottom:16px;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:13px;color:#166534;">💰 可用補休餘額：<strong id="compLeaveBalanceVal">--</strong>（選擇「補休」假別時，申請時數不可超過餘額）</div>
         <div class="leave-form-grid">
           <div class="form-group">
             <label>假別 *</label>
@@ -370,7 +360,6 @@
               <option value="bereavement">喪假</option>
               <option value="parental">產假 / 陪產假</option>
               <option value="menstrual">生理假</option>
-              <option value="comp">補休（加班轉補休）</option>
               <option value="other">其他</option>
             </select>
           </div>
@@ -503,7 +492,7 @@
         <div class="card-header"><div class="card-title">薪資計算參數</div></div>
         <div class="info-banner blue">
           <span>ℹ️</span>
-          <span>計算規則：<strong>支薪假</strong>＝特休、婚假、喪假、產假、補休；<strong>半薪假</strong>＝病假、生理假；<strong>不支薪假</strong>＝事假、其他。月薪制日薪＝月薪 ÷ 30、時薪＝日薪 ÷ 標準每日工時；加班費＝加班時數 × 時薪 × 倍率。加班時數＝每日實際工時超過標準每日工時的部分。<strong>員工下班打卡時可將加班轉為補休：轉補休的時數不發加班費，改以「補休」假支薪（時薪制按正常時薪支給）</strong>。同一天同時請假且有打卡者，以出勤為準、不重複扣薪。</span>
+          <span>計算規則：<strong>支薪假</strong>＝特休、婚假、喪假、產假；<strong>半薪假</strong>＝病假、生理假；<strong>不支薪假</strong>＝事假、其他。月薪制日薪＝月薪 ÷ 30、時薪＝日薪 ÷ 標準每日工時；加班費＝加班時數 × 時薪 × 倍率。加班時數＝每日實際工時超過標準每日工時的部分。同一天同時請假且有打卡者，以出勤為準、不重複扣薪。</span>
         </div>
         <div class="schedule-row" style="margin-bottom: 20px;">
           <div class="form-group"><label>加班費倍率</label><input type="number" id="payrollOtMultiplier" value="1.34" min="1" step="0.01"></div>
@@ -531,8 +520,8 @@
           <button class="btn btn-outline btn-sm" onclick="exportPayrollCSV()">匯出CSV</button>
         </div>
         <div class="table-wrapper">
-          <table><thead><tr><th>員工編號</th><th>姓名</th><th>薪資制</th><th>出勤天數</th><th>總工時</th><th>加班時數</th><th>補休(轉入/使用)</th><th>請假(支薪/半薪/不支薪)</th><th>本薪</th><th>加班費</th><th>補休給薪</th><th>請假扣款</th><th>應發薪資</th></tr></thead>
-          <tbody id="payrollTableBody"><tr><td colspan="13" class="empty-state">請選擇月份後點擊「計算」</td></tr></tbody></table>
+          <table><thead><tr><th>員工編號</th><th>姓名</th><th>薪資制</th><th>出勤天數</th><th>總工時</th><th>加班時數</th><th>請假(支薪/半薪/不支薪)</th><th>本薪</th><th>加班費</th><th>請假扣款</th><th>應發薪資</th></tr></thead>
+          <tbody id="payrollTableBody"><tr><td colspan="11" class="empty-state">請選擇月份後點擊「計算」</td></tr></tbody></table>
         </div>
         <div class="hint-text" style="margin-top:10px;">金額僅為系統試算結果，實際發放前請再人工核對出勤與假單。</div>
       </div>
@@ -661,7 +650,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.5 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資 + 補休 + 補班抵扣 · 補班全日開放 + 補登記)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.6 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
@@ -999,15 +988,6 @@ function submitLeaveRequest() {
   if (days <= 0) { showToast('結束日期不能早於開始日期', 'error'); return; }
   if (days > 60) { showToast('單次請假最多 60 天', 'error'); return; }
   if (!reason) { showToast('請填寫請假原因', 'warning'); return; }
-  // v4.0.3 補休假別：申請時數不得超過可用補休餘額（含待審中的補休）
-  if (type === 'comp') {
-    const bal = getCompBalance(currentUser.employeeId);
-    const needHours = days * bal.std_hours;
-    if (needHours > bal.balance + 0.001) {
-      showToast('補休餘額不足！可用 ' + fmtHours(Math.max(0, bal.balance)) + ' 小時，本次申請需 ' + fmtHours(needHours) + ' 小時（' + days + ' 天 × 標準每日工時）', 'error');
-      return;
-    }
-  }
 
   const nowISO = new Date().toISOString();
   const request = {
@@ -1058,13 +1038,6 @@ function cancelLeaveRequest(id) {
 // 員工：我的請假記錄
 function loadMyLeaves() {
   if (!requireLogin()) return;
-  // v4.0.3 補休餘額提示
-  const hint = document.getElementById('compLeaveBalanceHint');
-  if (hint && currentUser.role !== 'admin') {
-    hint.style.display = '';
-    const bal = getCompBalance(currentUser.employeeId);
-    document.getElementById('compLeaveBalanceVal').textContent = fmtHours(Math.max(0, bal.balance)) + ' 小時';
-  }
   const tbody = document.getElementById('myLeaveTableBody');
   if (!tbody) return;
   let list = (db.leave_requests || []).filter(function(l) { return l.employee_id === currentUser.employeeId; });
@@ -1457,47 +1430,7 @@ async function loadClockStatus() {
 
   document.getElementById('clockInBtn').disabled = !!(record && record.clock_in);
   document.getElementById('clockOutBtn').disabled = !!(record && record.clock_out) || !(record && record.clock_in);
-  updateCompInfo(record); // v4.0.3 補休餘額與加班提示
   updateMakeupInfo(record); // v4.0.5 補班抵扣面板（任何上班日皆顯示）
-}
-
-// ===== v4.0.3 補休（Compensatory Leave） =====
-// 補休餘額（小時）＝歷年下班打卡「加班轉補休」累積 − 補休假（含待審+已核准）換算時數
-function getCompBalance(empId) {
-  const stdH = getPayrollConfig().standard_daily_hours;
-  let earned = 0, used = 0;
-  (db.attendance || []).forEach(function(a) {
-    if (a.employee_id === empId) earned += parseFloat(a.comp_hours) || 0;
-  });
-  (db.leave_requests || []).forEach(function(l) {
-    if (l.employee_id === empId && (l.status === 'approved' || l.status === 'pending') && (l.leave_type || l.type) === 'comp') {
-      used += calcLeaveDays(l.start_date, l.end_date) * stdH;
-    }
-  });
-  earned = Math.round(earned * 100) / 100;
-  used = Math.round(used * 100) / 100;
-  return { earned: earned, used: used, balance: Math.round((earned - used) * 100) / 100, std_hours: stdH };
-}
-
-// 打卡頁：補休餘額 + 今日可轉補休時數提示
-function updateCompInfo(record) {
-  const balEl = document.getElementById('compBalanceText');
-  const hintEl = document.getElementById('otCompHint');
-  const panelEl = document.getElementById('otCompPanel');
-  if (!balEl || !hintEl) return;
-  if (currentUser.role === 'admin') { panelEl.style.display = 'none'; return; } // admin 不列入薪資，無補休
-  panelEl.style.display = '';
-  const bal = getCompBalance(currentUser.employeeId);
-  balEl.textContent = fmtHours(Math.max(0, bal.balance)) + ' 小時（累積 ' + fmtHours(bal.earned) + ' − 已用/待用 ' + fmtHours(bal.used) + '）';
-  if (record && record.clock_in && !record.clock_out) {
-    hintEl.textContent = '下班打卡時，可將今日加班時數轉為補休（超過標準工時 ' + fmtHours(bal.std_hours) + ' 小時的部分）';
-  } else if (record && record.clock_out) {
-    hintEl.textContent = record.comp_hours > 0
-      ? '今日已將 ' + fmtHours(record.comp_hours) + ' 小時加班轉為補休'
-      : '今日已打卡下班' + (parseFloat(record.comp_hours) === 0 ? '（未轉補休）' : '');
-  } else {
-    hintEl.textContent = '下班打卡時，可將今日加班時數轉為補休（0 = 不轉）';
-  }
 }
 
 // ===== v4.0.5 補班抵扣（平日請假 ↔ 補班日出勤；任何上班日皆可登記，已打卡可補登記） =====
@@ -1745,34 +1678,11 @@ function clockOut() {
     return;
   }
 
-  // v4.0.3 加班轉補休：先以暫存副本驗證，通過後才寫入紀錄（避免驗證失敗仍變更打卡資料）
-  let compMsg = '';
-  let compHours = 0;
-  const compInput = document.getElementById('otToCompHours');
-  const wh = calcWorkHours(Object.assign({}, record, { clock_out: now }));
-  const stdH = getPayrollConfig().standard_daily_hours;
-  const otHours = wh ? Math.max(0, wh.hours - stdH) : 0;
-  if (compInput && otHours > 0) {
-    compHours = parseFloat(compInput.value) || 0;
-    if (compHours < 0) { showToast('轉補休時數不可為負數', 'error'); return; }
-    if (compHours > 0) {
-      // 只能轉「整個加班區間內」的時數，以 0.5 小時為單位
-      const maxComp = Math.floor(otHours * 2) / 2;
-      if (compHours > maxComp + 0.001) {
-        showToast('今日加班僅 ' + fmtHours(otHours) + ' 小時，最多可轉補休 ' + fmtHours(maxComp) + ' 小時（以 0.5 小時為單位）', 'error');
-        return;
-      }
-      compHours = Math.round(compHours * 2) / 2;
-      compMsg = '，已將 ' + fmtHours(compHours) + ' 小時加班轉為補休';
-    }
-  }
-
   record.clock_out = now;
   record.clock_out_ip = currentIP;
   record.updated_at = new Date().toISOString();
   // Re-calculate status with both clock_in and clock_out
   record.status = calcAttendanceStatus(record.clock_in, now);
-  if (compHours > 0) record.comp_hours = compHours; // 已轉補休的加班時數（薪資計算據此扣除加班費）
   saveDB();
 
   const inTime = new Date(record.date + 'T' + record.clock_in);
@@ -1781,9 +1691,7 @@ function clockOut() {
   let extraMsg = '';
   if (record.status === 'early') extraMsg = '（早退）';
   else if (record.status === 'late_early') extraMsg = '（遲到+早退）';
-  showToast('下班打卡成功！工作時數：' + hours + ' 小時' + extraMsg + compMsg, 'success');
-  const compInputEl = document.getElementById('otToCompHours');
-  if (compInputEl) compInputEl.value = 0;
+  showToast('下班打卡成功！工作時數：' + hours + ' 小時' + extraMsg, 'success');
   loadClockStatus();
 }
 
@@ -2423,7 +2331,7 @@ function calcPayrollForEmployee(emp, ym) {
   const recs = (db.attendance || []).filter(function(a) {
     return a.employee_id === emp.employee_id && a.date >= range.start && a.date <= range.end && a.clock_in;
   });
-  let totalHours = 0, otHours = 0, otCompHours = 0;
+  let totalHours = 0, otHours = 0;
   const clockedDates = {};
   recs.forEach(function(r) {
     clockedDates[r.date] = true;
@@ -2431,9 +2339,7 @@ function calcPayrollForEmployee(emp, ym) {
     if (!wh) return;
     totalHours += wh.hours;
     if (wh.hours > stdH) otHours += wh.hours - stdH;
-    otCompHours += parseFloat(r.comp_hours) || 0; // v4.0.3 已轉補休的加班時數（不發加班費）
   });
-  otCompHours = Math.min(otCompHours, otHours);
 
   // v4.0.4 補班抵扣：補班日（makeup_type=leave_offset）可抵扣一天平日請假
   const offsetDates = {};
@@ -2460,29 +2366,22 @@ function calcPayrollForEmployee(emp, ym) {
     if (!clockedDates[ld.date]) netCount[rule]++;
   });
 
-  let basePay = 0, otPay = 0, leaveDeduct = 0, hourlyRate = 0, compLeavePay = 0;
-  const payableOt = Math.max(0, otHours - otCompHours); // 轉補休的部分不發加班費（改以補休假支薪）
-  // 補休假以正常時薪支薪；同日有實際打卡出勤者以出勤為準，不重複支給
-  const compTakenDays = leaveDays.filter(function(ld) { return (ld.leave_type) === 'comp' && !clockedDates[ld.date]; }).length;
-  const compTakenHours = Math.round(compTakenDays * stdH * 100) / 100;
+  let basePay = 0, otPay = 0, leaveDeduct = 0, hourlyRate = 0;
   if (setting.pay_type === 'hourly') {
     hourlyRate = parseFloat(setting.hourly_rate) || 0;
     const normalHours = Math.max(0, totalHours - otHours);
     basePay = normalHours * hourlyRate;
-    otPay = payableOt * hourlyRate * cfg.ot_multiplier;
-    // v4.0.3 補休假以正常時薪支薪（時薪制請補休沒上班仍要給錢，用先前累積的補休額度）
-    compLeavePay = compTakenHours * hourlyRate;
+    otPay = otHours * hourlyRate * cfg.ot_multiplier;
     // 時薪制：其他請假本來就不支薪，無扣款
   } else {
     const monthly = parseFloat(setting.monthly_salary) || 0;
     const dayRate = monthly / 30;
     hourlyRate = stdH > 0 ? dayRate / stdH : 0;
     basePay = monthly;
-    otPay = payableOt * hourlyRate * cfg.ot_multiplier;
-    // 月薪制：補休為支薪假（不扣款），轉補休的加班僅移除加班費倍率
+    otPay = otHours * hourlyRate * cfg.ot_multiplier;
     leaveDeduct = netCount.unpaid * dayRate + netCount.half * dayRate * 0.5;
   }
-  const grossPay = basePay + otPay + compLeavePay - leaveDeduct;
+  const grossPay = basePay + otPay - leaveDeduct;
   return {
     employee_id: emp.employee_id, name: emp.name, department: emp.department || '',
     pay_type: setting.pay_type === 'hourly' ? 'hourly' : 'monthly',
@@ -2492,12 +2391,10 @@ function calcPayrollForEmployee(emp, ym) {
     present_days: recs.length,
     total_hours: Math.round(totalHours * 100) / 100,
     ot_hours: Math.round(otHours * 100) / 100,
-    ot_comp_hours: Math.round(otCompHours * 100) / 100,
-    comp_taken_hours: compTakenHours,
     leave_paid: payCount.paid, leave_half: payCount.half, leave_unpaid: payCount.unpaid,
     leave_offset_days: leaveOffsetDays, makeup_days: makeupDays,
     net_leave_half: netCount.half, net_leave_unpaid: netCount.unpaid,
-    base_pay: basePay, ot_pay: otPay, comp_leave_pay: compLeavePay, leave_deduct: leaveDeduct, gross_pay: grossPay,
+    base_pay: basePay, ot_pay: otPay, leave_deduct: leaveDeduct, gross_pay: grossPay,
     ot_multiplier: cfg.ot_multiplier, standard_daily_hours: stdH
   };
 }
@@ -2621,7 +2518,7 @@ function calcAndRenderPayroll(silent) {
   _lastPayrollMonth = ym;
 
   if (rows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="13" class="empty-state">此月份沒有可計算的員工（請先在上方設定員工薪資）</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" class="empty-state">此月份沒有可計算的員工（請先在上方設定員工薪資）</td></tr>';
     return;
   }
   const totalGross = rows.reduce(function(s, r) { return s + r.gross_pay; }, 0);
@@ -2633,18 +2530,16 @@ function calcAndRenderPayroll(silent) {
       '<td>' + r.present_days + ' 天</td>' +
       '<td>' + fmtHours(r.total_hours) + ' 小時</td>' +
       '<td>' + fmtHours(r.ot_hours) + ' 小時</td>' +
-      '<td style="font-size:12px">' + fmtHours(r.ot_comp_hours) + ' / ' + fmtHours(r.comp_taken_hours) + ' 小時</td>' +
       '<td style="font-size:12px">' + r.leave_paid + ' / ' + r.leave_half + ' / ' + r.leave_unpaid + ' 天' +
         (r.leave_offset_days > 0 ? '<br><span style="color:#b45309">📅 補班抵扣 ' + r.leave_offset_days + ' 天</span>' : '') + '</td>' +
       '<td>' + fmtMoney(r.base_pay) + '</td>' +
       '<td>' + fmtMoney(r.ot_pay) + '</td>' +
-      '<td>' + (r.comp_leave_pay > 0 ? fmtMoney(r.comp_leave_pay) : '--') + '</td>' +
       '<td style="color:var(--danger)">' + (r.leave_deduct > 0 ? '-' + fmtMoney(r.leave_deduct) : '--') + '</td>' +
       '<td style="font-weight:700;color:var(--primary)">' + fmtMoney(r.gross_pay) + '</td>' +
       '</tr>';
   }).join('') +
   '<tr style="background:var(--bg);font-weight:700">' +
-    '<td colspan="12" style="text-align:right">應發總額（' + rows.length + ' 人）</td>' +
+    '<td colspan="10" style="text-align:right">應發總額（' + rows.length + ' 人）</td>' +
     '<td style="color:var(--primary)">' + fmtMoney(totalGross) + '</td>' +
   '</tr>';
   if (!silent) showToast('已計算 ' + ym + ' 薪資（' + rows.length + ' 人）', 'success');
@@ -2654,14 +2549,13 @@ function exportPayrollCSV() {
   if (!requireAdmin()) return;
   if (!_lastPayrollRows || _lastPayrollRows.length === 0) { showToast('請先計算薪資再匯出', 'warning'); return; }
   const ym = _lastPayrollMonth || document.getElementById('payrollMonthInput').value;
-  const headers = ['員工編號', '姓名', '部門', '計薪月份', '薪資制', '出勤天數', '總工時(小時)', '加班時數(小時)', '加班轉補休(小時)', '補休使用(小時)',
-    '請假-支薪(天)', '請假-半薪(天)', '請假-不支薪(天)', '補班抵扣(天)', '本薪', '加班費', '補休給薪', '請假扣款', '應發薪資', '加班倍率', '標準每日工時'];
+  const headers = ['員工編號', '姓名', '部門', '計薪月份', '薪資制', '出勤天數', '總工時(小時)', '加班時數(小時)',
+    '請假-支薪(天)', '請假-半薪(天)', '請假-不支薪(天)', '補班抵扣(天)', '本薪', '加班費', '請假扣款', '應發薪資', '加班倍率', '標準每日工時'];
   const lines = [headers.join(',')];
   _lastPayrollRows.forEach(function(r) {
     const row = [r.employee_id, r.name, r.department, ym, r.pay_type_text, r.present_days, r.total_hours, r.ot_hours,
-      r.ot_comp_hours, r.comp_taken_hours,
       r.leave_paid, r.leave_half, r.leave_unpaid, r.leave_offset_days,
-      Math.round(r.base_pay * 100) / 100, Math.round(r.ot_pay * 100) / 100, Math.round(r.comp_leave_pay * 100) / 100,
+      Math.round(r.base_pay * 100) / 100, Math.round(r.ot_pay * 100) / 100,
       Math.round(r.leave_deduct * 100) / 100,
       Math.round(r.gross_pay * 100) / 100, r.ot_multiplier, r.standard_daily_hours];
     lines.push(row.map(function(v) { return '"' + String(v === null || typeof v === 'undefined' ? '' : v).replace(/"/g, '""') + '"'; }).join(','));
@@ -2739,7 +2633,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '4.0.5.20260914';
+const BUILD_ID = '4.0.6.20260914';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
@@ -3119,8 +3013,7 @@ function mergeDB(cloudDb) {
       la.updated_at = ca.updated_at;
       if (ca.status) la.status = ca.status;
       if (typeof ca.wifi_verified !== 'undefined') la.wifi_verified = ca.wifi_verified;
-      // v4.0.4: 欄位級合併補齊 — 加班轉補休與補班抵扣欄位也要跨裝置傳播
-      if (typeof ca.comp_hours !== 'undefined') la.comp_hours = ca.comp_hours;
+      // v4.0.4: 補班抵扣欄位也要跨裝置傳播
       if (ca.makeup_type) {
         la.makeup_type = ca.makeup_type;
         la.offset_leave_id = ca.offset_leave_id;
