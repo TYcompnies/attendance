@@ -572,6 +572,15 @@
         </div>
         <div class="hint-text" style="margin-top:10px;">金額僅為系統試算結果，實際發放前請再人工核對出勤與假單。</div>
       </div>
+      <!-- v4.0.9 測試階段清空（薪資設定 + 打卡紀錄 + 請假單） -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">🧹 測試階段清空</div></div>
+        <div class="info-banner" style="background:#fef2f2; color:#991b1b; border:1px solid #fecaca;">
+          <span>⚠️</span>
+          <span>系統上線前，可一鍵清空<strong>測試階段產生的所有資料</strong>：員工薪資設定、薪資計算參數（回預設值）、打卡紀錄與請假單。保留：員工帳號、WiFi、排班、系統時程。清空結果會自動同步到所有裝置，<strong>刪除後無法復原</strong>（建議先到「系統設定 → 資料備份與還原」匯出 JSON 備份）。</span>
+        </div>
+        <button class="btn btn-outline" onclick="clearPayrollTestData()" style="color:var(--danger);border:1.5px solid var(--danger);">🗑️ 一鍵清空測試階段資料</button>
+      </div>
     </div>
 
     <!-- Admin WiFi Settings -->
@@ -720,7 +729,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.8 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.9 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資）)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
@@ -848,7 +857,7 @@ function loadDB() {
       (parsed.employees || []).forEach(function(e) { if (!e.updated_at) e.updated_at = nowISO; });
       (parsed.attendance || []).forEach(function(a) { if (!a.updated_at) a.updated_at = nowISO; });
       (parsed.leave_requests || []).forEach(function(l) { if (!l.updated_at) l.updated_at = nowISO; });
-      if (!parsed.data_clear) parsed.data_clear = { cleared_at: '' }; // v4.0.8 測試資料清空標記
+      if (!parsed.data_clear) parsed.data_clear = { cleared_at: '', salary_cleared_at: '' }; // v4.0.8/v4.0.9 測試資料清空標記
       return parsed;
     }
   } catch(e) {}
@@ -867,7 +876,7 @@ function loadDB() {
     payrollConfig: { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' },
     salary_settings: {},
     systemSchedule: { test_date: '', launch_date: '', updated_at: '' },
-    data_clear: { cleared_at: '' },
+    data_clear: { cleared_at: '', salary_cleared_at: '' },
     nextEmpId: 2, nextAttId: 1
   };
   localStorage.setItem(DB_KEY, JSON.stringify(defaultDB));
@@ -2439,13 +2448,40 @@ function clearTestData() {
   if (attCount === 0 && lvCount === 0) { showToast('目前沒有任何打卡紀錄與請假單可清空', 'info'); return; }
   if (!confirm('確定要一鍵清空所有測試資料嗎？\n\n將刪除：打卡紀錄 ' + attCount + ' 筆、請假單 ' + lvCount + ' 筆\n保留：員工帳號、WiFi、排班、薪資設定、系統時程\n\n清空結果會同步到所有裝置，刪除後無法復原！')) return;
   if (!confirm('⚠️ 最後確認：真的要永久刪除全部 ' + attCount + ' 筆打卡紀錄與 ' + lvCount + ' 筆請假單嗎？\n（如需保留，請先到「資料備份與還原」匯出 JSON 備份）')) return;
-  db.data_clear = { cleared_at: new Date().toISOString() };
+  db.data_clear = db.data_clear || {};
+  db.data_clear.cleared_at = new Date().toISOString(); // v4.0.9: 保留 salary_cleared_at（薪資清空標記獨立運作）
   db.attendance = [];
   db.leave_requests = [];
   db.nextAttId = 1;
   saveDB();
   refreshAllViews();
   showToast('已清空測試資料（打卡 ' + attCount + ' 筆、請假 ' + lvCount + ' 筆），並同步到所有裝置', 'success');
+}
+
+// ===== v4.0.9 測試階段清空（薪資計算頁）：薪資設定 + 計算參數回預設 + 打卡紀錄 + 請假單 =====
+// 保留：員工帳號、WiFi、排班、系統時程。以 data_clear 的兩個 tombstone（cleared_at / salary_cleared_at）
+// 讓清空結果跨裝置傳播：其他裝置殘留的舊資料同步後自動丟棄，清空之後的新資料正常合併。
+// payrollConfig 直接以「現在時間」重寫預設值 — 藉 updated_at 新者勝的合併規則自然傳播到所有裝置。
+function clearPayrollTestData() {
+  if (!requireAdmin()) return;
+  const salCount = Object.keys(db.salary_settings || {}).length;
+  const attCount = (db.attendance || []).length;
+  const lvCount = (db.leave_requests || []).length;
+  if (salCount === 0 && attCount === 0 && lvCount === 0) { showToast('目前沒有任何測試階段資料可清空', 'info'); return; }
+  if (!confirm('確定要一鍵清空測試階段資料嗎？\n\n將刪除：\n· 員工薪資設定 ' + salCount + ' 筆（計算參數回到預設值 1.34 倍 / 8 小時）\n· 打卡紀錄 ' + attCount + ' 筆\n· 請假單 ' + lvCount + ' 筆\n\n保留：員工帳號、WiFi、排班、系統時程\n\n清空結果會同步到所有裝置，刪除後無法復原！')) return;
+  if (!confirm('⚠️ 最後確認：真的要永久刪除全部測試階段資料（薪資設定、打卡紀錄、請假單）嗎？\n（如需保留，請先到「系統設定 → 資料備份與還原」匯出 JSON 備份）')) return;
+  const now = new Date().toISOString();
+  db.data_clear = db.data_clear || {};
+  db.data_clear.cleared_at = now;
+  db.data_clear.salary_cleared_at = now;
+  db.salary_settings = {};
+  db.payrollConfig = Object.assign(payrollDefaults(), { updated_at: now });
+  db.attendance = [];
+  db.leave_requests = [];
+  db.nextAttId = 1;
+  saveDB();
+  refreshAllViews();
+  showToast('已清空測試階段資料（薪資設定 ' + salCount + ' 筆、打卡 ' + attCount + ' 筆、請假 ' + lvCount + ' 筆），並同步到所有裝置', 'success');
 }
 
 // ===== Payroll / HR Module (v4.0.2 人資模組) =====
@@ -2784,7 +2820,7 @@ function importFullData(event) {
         if (!db.payrollConfig) db.payrollConfig = { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' };
         if (!db.salary_settings) db.salary_settings = {};
         if (!db.systemSchedule) db.systemSchedule = { test_date: '', launch_date: '', updated_at: '' }; // v4.0.7
-        if (!db.data_clear) db.data_clear = { cleared_at: '' }; // v4.0.8
+        if (!db.data_clear) db.data_clear = { cleared_at: '', salary_cleared_at: '' }; // v4.0.8/v4.0.9
         if (!db.nextEmpId) db.nextEmpId = db.employees.length + 1;
         if (!db.nextAttId) db.nextAttId = db.attendance.length + 1;
         // 補上 updated_at，確保匯入後與雲端合併時新舊判定正確
@@ -2808,7 +2844,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '4.0.8.20260914';
+const BUILD_ID = '4.0.9.20260914';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
@@ -3146,11 +3182,12 @@ function mergeDB(cloudDb) {
   const isDeleted = function(empId) { return !!delMap[empId]; };
 
   // v4.0.8: 測試資料清空標記（tombstone）— 清空時間點之前的打卡/假單，不從雲端或其他裝置復活
-  if (!db.data_clear) db.data_clear = { cleared_at: '' };
-  if (cloudDb.data_clear && cloudDb.data_clear.cleared_at) {
-    if (!db.data_clear.cleared_at || cloudDb.data_clear.cleared_at > db.data_clear.cleared_at) {
-      db.data_clear = cloudDb.data_clear;
-    }
+  // v4.0.9: 另增 salary_cleared_at 管薪資設定；兩個時間戳各自獨立、逐欄位新者勝
+  if (!db.data_clear) db.data_clear = { cleared_at: '', salary_cleared_at: '' };
+  if (cloudDb.data_clear) {
+    const cCleared = cloudDb.data_clear.cleared_at || '', cSalCleared = cloudDb.data_clear.salary_cleared_at || '';
+    if (cCleared && (!db.data_clear.cleared_at || cCleared > db.data_clear.cleared_at)) db.data_clear.cleared_at = cCleared;
+    if (cSalCleared && (!db.data_clear.salary_cleared_at || cSalCleared > db.data_clear.salary_cleared_at)) db.data_clear.salary_cleared_at = cSalCleared;
   }
   const clearAt = db.data_clear.cleared_at || '';
   const wasCleared = function(rec) { return !!clearAt && (!rec.updated_at || rec.updated_at <= clearAt); };
@@ -3256,11 +3293,20 @@ function mergeDB(cloudDb) {
     const pcLts = db.payrollConfig.updated_at || '', pcCts = cloudDb.payrollConfig.updated_at || '';
     if (pcCts && (!pcLts || pcCts > pcLts)) db.payrollConfig = cloudDb.payrollConfig;
   }
-  const salMap = db.salary_settings || {};
+  // v4.0.9: 薪資設定清空標記 — 清空時間點之前的薪資設定（本機殘留與雲端）不復活；之後新設定正常合併
+  const salClearAt = db.data_clear.salary_cleared_at || '';
+  const wasSalCleared = function(s) { return !!salClearAt && (!s || !s.updated_at || s.updated_at <= salClearAt); };
+  const salMap = {};
+  Object.keys(db.salary_settings || {}).forEach(function(k) {
+    const ls = (db.salary_settings || {})[k];
+    if (!ls || typeof ls !== 'object' || wasSalCleared(ls)) return; // v4.0.9: 清空時間點之前的本機殘留薪資設定也清除
+    salMap[k] = ls;
+  });
   (function() {
     const cloudSal = cloudDb.salary_settings || {};
     Object.keys(cloudSal).forEach(function(k) {
       if (!cloudSal[k] || typeof cloudSal[k] !== 'object') return;
+      if (wasSalCleared(cloudSal[k])) return; // v4.0.9: 清空時間點之前的薪資設定不從雲端復活
       const ls = salMap[k], cs = cloudSal[k];
       if (!ls) { salMap[k] = cs; return; }
       if (cs.updated_at && (!ls.updated_at || cs.updated_at > ls.updated_at)) salMap[k] = cs;
