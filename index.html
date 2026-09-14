@@ -256,16 +256,13 @@
           <strong>🕘 打卡規則</strong><br>
           · 每日各一次上班、下班打卡；打卡需在公司網路（WiFi/IP 白名單）環境下進行。<br>
           · 系統依排班時間自動判定遲到／早退；工作時數自動計算，超過標準每日工時的部分計為加班。<br>
-          · 補班日（國定假日／週六日出勤）打卡時，勾選「補班」並選擇要抵扣的平日請假，即可自動抵扣、不重複扣薪；忘記勾選可於當日下班後使用「📝 補登記」補登記。<br>
+          · 補班日（國定假日）打卡時，勾選「補班」並選擇要抵扣的平日請假，即可自動抵扣、不重複扣薪；忘記勾選可於當日下班後使用「📝 補登記」補登記。<br>
           <strong>📝 請假規則</strong><br>
           · 假單送出後為「待審核」狀態，經管理員核准後生效。<br>
           · 給薪規則：<span class="guide-tag">支薪</span>特休、婚假、喪假、產假 ／ <span class="guide-tag">半薪</span>病假、生理假 ／ <span class="guide-tag">不支薪</span>事假、其他。<br>
           · 同一天同時有打卡紀錄與假單時，以實際出勤為準、不重複扣薪。<br>
           <strong>☁️ 資料同步</strong><br>
           · 所有資料每 30 秒自動雲端同步，任何裝置開啟本網址即自動取得最新資料，無需輸入任何代碼。<br>
-          <strong>🔐 管理員</strong><br>
-          · 預設帳號 admin／admin123，首次登入後請立即於「員工管理」修改密碼。<br>
-          · 管理功能：統計概覽、員工管理、考勤記錄、請假審批、薪資計算、WiFi 設定、系統設定。
         </div>
       </details>
     </div>
@@ -653,6 +650,15 @@
           <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importFullData(event)">
         </div>
       </div>
+      <!-- v4.0.8 一鍵清空測試資料（保留員工帳號與所有設定） -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">🧹 清空測試資料</div></div>
+        <div class="info-banner blue">
+          <span>ℹ️</span>
+          <span>系統測試完成後，可一鍵清空<strong>所有打卡紀錄與請假單</strong>，保留員工帳號、WiFi、排班、薪資設定與系統時程。清空結果會自動同步到所有裝置，<strong>刪除後無法復原</strong>（建議先於上方匯出 JSON 備份）。</span>
+        </div>
+        <button class="btn btn-outline" onclick="clearTestData()" style="color:var(--danger);border:1.5px solid var(--danger);">🗑️ 一鍵清空測試資料</button>
+      </div>
       <div class="card">
         <div class="card-header"><div class="card-title">☁️ 雲端同步（跨裝置）</div></div>
         <div class="info-banner blue">
@@ -714,7 +720,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.7 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.8 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
@@ -842,6 +848,7 @@ function loadDB() {
       (parsed.employees || []).forEach(function(e) { if (!e.updated_at) e.updated_at = nowISO; });
       (parsed.attendance || []).forEach(function(a) { if (!a.updated_at) a.updated_at = nowISO; });
       (parsed.leave_requests || []).forEach(function(l) { if (!l.updated_at) l.updated_at = nowISO; });
+      if (!parsed.data_clear) parsed.data_clear = { cleared_at: '' }; // v4.0.8 測試資料清空標記
       return parsed;
     }
   } catch(e) {}
@@ -860,6 +867,7 @@ function loadDB() {
     payrollConfig: { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' },
     salary_settings: {},
     systemSchedule: { test_date: '', launch_date: '', updated_at: '' },
+    data_clear: { cleared_at: '' },
     nextEmpId: 2, nextAttId: 1
   };
   localStorage.setItem(DB_KEY, JSON.stringify(defaultDB));
@@ -2421,6 +2429,25 @@ function saveSystemSchedule() {
   renderLoginScheduleInfo();
 }
 
+// ===== v4.0.8 一鍵清空測試資料（打卡紀錄 + 請假單；保留員工帳號與所有設定） =====
+// 清空以 data_clear.cleared_at 標記（tombstone）：合併雲端時，時間點之前的紀錄一律丟棄，
+// 讓清空結果跨裝置傳播、不會被其他裝置的舊資料「復活」；清空之後的新打卡/假單不受影響。
+function clearTestData() {
+  if (!requireAdmin()) return;
+  const attCount = (db.attendance || []).length;
+  const lvCount = (db.leave_requests || []).length;
+  if (attCount === 0 && lvCount === 0) { showToast('目前沒有任何打卡紀錄與請假單可清空', 'info'); return; }
+  if (!confirm('確定要一鍵清空所有測試資料嗎？\n\n將刪除：打卡紀錄 ' + attCount + ' 筆、請假單 ' + lvCount + ' 筆\n保留：員工帳號、WiFi、排班、薪資設定、系統時程\n\n清空結果會同步到所有裝置，刪除後無法復原！')) return;
+  if (!confirm('⚠️ 最後確認：真的要永久刪除全部 ' + attCount + ' 筆打卡紀錄與 ' + lvCount + ' 筆請假單嗎？\n（如需保留，請先到「資料備份與還原」匯出 JSON 備份）')) return;
+  db.data_clear = { cleared_at: new Date().toISOString() };
+  db.attendance = [];
+  db.leave_requests = [];
+  db.nextAttId = 1;
+  saveDB();
+  refreshAllViews();
+  showToast('已清空測試資料（打卡 ' + attCount + ' 筆、請假 ' + lvCount + ' 筆），並同步到所有裝置', 'success');
+}
+
 // ===== Payroll / HR Module (v4.0.2 人資模組) =====
 // 假別給薪規則：paid=支薪、half=半薪、unpaid=不支薪
 const LEAVE_PAY_RULES = {
@@ -2757,6 +2784,7 @@ function importFullData(event) {
         if (!db.payrollConfig) db.payrollConfig = { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' };
         if (!db.salary_settings) db.salary_settings = {};
         if (!db.systemSchedule) db.systemSchedule = { test_date: '', launch_date: '', updated_at: '' }; // v4.0.7
+        if (!db.data_clear) db.data_clear = { cleared_at: '' }; // v4.0.8
         if (!db.nextEmpId) db.nextEmpId = db.employees.length + 1;
         if (!db.nextAttId) db.nextAttId = db.attendance.length + 1;
         // 補上 updated_at，確保匯入後與雲端合併時新舊判定正確
@@ -2780,7 +2808,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '4.0.7.20260914';
+const BUILD_ID = '4.0.8.20260914';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
@@ -3117,6 +3145,16 @@ function mergeDB(cloudDb) {
   db.deleted_employees = Object.values(delMap);
   const isDeleted = function(empId) { return !!delMap[empId]; };
 
+  // v4.0.8: 測試資料清空標記（tombstone）— 清空時間點之前的打卡/假單，不從雲端或其他裝置復活
+  if (!db.data_clear) db.data_clear = { cleared_at: '' };
+  if (cloudDb.data_clear && cloudDb.data_clear.cleared_at) {
+    if (!db.data_clear.cleared_at || cloudDb.data_clear.cleared_at > db.data_clear.cleared_at) {
+      db.data_clear = cloudDb.data_clear;
+    }
+  }
+  const clearAt = db.data_clear.cleared_at || '';
+  const wasCleared = function(rec) { return !!clearAt && (!rec.updated_at || rec.updated_at <= clearAt); };
+
   // 員工：以 employee_id（業務鍵）合併，避免兩台裝置各自新增員工拿到相同數字id而互相覆蓋
   const empMap = {};
   (db.employees || []).forEach(function(e) {
@@ -3145,11 +3183,13 @@ function mergeDB(cloudDb) {
   (db.attendance || []).forEach(function(a) {
     if (!a || !a.employee_id || !a.date) return;
     if (isDeleted(a.employee_id)) return; // v3.7: 已刪除員工的本機殘留考勤也清除
+    if (wasCleared(a)) return; // v4.0.8: 清空時間點之前的本機殘留考勤也清除
     attMap[a.employee_id + '|' + a.date] = a;
   });
   (cloudDb.attendance || []).forEach(function(ca) {
     if (!ca || !ca.employee_id || !ca.date) return;
     if (isDeleted(ca.employee_id)) return; // v3.7: 已刪除員工的考勤不從雲端復活
+    if (wasCleared(ca)) return; // v4.0.8: 清空時間點之前的考勤不從雲端復活
     const k = ca.employee_id + '|' + ca.date;
     const la = attMap[k];
     if (!la) { attMap[k] = ca; return; }
@@ -3179,11 +3219,13 @@ function mergeDB(cloudDb) {
   (db.leave_requests || []).forEach(function(l) {
     if (!l || !l.id) return;
     if (l.employee_id && isDeleted(l.employee_id)) return; // v3.7: 已刪除員工的本機殘留假單也清除
+    if (wasCleared(l)) return; // v4.0.8: 清空時間點之前的本機殘留假單也清除
     leaveMap[l.id] = l;
   });
   (cloudDb.leave_requests || []).forEach(function(cl) {
     if (!cl || !cl.id) return;
     if (cl.employee_id && isDeleted(cl.employee_id)) return; // v3.7: 已刪除員工的假單不從雲端復活
+    if (wasCleared(cl)) return; // v4.0.8: 清空時間點之前的假單不從雲端復活
     const ll = leaveMap[cl.id];
     if (!ll) { leaveMap[cl.id] = cl; return; }
     if (cl.updated_at && (!ll.updated_at || cl.updated_at > ll.updated_at)) {
