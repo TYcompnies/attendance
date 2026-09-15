@@ -61,6 +61,7 @@
     .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
     .btn-sm { padding: 8px 16px; font-size: 14px; width: auto; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn.btn-cooldown { opacity: 0.45; cursor: not-allowed; filter: grayscale(0.4); }
 
     /* Dashboard */
     .dashboard { display: none; min-height: 100vh; }
@@ -253,8 +254,9 @@
         <summary>📖 使用辦法</summary>
         <div class="guide-body">
           <strong>🕘 打卡規則</strong><br>
-          · 每日各一次上班、下班打卡；打卡需在公司網路（WiFi/IP 白名單）環境下進行。<br>
-          · 系統依排班時間自動判定遲到／早退；工作時數自動計算，超過標準每日工時的部分計為加班。<br>
+          · 打卡需在公司網路（WiFi/IP 白名單）環境下進行；為避免重複打卡，按鈕每次按下後有 3 秒冷卻時間。<br>
+          · 同一天可<strong>多次打卡</strong>：按下班卡後可再按上班卡開始下一段（例如午休外出、外出洽公返回），當日工時會自動加總。<br>
+          · 系統依排班時間自動判定遲到／早退；工作時數自動計算，當日合計超過標準每日工時的部分計為加班。<br>
           · 補班日（國定假日）打卡時，勾選「補班」並選擇要抵扣的平日請假，即可自動抵扣、不重複扣薪；忘記勾選可於當日下班後使用「📝 補登記」補登記。<br>
           <strong>📝 請假規則</strong><br>
           · 假單送出後為「待審核」狀態，經管理員核准後生效。<br>
@@ -339,6 +341,8 @@
             <button class="btn btn-success" id="clockInBtn" onclick="clockIn()">上班打卡</button>
             <button class="btn btn-danger" id="clockOutBtn" onclick="clockOut()">下班打卡</button>
           </div>
+          <!-- v4.0.11 同一天多次打卡：顯示今日各段打卡與合計工時 -->
+          <div id="todaySessionsInfo" style="display:none;margin-top:10px;padding:8px 12px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;font-size:12.5px;color:#5b21b6;"></div>
           <!-- v4.0.5 補班抵扣（平日請假 ↔ 補班日出勤）；任何上班日皆顯示 -->
           <div id="makeupPanel" style="display:none;margin-top:12px;padding:12px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;">
             <div style="font-size:13px;font-weight:600;color:#92400e;margin-bottom:8px;">📅 補班日（出勤抵扣平日請假）</div>
@@ -728,7 +732,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.10 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-14 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資）)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.11 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-15 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
@@ -983,6 +987,83 @@ function calcWorkHours(record) {
   else if (m === 0) text = h + '小時';
   else text = h + '小時' + m + '分';
   return { text: text, hours: totalMin / 60, minutes: totalMin };
+}
+
+// ===== v4.0.11 同一天可多次打卡 =====
+// 員工一天可打卡多段（例如午休外出、加班後再打一次）：每筆紀錄 = 一個打卡段。
+// 顯示／計算時用 aggregateAttendanceByDay() 彙總成一列：最早上班、最晚下班、各段工時加總。
+function newAttUid() {
+  return 'a' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+}
+
+// 該員工當日所有打卡段（依建立順序）
+function getTodayRecords(empId, dateStr) {
+  const d = dateStr || new Date().toLocaleDateString('en-CA');
+  return (db.attendance || []).filter(function(a) { return a.employee_id === empId && a.date === d; });
+}
+
+// 當日「尚未下班」的打卡段（可據此判斷能否再上班打卡 / 能否下班打卡）
+function getOpenRecord(empId, dateStr) {
+  return getTodayRecords(empId, dateStr).filter(function(a) { return a.clock_in && !a.clock_out; })[0] || null;
+}
+
+function formatMinutesText(totalMin) {
+  const h = Math.floor(totalMin / 60), m = totalMin % 60;
+  if (h === 0) return m + '分';
+  if (m === 0) return h + '小時';
+  return h + '小時' + m + '分';
+}
+
+// 單列（可能是彙總列）的工作時數：彙總列用各段加總，避免把中間休息時間算進去
+function aggDayWork(row) {
+  if (!row) return null;
+  if (typeof row._totalMinutes === 'number' && row._totalMinutes > 0) {
+    return { text: formatMinutesText(row._totalMinutes), hours: row._totalMinutes / 60, minutes: row._totalMinutes };
+  }
+  return calcWorkHours(row);
+}
+
+// 將同一員工同一天的多筆打卡彙總成一列（_count = 打卡段數、_totalMinutes = 各段工時加總）
+function aggregateAttendanceByDay(records) {
+  const map = {}, order = [];
+  (records || []).forEach(function(r) {
+    if (!r || r._isLeave) { if (r) order.push(r); return; }
+    const k = (r.employee_id || '') + '|' + r.date;
+    if (!map[k]) {
+      map[k] = Object.assign({}, r, { _sessions: [], _count: 0, _totalMinutes: 0 });
+      order.push(map[k]);
+    }
+    const agg = map[k];
+    agg._sessions.push(r);
+    agg._count++;
+    const wh = calcWorkHours(r);
+    if (wh) agg._totalMinutes += wh.minutes;
+    if (r.clock_in && (!agg.clock_in || r.clock_in < agg.clock_in)) {
+      agg.clock_in = r.clock_in;
+      if (r.clock_in_ip) agg.clock_in_ip = r.clock_in_ip;
+    }
+    if (r.clock_out && (!agg.clock_out || r.clock_out > agg.clock_out)) {
+      agg.clock_out = r.clock_out;
+      if (r.clock_out_ip) agg.clock_out_ip = r.clock_out_ip;
+    }
+    if (r.makeup_type === 'leave_offset') {
+      agg.makeup_type = 'leave_offset';
+      agg.offset_leave_id = r.offset_leave_id;
+      agg.offset_leave_date = r.offset_leave_date;
+    }
+    if (r.wifi_verified) agg.wifi_verified = 1;
+    if (!agg.ip_address && r.ip_address) agg.ip_address = r.ip_address;
+    if (r._leaveType) agg._leaveType = r._leaveType;
+    const rank = { late_early: 3, late: 2, early: 2, absent: 1, normal: 0, present: 0 };
+    if (r.status && (rank[r.status] || 0) > (rank[agg.status] || 0)) agg.status = r.status;
+  });
+  return order;
+}
+
+// 打卡段數徽章（同一天多次打卡時提示）
+function multiPunchBadge(count) {
+  if (!count || count < 2) return '';
+  return ' <span class="badge" style="background:#ede9fe;color:#6d28d9;font-size:11px;">🔁 ' + count + ' 次</span>';
 }
 
 // ===== Leave Management (v3.5) =====
@@ -1432,13 +1513,15 @@ function startClock() {
     if (clockDateEl) clockDateEl.textContent = now.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
     if (!currentUser) return;
     const today = now.toLocaleDateString('en-CA');
-    const record = db.attendance.find(function(a) { return a.employee_id === currentUser.employeeId && a.date === today; });
-    if (record && record.clock_in && !record.clock_out) {
+    const record = getOpenRecord(currentUser.employeeId, today); // v4.0.11 進行中的那一段
+    if (record) {
       const workHoursEl = document.getElementById('workHours');
       if (workHoursEl) {
+        let totalMin = 0;
+        getTodayRecords(currentUser.employeeId, today).forEach(function(r) { const w = calcWorkHours(r); if (w) totalMin += w.minutes; });
         const inTime = new Date(record.date + 'T' + record.clock_in);
-        const hours = ((now - inTime) / 3600000).toFixed(1);
-        workHoursEl.textContent = hours + 'h';
+        const liveMin = Math.max(0, Math.round((now - inTime) / 60000));
+        workHoursEl.textContent = ((totalMin + liveMin) / 60).toFixed(1) + 'h';
       }
     }
   }
@@ -1449,7 +1532,10 @@ function startClock() {
 async function loadClockStatus() {
   if (!currentUser) return;
   const today = new Date().toLocaleDateString('en-CA');
-  const record = db.attendance.find(function(a) { return a.employee_id === currentUser.employeeId && a.date === today; });
+  // v4.0.11：同一天可有多段打卡；record = 當日主要紀錄（最早上班那一筆，補班登記以其為準）
+  const todayRecs = getTodayRecords(currentUser.employeeId, today);
+  const openRec0 = getOpenRecord(currentUser.employeeId, today); // 於 await 前先算好（避免登出 race）
+  const record = todayRecs[0] || null;
   const wifiEl = document.getElementById('wifiStatus');
   const isAdmin = currentUser.role === 'admin';
 
@@ -1458,6 +1544,7 @@ async function loadClockStatus() {
     wifiEl.innerHTML = '<span>🔄 正在偵測網路環境...</span>';
     currentIP = await detectIP();
   }
+  if (!currentUser) return; // 防禦：await detectIP 期間使用者可能已登出（v4.0.7 修補的 race，v4.0.11 補強）
 
   if (isAdmin) {
     // Admin is EXEMPT from WiFi/IP restrictions — can clock in/out & manage from anywhere
@@ -1483,28 +1570,33 @@ async function loadClockStatus() {
   const clockOutEl = document.getElementById('clockOutTime');
   const workHoursEl = document.getElementById('workHours');
 
-  if (record && record.clock_in) {
-    clockInEl.textContent = record.clock_in;
+  // v4.0.11：彙總當日所有打卡段（最早上班、最晚下班、各段工時加總）
+  const firstIn = todayRecs.map(function(r) { return r.clock_in; }).filter(Boolean).sort()[0] || null;
+  const lastOut = todayRecs.map(function(r) { return r.clock_out; }).filter(Boolean).sort().slice(-1)[0] || null;
+  const openRec = openRec0;
+  let totalMin = 0;
+  todayRecs.forEach(function(r) { const w = calcWorkHours(r); if (w) totalMin += w.minutes; });
+
+  if (firstIn) {
+    clockInEl.textContent = firstIn;
     clockInEl.className = 'status-value success';
   } else {
     clockInEl.textContent = '--:--';
     clockInEl.className = 'status-value pending';
   }
 
-  if (record && record.clock_out) {
-    clockOutEl.textContent = record.clock_out;
-    clockOutEl.className = 'status-value success';
-    const inTime = new Date(record.date + 'T' + record.clock_in);
-    const outTime = new Date(record.date + 'T' + record.clock_out);
-    workHoursEl.textContent = ((outTime - inTime) / 3600000).toFixed(1) + 'h';
-    workHoursEl.className = 'status-value success';
-  } else if (record && record.clock_in) {
+  if (openRec) {
     clockOutEl.textContent = '--:--';
     clockOutEl.className = 'status-value pending';
-    const inTime = new Date(record.date + 'T' + record.clock_in);
-    const hours = ((new Date() - inTime) / 3600000).toFixed(1);
-    workHoursEl.textContent = hours + 'h';
+    const inT = new Date(openRec.date + 'T' + openRec.clock_in);
+    const liveMin = Math.max(0, Math.round((new Date() - inT) / 60000));
+    workHoursEl.textContent = ((totalMin + liveMin) / 60).toFixed(1) + 'h';
     workHoursEl.className = 'status-value pending';
+  } else if (lastOut) {
+    clockOutEl.textContent = lastOut;
+    clockOutEl.className = 'status-value success';
+    workHoursEl.textContent = (totalMin / 60).toFixed(1) + 'h';
+    workHoursEl.className = 'status-value success';
   } else {
     clockOutEl.textContent = '--:--';
     clockOutEl.className = 'status-value pending';
@@ -1512,8 +1604,22 @@ async function loadClockStatus() {
     workHoursEl.className = 'status-value pending';
   }
 
-  document.getElementById('clockInBtn').disabled = !!(record && record.clock_in);
-  document.getElementById('clockOutBtn').disabled = !!(record && record.clock_out) || !(record && record.clock_in);
+  // 當日打卡段列表（多段時才顯示）
+  const sessionsEl = document.getElementById('todaySessionsInfo');
+  if (sessionsEl) {
+    if (todayRecs.length > 1) {
+      sessionsEl.innerHTML = '🔁 今日已打卡 ' + todayRecs.length + ' 段：' +
+        todayRecs.map(function(r, i) { return (i + 1) + ') ' + esc(r.clock_in || '--') + '–' + esc(r.clock_out || '進行中'); }).join('、') +
+        '　合計 ' + formatMinutesText(totalMin);
+      sessionsEl.style.display = '';
+    } else {
+      sessionsEl.innerHTML = '';
+      sessionsEl.style.display = 'none';
+    }
+  }
+
+  document.getElementById('clockInBtn').disabled = !!openRec;
+  document.getElementById('clockOutBtn').disabled = !openRec;
   updateMakeupInfo(record); // v4.0.5 補班抵扣面板（任何上班日皆顯示）
 }
 
@@ -1642,8 +1748,8 @@ function registerMakeup() {
   if (!requireLogin()) return;
   if (currentUser.role === 'admin') { showToast('管理員不列入薪資計算，無需補班登記', 'warning'); return; }
   const today = new Date().toLocaleDateString('en-CA');
-  const record = db.attendance.find(function(a) { return a.employee_id === currentUser.employeeId && a.date === today; });
-  if (!record || !record.clock_in) { showToast('請先完成上班打卡', 'warning'); return; }
+  const record = getTodayRecords(currentUser.employeeId, today).filter(function(a) { return a.clock_in; })[0] || null; // v4.0.11 以當日主要（最早上班）紀錄為準
+  if (!record) { showToast('請先完成上班打卡', 'warning'); return; }
   if (record.makeup_type === 'leave_offset') { showToast('今日已登記為補班日', 'warning'); return; }
   const regBtn = document.getElementById('makeupRegisterBtn');
   const checkEl = document.getElementById('makeupCheck');
@@ -1675,8 +1781,37 @@ function registerMakeup() {
   loadClockStatus();
 }
 
+// ===== v4.0.11 打卡防連點：上班／下班按鈕共用 3 秒冷卻 =====
+const CLOCK_COOLDOWN_MS = 3000;
+var _clockCooldownUntil = 0; // var 宣告避免 TDZ（自動化測試可直接重置）
+
+function startClockCooldown() {
+  _clockCooldownUntil = Date.now() + CLOCK_COOLDOWN_MS;
+  ['clockInBtn', 'clockOutBtn'].forEach(function(id) {
+    const b = document.getElementById(id);
+    if (b) { b.disabled = true; b.classList.add('btn-cooldown'); }
+  });
+  setTimeout(function() {
+    _clockCooldownUntil = 0;
+    ['clockInBtn', 'clockOutBtn'].forEach(function(id) {
+      const b = document.getElementById(id);
+      if (b) b.classList.remove('btn-cooldown');
+    });
+    loadClockStatus();
+  }, CLOCK_COOLDOWN_MS + 60);
+}
+
+function clockCooldownBlocked() {
+  if (!_clockCooldownUntil) return false;
+  if (Date.now() >= _clockCooldownUntil) { _clockCooldownUntil = 0; return false; }
+  showToast('打卡過於頻繁，請 ' + Math.ceil((_clockCooldownUntil - Date.now()) / 1000) + ' 秒後再按一次（避免重複打卡）', 'warning');
+  return true;
+}
+
 function clockIn() {
   if (!requireLogin()) return;
+  if (clockCooldownBlocked()) return;
+  startClockCooldown();
   const today = new Date().toLocaleDateString('en-CA');
   const now = new Date().toLocaleTimeString('en-GB');
   const wifi = db.wifiSettings;
@@ -1689,9 +1824,11 @@ function clockIn() {
     return;
   }
 
-  let record = db.attendance.find(function(a) { return a.employee_id === currentUser.employeeId && a.date === today; });
-  if (record && record.clock_in) {
-    showToast('今日已打卡上班', 'warning');
+  // v4.0.11：同一天可多次打卡 — 只要沒有「尚未下班」的打卡段，就可以再打一次上班卡
+  const todayRecs = getTodayRecords(currentUser.employeeId, today);
+  const openRec = getOpenRecord(currentUser.employeeId, today);
+  if (openRec) {
+    showToast('您已於 ' + openRec.clock_in + ' 打卡上班，請先按下班打卡', 'warning');
     return;
   }
 
@@ -1706,21 +1843,23 @@ function clockIn() {
 
   const status = calcAttendanceStatus(now, null);
   const nowISO = new Date().toISOString();
-  if (record) {
-    record.clock_in = now;
-    record.clock_in_ip = currentIP;
-    record.ip_address = record.ip_address || currentIP;
-    record.wifi_verified = wifiVerified ? 1 : 0;
-    record.status = status;
-    record.updated_at = nowISO;
+  // 沒有進行中的打卡段 → 建立新的一段（同日第二、第三次打卡以此類推）
+  const blank = todayRecs.filter(function(a) { return !a.clock_in; })[0];
+  if (blank) {
+    blank.clock_in = now;
+    blank.clock_in_ip = currentIP;
+    blank.ip_address = blank.ip_address || currentIP;
+    blank.wifi_verified = wifiVerified ? 1 : 0;
+    blank.status = status;
+    blank.updated_at = nowISO;
     if (makeupInfo) {
-      record.makeup_type = 'leave_offset';
-      record.offset_leave_id = makeupInfo.leave_id;
-      record.offset_leave_date = makeupInfo.leave_date;
+      blank.makeup_type = 'leave_offset';
+      blank.offset_leave_id = makeupInfo.leave_id;
+      blank.offset_leave_date = makeupInfo.leave_date;
     }
   } else {
     db.attendance.push({
-      id: db.nextAttId++, employee_id: currentUser.employeeId,
+      id: db.nextAttId++, uid: newAttUid(), employee_id: currentUser.employeeId,
       clock_in: now, clock_out: null, date: today,
       ip_address: currentIP, clock_in_ip: currentIP, clock_out_ip: null,
       wifi_verified: wifiVerified ? 1 : 0,
@@ -1735,12 +1874,15 @@ function clockIn() {
   const lateMsg = status === 'late' ? '（遲到）' : '';
   const adminMsg = isAdmin ? '（管理員不受WiFi管制）' : '';
   const makeupMsg = makeupInfo ? '，已登記補班抵扣 ' + makeupInfo.leave_date + ' 的' + leaveTypeText(makeupInfo.leave_type) : '';
-  showToast('上班打卡成功！時間：' + now + lateMsg + makeupMsg + adminMsg, 'success');
+  const seqMsg = todayRecs.length > 0 ? '（今日第 ' + (todayRecs.length + 1) + ' 次打卡）' : '';
+  showToast('上班打卡成功！時間：' + now + seqMsg + lateMsg + makeupMsg + adminMsg, 'success');
   loadClockStatus();
 }
 
 function clockOut() {
   if (!requireLogin()) return;
+  if (clockCooldownBlocked()) return;
+  startClockCooldown();
   const today = new Date().toLocaleDateString('en-CA');
   const now = new Date().toLocaleTimeString('en-GB');
   const wifi = db.wifiSettings;
@@ -1753,13 +1895,10 @@ function clockOut() {
     return;
   }
 
-  const record = db.attendance.find(function(a) { return a.employee_id === currentUser.employeeId && a.date === today; });
-  if (!record || !record.clock_in) {
-    showToast('您今日尚未打卡上班', 'error');
-    return;
-  }
-  if (record.clock_out) {
-    showToast('今日已打卡下班', 'warning');
+  // v4.0.11：關閉「目前進行中」的那一段打卡（同一天可有多段）
+  const record = getOpenRecord(currentUser.employeeId, today);
+  if (!record) {
+    showToast('目前沒有進行中的上班打卡，請先按上班打卡', 'error');
     return;
   }
 
@@ -1776,7 +1915,12 @@ function clockOut() {
   let extraMsg = '';
   if (record.status === 'early') extraMsg = '（早退）';
   else if (record.status === 'late_early') extraMsg = '（遲到+早退）';
-  showToast('下班打卡成功！工作時數：' + hours + ' 小時' + extraMsg, 'success');
+  // v4.0.11：同一天多段打卡時，額外提示本日累計工時
+  const dayRecs = getTodayRecords(currentUser.employeeId, today);
+  let dayMin = 0;
+  dayRecs.forEach(function(r) { const w = calcWorkHours(r); if (w) dayMin += w.minutes; });
+  const dayMsg = dayRecs.length > 1 ? '，本日累計 ' + formatMinutesText(dayMin) : '';
+  showToast('下班打卡成功！本次工時：' + hours + ' 小時' + dayMsg + extraMsg, 'success');
   loadClockStatus();
 }
 
@@ -1812,6 +1956,8 @@ function loadHistory() {
     }
   });
 
+  // v4.0.11：同一天多次打卡 → 彙總成一列（最早上班／最晚下班／工時加總）
+  records = aggregateAttendanceByDay(records);
   records.sort(function(a, b) { return b.date.localeCompare(a.date); });
   records = records.slice(0, 90);
 
@@ -1855,7 +2001,7 @@ function loadHistory() {
         '<td>' + leaveDayBadge(r._leaveType) + offsetCell + '</td>' +
         '</tr>';
     }
-    const wh = calcWorkHours(r);
+    const wh = aggDayWork(r);
     let hours = '--';
     if (wh) hours = wh.text;
     else if (r.clock_in) hours = '<span style="color:#999">工作中</span>';
@@ -1863,7 +2009,7 @@ function loadHistory() {
     if (r._leaveType) statusCell += '<br><span style="font-size:11px">' + leaveDayBadge(r._leaveType) + '</span>';
     if (r.makeup_type === 'leave_offset') statusCell += '<br><span style="font-size:11px">' + makeupOffsetBadge() + '</span>';
     return '<tr>' +
-      '<td>' + esc(r.date) + '</td>' +
+      '<td>' + esc(r.date) + multiPunchBadge(r._count) + '</td>' +
       '<td>' + (r.clock_in ? esc(r.clock_in) : '<span style="color:#999">未打卡</span>') + '</td>' +
       '<td>' + (r.clock_out ? esc(r.clock_out) : '<span style="color:#999">未打卡</span>') + '</td>' +
       '<td>' + hours + '</td>' +
@@ -1897,7 +2043,10 @@ function loadAdminStats() {
     d.setDate(d.getDate() - i);
     const dateStr = d.toLocaleDateString('en-CA');
     dayLabels.push(dateStr);
-    const count = db.attendance.filter(function(a) { return a.date === dateStr && a.clock_in; }).length;
+    // v4.0.11：同一天多次打卡 → 以「當日打卡人數」計（同一人不重複計算）
+    const ids = {};
+    db.attendance.forEach(function(a) { if (a.date === dateStr && a.clock_in) ids[a.employee_id] = 1; });
+    const count = Object.keys(ids).length;
     dayData.push(count);
   }
   const maxVal = Math.max.apply(null, dayData.concat([1]));
@@ -1956,11 +2105,15 @@ function loadEmployees() {
   }
 
   tbody.innerHTML = employees.map(function(e) {
-    const todayRecord = db.attendance.find(function(a) { return a.employee_id === e.employee_id && a.date === today; });
+    // v4.0.11：同一天可多次打卡 → 有進行中的段優先顯示，否則顯示當日最早上班
+    const todayRecs = db.attendance.filter(function(a) { return a.employee_id === e.employee_id && a.date === today; });
+    const todayRecord = todayRecs.filter(function(a) { return a.clock_in && !a.clock_out; })[0] || todayRecs[0];
     let todayStatus = '<span style="color:#999">未打卡</span>';
     if (todayRecord && todayRecord.clock_in) {
-      if (todayRecord.clock_out) todayStatus = '<span class="badge badge-info">' + esc(todayRecord.clock_in) + '~' + esc(todayRecord.clock_out) + '</span>';
-      else todayStatus = '<span class="badge badge-success">' + esc(todayRecord.clock_in) + '</span>';
+      const ins = todayRecs.map(function(r) { return r.clock_in; }).filter(Boolean).sort()[0];
+      const outs = todayRecs.map(function(r) { return r.clock_out; }).filter(Boolean).sort().slice(-1)[0];
+      if (outs) todayStatus = '<span class="badge badge-info">' + esc(ins) + '~' + esc(outs) + '</span>' + multiPunchBadge(todayRecs.length);
+      else todayStatus = '<span class="badge badge-success">' + esc(todayRecord.clock_in) + ' 上班</span>' + multiPunchBadge(todayRecs.length);
     }
     const canManage = e.employee_id !== 'admin';
     const actions = canManage ?
@@ -2050,6 +2203,13 @@ document.getElementById('addEmployeeForm').addEventListener('submit', function(e
     showToast('員工編號已存在', 'error');
     return;
   }
+  // v4.0.11：清除該編號的刪除標記（tombstone），讓「刪除後重新用同一編號新增」能成功並同步到所有裝置
+  if (!db.deleted_employees) db.deleted_employees = [];
+  var hadTombstone = db.deleted_employees.some(function(d) { return d && d.employee_id === empId; });
+  db.deleted_employees = db.deleted_employees.filter(function(d) { return !d || d.employee_id !== empId; });
+  // 防呆：nextEmpId 從未初始化或與既有員工 id 重複時自動跳號，避免新增後管理操作抓錯人
+  if (!db.nextEmpId) db.nextEmpId = db.employees.length + 1;
+  while (db.employees.some(function(e) { return e.id === db.nextEmpId; })) db.nextEmpId++;
   db.employees.push({
     id: db.nextEmpId++, employee_id: empId,
     name: empName,
@@ -2060,7 +2220,7 @@ document.getElementById('addEmployeeForm').addEventListener('submit', function(e
     updated_at: new Date().toISOString()
   });
   saveDB();
-  showToast('員工建立成功！', 'success');
+  showToast('員工建立成功！' + (hadTombstone ? '（編號 ' + empId + ' 曾刪除，已重新啟用）' : ''), 'success');
   closeModal('addEmployeeModal');
   document.getElementById('addEmployeeForm').reset();
   loadEmployees();
@@ -2180,6 +2340,8 @@ function loadAdminAttendance() {
     }
   });
 
+  // v4.0.11：同一員工同一天多次打卡 → 彙總成一列（最早上班／最晚下班／工時加總）
+  records = aggregateAttendanceByDay(records);
   records.sort(function(a, b) { if (b.date !== a.date) return b.date.localeCompare(a.date); return (b.clock_in || '').localeCompare(a.clock_in || ''); });
 
   const tbody = document.getElementById('adminAttTableBody');
@@ -2203,12 +2365,12 @@ function loadAdminAttendance() {
         '<td>' + leaveDayBadge(r._leaveType) + offsetCell + '</td>' +
         '</tr>';
     }
-    var wh = calcWorkHours(r);
+    var wh = aggDayWork(r);
     var statusCell = statusBadge(r.status);
     if (r._leaveType) statusCell += '<br><span style="font-size:11px">' + leaveDayBadge(r._leaveType) + '</span>';
     if (r.makeup_type === 'leave_offset') statusCell += '<br><span style="font-size:11px">' + makeupOffsetBadge() + '</span>';
     return '<tr>' +
-      '<td>' + esc(r.date) + '</td>' +
+      '<td>' + esc(r.date) + multiPunchBadge(r._count) + '</td>' +
       '<td style="font-weight:600">' + esc(r.employee_id) + '</td>' +
       '<td>' + (esc(r.employee_name) || '--') + '</td>' +
       '<td>' + (esc(r.department) || '--') + '</td>' +
@@ -2259,9 +2421,11 @@ function exportCSV() {
       });
     }
   });
+  // v4.0.11：同一員工同一天多次打卡 → 彙總成一列（最早上班／最晚下班／工時加總）
+  records = aggregateAttendanceByDay(records);
   records.sort(function(a, b) { return b.date.localeCompare(a.date); });
 
-  const headers = ['員工編號', '姓名', '部門', '日期', '上班時間', '下班時間', '工作時數', '工作時數(小時)', '上班IP', '下班IP', 'WiFi驗證', '狀態'];
+  const headers = ['員工編號', '姓名', '部門', '日期', '上班時間', '下班時間', '工作時數', '工作時數(小時)', '上班IP', '下班IP', 'WiFi驗證', '狀態', '打卡次數'];
   const statusZh = { normal: '正常', present: '正常', late: '遲到', early: '早退', late_early: '遲到+早退', absent: '缺席', leave: '請假' };
   const lines = [headers.join(',')];
   records.forEach(function(r) {
@@ -2272,7 +2436,7 @@ function exportCSV() {
       clockOut = ''; whText = ''; whHours = ''; ip1 = ''; ip2 = ''; wifi = '';
       status = '請假(' + leaveTypeText(r._leaveType) + ')' + csvOffset;
     } else {
-      const wh = calcWorkHours(r);
+      const wh = aggDayWork(r);
       whText = wh ? wh.text : ''; whHours = wh ? wh.hours.toFixed(2) : '';
       clockIn = r.clock_in || ''; clockOut = r.clock_out || '';
       ip1 = r.clock_in_ip || r.ip_address || ''; ip2 = r.clock_out_ip || '';
@@ -2281,7 +2445,7 @@ function exportCSV() {
       if (r._leaveType) status += ' / 請假(' + leaveTypeText(r._leaveType) + ')';
       if (r.makeup_type === 'leave_offset') status += ' / 補班抵扣(' + (r.offset_leave_date || '') + ')';
     }
-    var row = [r.employee_id, r.employee_name, r.department, r.date, clockIn, clockOut, whText, whHours, ip1, ip2, wifi, status];
+    var row = [r.employee_id, r.employee_name, r.department, r.date, clockIn, clockOut, whText, whHours, ip1, ip2, wifi, status, (r._isLeave ? '' : (r._count || 1))];
     lines.push(row.map(function(v) {
       var s = String(v || '');
       return '"' + s.replace(/"/g, '""') + '"';
@@ -2539,13 +2703,18 @@ function calcPayrollForEmployee(emp, ym) {
   });
   let totalHours = 0, otHours = 0;
   const clockedDates = {};
+  const dayHours = {}; // v4.0.11 同一天多段打卡 → 先按日加總工時，再以「日」為單位判斷加班
   recs.forEach(function(r) {
     clockedDates[r.date] = true;
     const wh = calcWorkHours(r);
     if (!wh) return;
-    totalHours += wh.hours;
-    if (wh.hours > stdH) otHours += wh.hours - stdH;
+    dayHours[r.date] = (dayHours[r.date] || 0) + wh.hours;
   });
+  Object.keys(dayHours).forEach(function(d) {
+    totalHours += dayHours[d];
+    if (dayHours[d] > stdH) otHours += dayHours[d] - stdH;
+  });
+  const presentDays = Object.keys(clockedDates).length;
 
   // v4.0.4 補班抵扣：補班日（makeup_type=leave_offset）可抵扣一天平日請假
   const offsetDates = {};
@@ -2594,7 +2763,7 @@ function calcPayrollForEmployee(emp, ym) {
     pay_type_text: setting.pay_type === 'hourly' ? '時薪制' : '月薪制',
     monthly_salary: parseFloat(setting.monthly_salary) || 0,
     hourly_rate: parseFloat(setting.hourly_rate) || 0,
-    present_days: recs.length,
+    present_days: presentDays, // v4.0.11 以「日出勤天數」計（同一天多次打卡只算一天）
     total_hours: Math.round(totalHours * 100) / 100,
     ot_hours: Math.round(otHours * 100) / 100,
     leave_paid: payCount.paid, leave_half: payCount.half, leave_unpaid: payCount.unpaid,
@@ -2843,7 +3012,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '4.0.10.20260914';
+const BUILD_ID = '4.0.11.20260915';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
@@ -3177,6 +3346,22 @@ function mergeDB(cloudDb) {
     if (!ld) { delMap[cd.employee_id] = cd; return; }
     if (cd.deleted_at && (!ld.deleted_at || cd.deleted_at > ld.deleted_at)) delMap[cd.employee_id] = cd;
   });
+  // v4.0.11：刪除過的員工編號若又被重新新增，要能「復活」——
+  // 只要（本機或雲端）員工紀錄的 updated_at 比刪除標記還新，就解除該筆 tombstone，
+  // 否則「刪除後再用同一編號新增」會在同步後被 tombstone 擋掉，造成「沒辦法新增員工」。
+  (function() {
+    const revive = function(list) {
+      (list || []).forEach(function(e) {
+        if (!e || !e.employee_id) return;
+        const d = delMap[e.employee_id];
+        if (!d) return;
+        const ts = e.updated_at || '';
+        if (ts && (!d.deleted_at || ts > d.deleted_at)) delete delMap[e.employee_id];
+      });
+    };
+    revive(db.employees);
+    revive(cloudDb.employees);
+  })();
   db.deleted_employees = Object.values(delMap);
   const isDeleted = function(empId) { return !!delMap[empId]; };
 
@@ -3216,17 +3401,19 @@ function mergeDB(cloudDb) {
   // 考勤：以 employee_id + date 為業務鍵合併；
   // 若本機只有上班、雲端只有下班（或相反）→ 欄位級合併成完整一筆，避免重複與缺漏
   const attMap = {};
+  // v4.0.11：同一天可有多段打卡 → 有 uid 者以 uid 為合併鍵（舊資料仍用 員工|日期）
+  const attKey = function(a) { return a.uid ? ('u:' + a.uid) : ('d:' + a.employee_id + '|' + a.date); };
   (db.attendance || []).forEach(function(a) {
     if (!a || !a.employee_id || !a.date) return;
     if (isDeleted(a.employee_id)) return; // v3.7: 已刪除員工的本機殘留考勤也清除
     if (wasCleared(a)) return; // v4.0.8: 清空時間點之前的本機殘留考勤也清除
-    attMap[a.employee_id + '|' + a.date] = a;
+    attMap[attKey(a)] = a;
   });
   (cloudDb.attendance || []).forEach(function(ca) {
     if (!ca || !ca.employee_id || !ca.date) return;
     if (isDeleted(ca.employee_id)) return; // v3.7: 已刪除員工的考勤不從雲端復活
     if (wasCleared(ca)) return; // v4.0.8: 清空時間點之前的考勤不從雲端復活
-    const k = ca.employee_id + '|' + ca.date;
+    const k = attKey(ca);
     const la = attMap[k];
     if (!la) { attMap[k] = ca; return; }
     let changed = false;
