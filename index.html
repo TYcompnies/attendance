@@ -254,7 +254,7 @@
         <summary>📖 使用辦法</summary>
         <div class="guide-body">
           <strong>🕘 打卡規則</strong><br>
-          · 打卡時系統會自動抓取裝置 <strong>IPv4</strong>：連上公司 WiFi「<strong>TY_5G</strong>」後，只要是該 WiFi 配發的<strong>浮動 IP</strong>（同一網段，如 192.168.31.x）就自動放行，系統會隨時自動更新浮動 IP，不必輸入任何網段或 IP；為避免重複打卡，按鈕每次按下後有 3 秒冷卻時間。<br>
+          · 打卡時系統會自動偵測網路：連上公司 WiFi「<strong>TY_5G</strong>」後<b>只要抓得到 IP 就自動放行</b>，不比對任何網段或 IPv4，也不必輸入任何設定；為避免重複打卡，按鈕每次按下後有 3 秒冷卻時間。<br>
           · 同一天可<strong>多次打卡</strong>：按下班卡後可再按上班卡開始下一段（例如午休外出、外出洽公返回），當日工時會自動加總；<strong>每一次打卡都會在考勤紀錄中各自成一列</strong>。<br>
           · 系統依排班時間自動判定遲到／早退；工作時數自動計算，當日合計超過標準每日工時的部分計為加班。<br>
           · 補班日（國定假日）打卡時，勾選「補班」並選擇要抵扣的平日請假，即可自動抵扣、不重複扣薪；忘記勾選可於當日下班後使用「📝 補登記」補登記。<br>
@@ -588,15 +588,15 @@
 
     <!-- Admin WiFi Settings -->
     <div id="page-admin-wifi" class="page">
-      <div class="section-title">打卡驗證設定（WiFi TY_5G · 浮動 IP 自動抓取）</div>
+      <div class="section-title">打卡驗證設定（WiFi TY_5G · 連上抓到 IP 即放行）</div>
       <div class="card">
         <div class="info-banner blue">
           <span>ℹ️</span>
-          <span>員工連上公司 WiFi「<strong>TY_5G</strong>」打卡，系統<strong>自動抓取該 WiFi 配發的浮動 IP</strong>並登記；只要員工抓到的 IP 落在同一個浮動網段就<strong>自動放行</strong>。<strong>不必輸入任何網段或 IP</strong>，DHCP 換 IP 也由系統自動更新。</span>
+          <span>員工連上公司 WiFi「<strong>TY_5G</strong>」打卡，系統<strong>只要抓得到 IP 就自動放行</strong>。<strong>不需要輸入任何 IPv4、網段或浮動 IP</strong>，也不比對 IP — 設定頁只需填 WiFi 名稱。</span>
         </div>
         <div class="info-banner" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0;">
           <span>🤖</span>
-          <span>浮動 IP 全自動維護：<strong>① 您（管理員）用公司 WiFi 開啟本頁</strong> → 系統自動抓取並更新（換分享器／換網段也自動跟上）；<strong>② 員工打卡時</strong>若抓到同網段的新 IP → 自動更新為最新值。員工在別的網段（如自家 WiFi）不會被放行，也不會改動登記值。</span>
+          <span>全自動免設定：員工開啟打卡頁時系統自動偵測網路，<strong>有抓到 IP（內網或公用皆可）即放行</strong>，並把該 IP 記錄於下方供稽核參考；只有瀏覽器完全抓不到 IP 時才會擋下，按「🔄 重新偵測」即可重試。</span>
         </div>
         <div class="info-banner" style="background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;">
           <span>👑</span>
@@ -611,7 +611,7 @@
             <button class="btn btn-outline btn-sm" id="redetectBtn" onclick="redetectNetwork()">🔄 重新偵測</button>
           </div>
           <div style="margin-top:8px;">
-            <strong>TY_5G 浮動 IP（系統自動抓取）：</strong>
+            <strong>最近偵測到的 IP（僅供參考，不影響放行）：</strong>
             <span id="adminSsidIp" style="font-family:monospace;color:var(--primary);">載入中...</span>
             <span id="adminSsidSeg" style="font-family:monospace;color:var(--text-secondary);font-size:12.5px;"></span>
             <span id="adminSsidIpAt" style="font-size:12px;color:var(--text-secondary);"></span>
@@ -621,15 +621,10 @@
         <div class="form-group">
           <label>WiFi 名稱（SSID）</label>
           <input type="text" id="wifiNameInput" placeholder="例如：TY_5G">
-          <div class="hint-text">公司打卡用的 WiFi 名稱（識別標籤，會寫入打卡紀錄）。連上此 WiFi 後系統自動抓取其浮動 IP。</div>
+          <div class="hint-text">公司打卡用的 WiFi 名稱（識別標籤，會寫入打卡紀錄）。員工連上這個 WiFi 後，系統抓到 IP 就自動放行。</div>
         </div>
         <div class="form-group">
-          <label>額外允許的 IPv4（選填，通常留空）</label>
-          <input type="text" id="allowedIPsInput" placeholder="留空即可，例如：61.220.1.2">
-          <div class="hint-text">一般不必填寫：連上 TY_5G 就自動放行。只有在特殊環境（如分公司／VPN 抓不到 TY_5G 網段）才需要把該 IP 或網段加進來。多筆用逗號分隔，支援萬用字元（61.220.1.*）。</div>
-        </div>
-        <div class="form-group">
-          <label class="checkbox-label"><input type="checkbox" id="wifiEnabledInput"> 啟用打卡驗證（TY_5G 浮動 IP 自動放行）</label>
+          <label class="checkbox-label"><input type="checkbox" id="wifiEnabledInput"> 啟用打卡驗證（連上 TY_5G 抓到 IP 即放行）</label>
         </div>
         <button class="btn btn-primary" onclick="saveWifiSettings()">儲存設定</button>
       </div>
@@ -749,7 +744,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.18 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-21 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · WiFi 名稱 TY_5G · 自動抓取浮動 IP 並隨時自動更新（免輸入任何網段/IP）)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.19 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-21 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · WiFi 名稱 TY_5G · 連上抓到 IP 即放行（免輸入任何網段/IP）)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
@@ -852,23 +847,17 @@ let currentPublicIP = null;  // v4.0.13：公用 IP（內網 IP 抓不到時的�
 let loginAttempts = {};
 let confirmCallback = null;
 
-// ===== v4.0.18 WiFi 名稱(TY_5G) 的「浮動 IP」自動抓取 + 自動放行（免輸入任何網段/IP） =====
+// ===== v4.0.19 WiFi 名稱(TY_5G)：連上就放行（只看「有沒有抓到 IP」，不再比對任何 IPv4/網段） =====
 //   wifi_name = 公司打卡 WiFi 名稱（TY_5G）
-//   ssid_ip   = TY_5G 目前配發給裝置的浮動 IP（系統自動抓取、隨時自動更新，不需人手輸入）
-//   allowed_ips = 選填的「額外允許」清單（通常留空；只有抓不到內網 IP 的特殊環境才用）
-// 判定：連上 TY_5G 後系統自動抓取 IPv4，只要落在「TY_5G 浮動 IP 的網段」內就放行；
-//       DHCP 換 IP（192.168.31.83 → 192.168.31.100）會自動更新登記值，員工照樣能打卡。
-// 自動更新時機（皆為全自動）：
-//   ① 管理員開「WiFi設定」頁 → 抓到內網 IP 就無條件更新（公司換分享器／換網段也自動跟上）
-//   ② 員工打卡頁載入 → 若抓到的 IP 與登記值同網段，自動更新為最新的浮動 IP；不同網段則不更新
+//   last_ip   = 最近一次偵測到的 IP（自動記錄，僅供顯示與稽核，不參與放行判定）
+// 判定：瀏覽器抓得到 IP（內網或公用皆可）→ 放行；完全抓不到 IP → 擋下。
+//       不再需要輸入任何網段／浮動 IP／精確 IP，也不需要系統登記並比對 IPv4。
 const WIFI_FACTORY_NAME = 'Office WiFi'; // 舊版從未設定過的原廠值（出現即視為未設定，套用預設）
-const SSID_FLOATING_DEFAULT = '192.168.31.83'; // TY_5G 出廠預設浮動 IP（之後由系統自動更新）
 function wifiDefaults() {
   return {
     wifi_name: 'TY_5G',        // 公司打卡 WiFi 名稱
-    ssid_ip: SSID_FLOATING_DEFAULT, // TY_5G 的浮動 IP（系統自動抓取更新）
-    ssid_ip_at: new Date().toISOString(),
-    allowed_ips: '',           // 選填：額外允許的 IPv4（通常留空）
+    last_ip: '',               // 最近偵測到的 IP（系統自動記錄，僅供顯示）
+    last_ip_at: '',
     enabled: true,
     updated_at: new Date().toISOString()
   };
@@ -882,23 +871,25 @@ function ipSegment(ip) {
 function splitIpList(str) {
   return (str || '').split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
 }
-// 補齊新版欄位（v4.0.18：WiFi 名稱 + 浮動 IP + 選填額外清單；綁定網段與舊勾選一律移除）
+// 補齊新版欄位（v4.0.19：WiFi 名稱 + 最近 IP 記錄；網段／浮動 IP／額外清單一律移除）
 function normalizeWifiSettings(target) {
   if (!target) return;
   const w = target.wifiSettings;
+  const hasLegacy = !!(w && (w.allowed_ips || w.ssid_ip || w.ssid_ip_range));
   const untouched = !w || typeof w !== 'object' ||
-    (!w.allowed_ips && (!w.wifi_name || w.wifi_name === WIFI_FACTORY_NAME));
+    (!hasLegacy && (!w.wifi_name || w.wifi_name === WIFI_FACTORY_NAME));
   if (untouched) { target.wifiSettings = wifiDefaults(); return; }
+  // v4.0.19：舊版登記的浮動 IP 轉為「最近 IP」記錄（僅供顯示，不再用於判定）
+  const legacyIp = (typeof w.ssid_ip === 'string' && w.ssid_ip) ? w.ssid_ip
+    : (typeof w.allowed_ips === 'string' ? w.allowed_ips : '');
   delete target.wifiSettings.require_ssid;   // v4.0.13 的雙條件勾選已廢除
   delete target.wifiSettings.ssid_ip_range;  // v4.0.16 起不再綁定網段（舊資料清掉）
+  delete target.wifiSettings.allowed_ips;    // v4.0.19 起不再需要任何 IP 清單
+  delete target.wifiSettings.ssid_ip;
+  delete target.wifiSettings.ssid_ip_at;
   if (!w.wifi_name) w.wifi_name = 'TY_5G';
-  if (typeof w.allowed_ips !== 'string') w.allowed_ips = '';
-  // v4.0.18：浮動 IP 缺值時由既有清單網段推導，推不出來就用出廠預設
-  if (!w.ssid_ip || typeof w.ssid_ip !== 'string') {
-    const segs = splitIpList(w.allowed_ips).map(ipSegment).filter(Boolean);
-    w.ssid_ip = segs.length ? segs[0].replace(/\.\*$/, '.1') : SSID_FLOATING_DEFAULT;
-  }
-  if (!w.ssid_ip_at) w.ssid_ip_at = w.updated_at || new Date().toISOString();
+  if (!w.last_ip || typeof w.last_ip !== 'string') w.last_ip = legacyIp.replace(/,\s*.*$/, '');
+  if (!w.last_ip_at) w.last_ip_at = w.updated_at || '';
   if (w.enabled === undefined) w.enabled = true;
 }
 
@@ -910,7 +901,7 @@ function loadDB() {
     if (raw) {
       const parsed = JSON.parse(raw);
       // Migration: ensure all required fields exist
-      normalizeWifiSettings(parsed); // v4.0.18：WiFi 名稱 + 浮動 IP + 選填額外清單欄位補齊（移除綁定網段）
+      normalizeWifiSettings(parsed); // v4.0.19：WiFi 名稱 + 最近 IP 記錄（網段／浮動 IP／額外清單一律移除）
       if (!parsed.schedule) parsed.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
       if (!parsed.attendance) parsed.attendance = [];
       if (!parsed.employees) parsed.employees = [];
@@ -944,7 +935,7 @@ function loadDB() {
     attendance: [],
     leave_requests: [],
     deleted_employees: [],
-    wifiSettings: wifiDefaults(), // v4.0.18：WiFi 名稱 TY_5G + 浮動 IP 自動抓取（清單預設留空）
+    wifiSettings: wifiDefaults(), // v4.0.19：WiFi 名稱 TY_5G，連上抓到 IP 即放行
     schedule: { start_time: '09:00', end_time: '18:00', enabled: true },
     payrollConfig: { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' },
     salary_settings: {},
@@ -1030,7 +1021,7 @@ function isIPAllowed(ip, allowedIPsStr) {
   });
 }
 
-// ===== v4.0.13 內網 IPv4 自動抓取（v4.0.18 沿用，供 TY_5G 浮動 IP 判定） =====
+// ===== v4.0.13 內網 IPv4 自動抓取（v4.0.19 沿用，供連線判定與顯示） =====
 // 瀏覽器基於隱私不會直接提供區網 IP，只能透過 WebRTC 的 ICE candidate 取得；
 // Chrome 可能以 mDNS（xxx.local）遮蔽，此時回傳 null，改以公用 IP 備援。
 function isPrivateIPv4(ip) {
@@ -1068,7 +1059,7 @@ function detectLocalIPv4() {
   });
 }
 
-// 回傳 { ip, lan, public }：優先使用內網 IPv4，抓不到才用公用 IP（v4.0.18 沿用：抓到內網就不再取公用，減少網路請求）
+// 回傳 { ip, lan, public }：優先使用內網 IPv4，抓不到才用公用 IP（v4.0.19 沿用：抓到內網就不再取公用，減少網路請求）
 async function detectIPv4() {
   var lan = null, pub = null;
   try { lan = await detectLocalIPv4(); } catch (e) { lan = null; }
@@ -1079,84 +1070,66 @@ async function detectIPv4() {
   return { ip: lan || pub || 'unknown', lan: lan || null, public: pub || null };
 }
 
-// ===== v4.0.18 打卡閘門：抓到的 IP 必須是 WiFi「TY_5G」的浮動 IP（同網段）才放行 =====
-// 不再是「任何內網 IP 都放行」：員工在自家 WiFi（也是 192.168.x.x）不會被放行。
+// ===== v4.0.19 打卡閘門：只認 WiFi 名稱 TY_5G，抓得到 IP 就放行（不比對任何網段/IP） =====
+// 員工連上 TY_5G 後瀏覽器只要抓得到 IP（內網 192.168.x.x 或公用 IP 皆可）就自動放行；
+// 完全抓不到 IP（瀏覽器遮蔽／無網路）才擋下，請按「🔄 重新偵測」重試。
 function evalWifiGate(ip) {
   const w = db.wifiSettings || {};
-  const cur = ip || currentIP || 'unknown';
-  const allowedIps = (w.allowed_ips || '').trim();
+  const raw = (ip || currentIP || '').trim();
+  const hasIP = !!raw && raw !== 'unknown';
   const name = (w.wifi_name || '').trim() || 'TY_5G';
-  const ssidIp = (w.ssid_ip || '').trim();   // TY_5G 目前登記的浮動 IP
-  const ssidSeg = ipSegment(ssidIp);         // 該浮動 IP 所屬網段（192.168.31.*）
-  const ssidOK = ssidSeg ? isIPAllowed(cur, ssidSeg) : false;
-  const extraOK = allowedIps ? isIPAllowed(cur, allowedIps) : false; // 選填例外清單
   return {
-    enabled: !!w.enabled, ip: cur, allowedIps: allowedIps,
-    ssidName: name, ssidIp: ssidIp, ssidSeg: ssidSeg,
-    ssidOK: ssidOK, extraOK: extraOK,
-    ok: !w.enabled || ssidOK || extraOK
+    enabled: !!w.enabled,
+    ip: hasIP ? raw : 'unknown',
+    ssidName: name,
+    lastIp: (w.last_ip || '').trim(),
+    ipOK: hasIP,
+    ok: !w.enabled || hasIP   // 停用驗證 → 全放行；啟用 → 抓到 IP 就放行
   };
 }
 
 function wifiFailReason(g) {
   if (g.ip === 'unknown') {
-    return '抓不到您的 IPv4，無法確認是否連上公司 WiFi。請確認已連上 WiFi：' +
-      (g.ssidName || 'TY_5G') + '，再按「🔄 重新偵測」重試。';
+    return '抓不到您的 IP，無法確認是否已連上 WiFi：' + (g.ssidName || 'TY_5G') +
+      '。請確認已連上該 WiFi（或開啟任一網路連線）後，按「🔄 重新偵測」重試。';
   }
-  if (g.ssidSeg) {
-    return '您的 IPv4（' + g.ip + '）不是 WiFi「' + (g.ssidName || 'TY_5G') +
-      '」配發的浮動 IP（目前登記 ' + g.ssidIp + '，網段 ' + g.ssidSeg +
-      '）。請確認已連上 WiFi：' + (g.ssidName || 'TY_5G') + ' 後再打卡。';
-  }
-  return '尚未偵測到 WiFi「' + (g.ssidName || 'TY_5G') +
-    '」的浮動 IP（系統會自動抓取）。請確認已連上 WiFi：' + (g.ssidName || 'TY_5G') +
-    '，或請管理員開啟「WiFi設定」頁讓系統自動抓取。';
+  return '尚未取得網路 IP，請確認已連上 WiFi：' + (g.ssidName || 'TY_5G') + ' 後再打卡。';
 }
 
-// v4.0.18：自動抓取並維護 TY_5G 的浮動 IP（全自動，不需人手輸入任何網段/IP）
-//  opts.admin = true → 管理員開設定頁：抓到內網 IP 就無條件更新（換分享器／換網段自動跟上）
-//  一般員工端         → 只在「與登記值同網段」時更新（浮動追蹤最新 IP），不同網段絕不更新
-// 回傳 { ip, lan, public, ssidIp, updated, reason }
-//  reason = updated / unchanged / other-lan / public-only / no-ip / no-ssid
-function syncSsidFloatingIP(opts) {
-  const isAdmin = !!(opts && opts.admin);
+// v4.0.19：記錄最近一次偵測到的 IP（僅供顯示／稽核，不影響放行判定）
+// 回傳 { ip, lan, public, lastIp, updated, reason }
+//  reason = updated / unchanged / no-ip
+function recordDetectedIP(opts) {
   if (!db.wifiSettings) db.wifiSettings = wifiDefaults();
-  const before = (db.wifiSettings.ssid_ip || '').trim();
-  const result = { ip: currentIP, lan: currentLocalIP, public: currentPublicIP, ssidIp: before, updated: false, reason: '' };
-  const cur = currentIP;
+  const w = db.wifiSettings;
+  const before = (w.last_ip || '').trim();
+  const result = { ip: currentIP, lan: currentLocalIP, public: currentPublicIP, lastIp: before, updated: false, reason: '' };
+  const cur = (currentIP || '').trim();
   if (!cur || cur === 'unknown') { result.reason = 'no-ip'; return result; }
-  if (!isPrivateIPv4(cur)) { result.reason = 'public-only'; return result; } // 公用 IP 不登記
-  const curSeg = ipSegment(cur);
-  const beforeSeg = ipSegment(before);
-  let shouldUpdate = false;
-  if (!before) { shouldUpdate = true; result.reason = 'no-ssid'; }
-  else if (isAdmin) { shouldUpdate = cur !== before; }
-  else if (beforeSeg && curSeg === beforeSeg) { shouldUpdate = cur !== before; }
-  else { result.reason = 'other-lan'; return result; } // 員工在其他網段：不更新、也不放行
-  if (!shouldUpdate) { result.reason = 'unchanged'; return result; }
-  db.wifiSettings.ssid_ip = cur;
-  db.wifiSettings.ssid_ip_at = new Date().toISOString();
-  db.wifiSettings.updated_at = new Date().toISOString();
+  if (cur === before) { result.reason = 'unchanged'; return result; }
+  w.last_ip = cur;
+  w.last_ip_at = new Date().toISOString();
+  w.updated_at = w.last_ip_at;
   saveDB();
-  result.ssidIp = cur;
+  result.lastIp = cur;
   result.updated = true;
-  if (result.reason !== 'no-ssid') result.reason = 'updated';
+  result.reason = 'updated';
   return result;
 }
 
-// 打卡／設定頁共用：抓 IP → 同步 TY_5G 浮動 IP → 回傳結果
+// 打卡／設定頁共用：抓 IP → 記錄最近 IP → 回傳結果
 async function autoRegisterIP(opts) {
   const quiet = !!(opts && opts.quiet);
   const det = await detectIPv4();
   currentIP = det.ip; currentLocalIP = det.lan; currentPublicIP = det.public;
-  const synced = syncSsidFloatingIP(opts);
+  const rec = recordDetectedIP(opts);
   const result = {
     ip: currentIP, lan: det.lan, public: det.public,
     lanOK: !!(det.lan && isPrivateIPv4(det.lan)),
-    ssidIp: synced.ssidIp, updated: synced.updated, reason: synced.reason
+    lastIp: rec.lastIp, updated: rec.updated, reason: rec.reason
   };
-  if (!quiet && synced.updated) {
-    showToast('已自動更新 ' + (db.wifiSettings.wifi_name || 'TY_5G') + ' 浮動 IP：' + synced.ssidIp + ' ✓', 'success');
+  if (!quiet && rec.updated) {
+    showToast('已記錄目前 IP：' + rec.lastIp + ' ✓', 'success');
   }
   return result;
 }
@@ -1744,26 +1717,25 @@ async function loadClockStatus() {
     currentIP = det.ip; currentLocalIP = det.lan; currentPublicIP = det.public;
   }
   if (!currentUser) return; // 防禦：await detectIP 期間使用者可能已登出（v4.0.7 修補的 race，v4.0.11 補強）
-  // v4.0.18：自動同步 TY_5G 浮動 IP（打卡頁一律採「同網段才更新」的浮動追蹤，
-  // 即使管理員在外面開啟打卡頁也不會把外部網段寫入登記值；管理員改網段請開「WiFi設定」頁）
-  if (db.wifiSettings && db.wifiSettings.enabled) syncSsidFloatingIP({ admin: false });
+  // v4.0.19：記錄本次偵測到的 IP（僅供顯示／稽核，放行與否只看「有沒有抓到 IP」）
+  if (db.wifiSettings) recordDetectedIP();
 
   if (isAdmin) {
     // Admin is EXEMPT from IP restrictions — can clock in/out & manage from anywhere
     wifiEl.className = 'wifi-status verified';
     wifiEl.innerHTML = '<span>👑 管理員模式：不受打卡管制，可隨時隨地使用 · IPv4: ' + esc(currentIP) + '</span>';
   } else {
-    // v4.0.18：抓到的 IP 必須是 TY_5G 的浮動 IP（同網段）才放行
+    // v4.0.19：抓得到 IP 就放行（不比對網段）
     const g = evalWifiGate();
     const redetectBtn = '<button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:12px;margin-left:6px;" onclick="redetectNetwork()">🔄 重新偵測</button>';
 
     if (!g.enabled) {
       wifiEl.className = 'wifi-status disabled';
-      wifiEl.innerHTML = '<span>⚠️ 打卡驗證已停用（任何網路均可打卡）· IPv4: ' + esc(currentIP) + '</span>';
+      wifiEl.innerHTML = '<span>⚠️ 打卡驗證已停用（任何網路均可打卡）· IP: ' + esc(currentIP) + '</span>';
     } else if (g.ok) {
       wifiEl.className = 'wifi-status verified';
-      wifiEl.innerHTML = '<span>✅ WiFi: ' + esc(g.ssidName) + ' · 浮動 IP: ' + esc(g.ip) +
-        ' ✓（' + esc(g.ssidSeg || '') + '，已自動放行）</span>';
+      wifiEl.innerHTML = '<span>✅ WiFi: ' + esc(g.ssidName) + ' · 已連線並取得 IP: ' + esc(g.ip) +
+        ' ✓（自動放行）</span>';
     } else {
       wifiEl.className = 'wifi-status unverified';
       wifiEl.innerHTML = '<span>❌ ' + esc(wifiFailReason(g)) + '</span>' + redetectBtn;
@@ -2037,7 +2009,7 @@ function clockIn() {
   const today = new Date().toLocaleDateString('en-CA');
   const now = new Date().toLocaleTimeString('en-GB');
   const isAdmin = currentUser.role === 'admin';
-  // v4.0.18：驗證「是否為 TY_5G 的浮動 IP（同網段）」（管理員豁免）
+  // v4.0.19：驗證「是否已連上 TY_5G 並抓到 IP」（管理員豁免）
   const gate = evalWifiGate();
   const wifiVerified = isAdmin ? true : gate.ok;
 
@@ -2110,7 +2082,7 @@ function clockOut() {
   const now = new Date().toLocaleTimeString('en-GB');
   const isAdmin = currentUser.role === 'admin';
 
-  // v4.0.18：下班打卡時重新驗證「TY_5G 浮動 IP」— admin exempt
+  // v4.0.19：下班打卡時重新驗證「是否已連上 TY_5G 並抓到 IP」— admin exempt
   const gate = evalWifiGate();
   const wifiVerified = isAdmin ? true : gate.ok;
   if (!isAdmin && gate.enabled && !gate.ok) {
@@ -2700,59 +2672,54 @@ function exportCSV() {
   showToast('CSV已匯出（共 ' + records.length + ' 筆記錄，含請假）', 'success');
 }
 
-// ===== 打卡驗證設定（v4.0.18：WiFi 名稱 + TY_5G 浮動 IP 自動抓取，開頁即自動更新） =====
+// ===== 打卡驗證設定（v4.0.19：只認 WiFi 名稱，抓到 IP 即放行；開頁自動偵測） =====
 async function loadWifiSettings() {
   if (!requireAdmin()) return;
   const wifi = db.wifiSettings || {};
-  const input = document.getElementById('allowedIPsInput');
-  if (input) input.value = wifi.allowed_ips || '';
   const nameInput = document.getElementById('wifiNameInput');
   if (nameInput) nameInput.value = wifi.wifi_name || 'TY_5G';
   document.getElementById('wifiEnabledInput').checked = !!wifi.enabled;
-  // 自動抓取 IPv4 並更新 TY_5G 浮動 IP（管理員端：抓到內網 IP 即無條件更新）
+  // 自動偵測並記錄目前 IP（僅供顯示／稽核，不再比對網段）
   const res = await autoRegisterIP({ admin: true });
   refreshWifiDetectInfo(res);
 }
 
-// 顯示偵測結果：內網 IPv4 / 公用 IP / TY_5G 浮動 IP 與放行狀態
+// 顯示偵測結果：內網 IPv4 / 公用 IP / 最近 IP 與放行狀態
 function refreshWifiDetectInfo(res) {
   const setTxt = function(id, txt) { const el = document.getElementById(id); if (el) el.textContent = txt; };
   setTxt('adminCurrentIP', currentLocalIP || (isPrivateIPv4(currentIP) ? currentIP : '（無法取得）'));
   setTxt('adminPublicIP', currentPublicIP || (currentIP && currentIP !== 'unknown' && !isPrivateIPv4(currentIP) ? currentIP : '（無）'));
 
   const w = db.wifiSettings || {};
-  const seg = ipSegment(w.ssid_ip || '');
-  setTxt('adminSsidIp', (w.ssid_ip || '（尚未抓取）'));
-  setTxt('adminSsidSeg', seg ? '→ 放行網段 ' + seg : '');
+  setTxt('adminSsidIp', (w.last_ip || '（尚未偵測到）'));
+  setTxt('adminSsidSeg', '');
   const at = document.getElementById('adminSsidIpAt');
   if (at) {
-    if (w.ssid_ip_at) {
-      const d = new Date(w.ssid_ip_at);
-      at.textContent = isNaN(d.getTime()) ? '' : '（更新於 ' + d.toLocaleString('zh-TW') + '）';
+    if (w.last_ip_at) {
+      const d = new Date(w.last_ip_at);
+      at.textContent = isNaN(d.getTime()) ? '' : '（記錄於 ' + d.toLocaleString('zh-TW') + '）';
     } else { at.textContent = ''; }
   }
 
   const note = document.getElementById('wifiAutoNote');
   if (note) {
     const g = evalWifiGate();
-    if (res && res.updated) {
-      note.innerHTML = '✅ 已自動抓取並更新 ' + esc(g.ssidName || 'TY_5G') + ' 浮動 IP：<strong>' + esc(res.ssidIp) + '</strong>';
-    } else if (res && res.reason === 'unchanged') {
-      note.innerHTML = '✅ 浮動 IP <strong>' + esc(res.ssidIp) + '</strong> 已是最新，無需更新';
-    } else if (res && res.reason === 'public-only') {
-      note.innerHTML = '⚠️ 只抓到公用 IP，未更新 — 請連上 WiFi：' + esc(g.ssidName || 'TY_5G') + ' 後重新偵測';
+    if (g.ok) {
+      note.innerHTML = '✅ 已取得 IP：<strong>' + esc(g.ip) + '</strong> — 連上 ' +
+        esc(g.ssidName || 'TY_5G') + ' 即自動放行';
     } else if (res && res.reason === 'no-ip') {
-      note.innerHTML = '⚠️ 抓不到 IPv4 — 請連上 WiFi：' + esc(g.ssidName || 'TY_5G') + ' 後重新偵測';
+      note.innerHTML = '⚠️ 抓不到 IP — 請確認網路連線（如已連上 ' +
+        esc(g.ssidName || 'TY_5G') + '）後按「🔄 重新偵測」';
     } else {
-      note.innerHTML = '✅ 目前浮動 IP：<strong>' + esc(res ? res.ssidIp : (w.ssid_ip || '')) + '</strong>';
+      note.innerHTML = '⚠️ 尚未取得 IP，員工打卡會被擋下';
     }
   }
 
   const warn = document.getElementById('wifiDetectWarn');
   if (warn) {
-    if (!currentLocalIP) {
+    if (!currentIP || currentIP === 'unknown') {
       warn.style.display = '';
-      warn.innerHTML = '⚠️ 此瀏覽器抓不到內網 IPv4（Chrome 會以 mDNS 遮蔽），無法自動抓取浮動 IP，員工打卡會被擋下。替代做法：① 改用另一瀏覽器（Edge／Safari）或手機開啟本頁讓系統抓取；② 在「額外允許的 IPv4」填入該環境的 IP 或網段（如 61.220.1.*）；③ 暫時取消勾選「啟用打卡驗證」。';
+      warn.innerHTML = '⚠️ 此瀏覽器抓不到任何 IP（Chrome 可能以 mDNS 遮蔽內網 IP、或目前無網路連線），啟用驗證時員工打卡會被擋下。替代做法：① 改用另一瀏覽器（Edge／Safari）或手機開啟本頁讓系統抓取；② 暫時取消勾選「啟用打卡驗證」。';
     } else {
       warn.style.display = 'none';
     }
@@ -2761,19 +2728,16 @@ function refreshWifiDetectInfo(res) {
 
 function saveWifiSettings() {
   if (!requireAdmin()) return;
-  const allowed = trim(document.getElementById('allowedIPsInput').value);
   const name = trim(document.getElementById('wifiNameInput').value) || 'TY_5G';
   db.wifiSettings = {
     wifi_name: name,
-    ssid_ip: (db.wifiSettings && db.wifiSettings.ssid_ip) || SSID_FLOATING_DEFAULT, // 浮動 IP 由系統維護，不手動覆寫
-    ssid_ip_at: (db.wifiSettings && db.wifiSettings.ssid_ip_at) || new Date().toISOString(),
-    allowed_ips: allowed,
+    last_ip: (db.wifiSettings && db.wifiSettings.last_ip) || '', // 最近 IP 由系統自動記錄，不手動輸入
+    last_ip_at: (db.wifiSettings && db.wifiSettings.last_ip_at) || '',
     enabled: document.getElementById('wifiEnabledInput').checked,
     updated_at: new Date().toISOString()
   };
   saveDB();
-  showToast('打卡設定已儲存！（WiFi：' + name + ' · 浮動 IP：' + db.wifiSettings.ssid_ip +
-    (allowed ? ' · 額外允許：' + allowed : '') + '）', 'success');
+  showToast('打卡設定已儲存！（WiFi：' + name + ' · 連上即自動放行）', 'success');
   loadClockStatus();
 }
 
@@ -3255,7 +3219,7 @@ function importFullData(event) {
           return;
         }
         db = imported;
-        normalizeWifiSettings(db); // v4.0.18
+        normalizeWifiSettings(db); // v4.0.19
         if (!db.schedule) db.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
         if (!db.payrollConfig) db.payrollConfig = { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' };
         if (!db.salary_settings) db.salary_settings = {};
@@ -3284,7 +3248,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '4.0.18.20260921';
+const BUILD_ID = '4.0.19.20260921';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
@@ -3742,7 +3706,7 @@ function mergeDB(cloudDb) {
     const lts = db[k].updated_at || '', cts = cloudDb[k].updated_at || '';
     if (cts && (!lts || cts > lts)) db[k] = cloudDb[k];
   });
-  normalizeWifiSettings(db); // v4.0.18
+  normalizeWifiSettings(db); // v4.0.19
   if (!db.schedule) db.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
 
   // v4.0.2: 人資模組合併 — 計算參數以 updated_at 新者為準；員工薪資設定以 employee_id 為業務鍵、updated_at 新者優先
