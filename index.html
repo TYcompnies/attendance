@@ -592,11 +592,11 @@
       <div class="card">
         <div class="info-banner blue">
           <span>ℹ️</span>
-          <span>員工打卡時必須同時符合兩個條件：① 裝置 IPv4 落在 WiFi「<strong>TY_5G</strong>」的<strong>綁定網段</strong>（視為已連上該 WiFi）；② IPv4 在「允許打卡的 IPv4 清單」內。兩個都符合才能打卡。</span>
+          <span>公司打卡 WiFi 名稱：<strong>TY_5G</strong>。員工連上此 WiFi 打卡時，系統會<strong>自動抓取裝置 IPv4</strong>，只要在下方「允許打卡的 IPv4 清單」內就放行（<strong>不綁定網段</strong>，換 IP 也能自動放行）。</span>
         </div>
         <div class="info-banner" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0;">
           <span>🤖</span>
-          <span>本頁開啟時會<strong>自動抓取您的 IPv4 並自動帶入</strong>：抓到內網 IP（如 192.168.31.83）就自動帶入綁定網段 <strong>192.168.31.*</strong>，以及清單的整段 <strong>192.168.31.*</strong> 與精確 IP <strong>192.168.31.83</strong>（既有設定附加保留），不必手動輸入或按任何按鈕。</span>
+          <span>本頁開啟時會<strong>自動抓取您的 IPv4 並自動帶入清單放行</strong>：抓到內網 IP（如 192.168.31.83）就自動帶入整段 <strong>192.168.31.*</strong> 與精確 IP <strong>192.168.31.83</strong>（既有設定附加保留），不必手動輸入或按任何按鈕。</span>
         </div>
         <div class="info-banner" style="background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;">
           <span>👑</span>
@@ -613,22 +613,17 @@
           <div id="wifiDetectWarn" style="display:none;margin-top:10px;font-size:12.5px;color:#9a3412;"></div>
         </div>
         <div class="form-group">
-          <label>綁定 WiFi 名稱</label>
+          <label>WiFi 名稱（SSID）</label>
           <input type="text" id="wifiNameInput" placeholder="例如：TY_5G">
-          <div class="hint-text">公司打卡用的 WiFi 名稱。瀏覽器無法讀取連線中的 SSID，系統改以「綁定網段」自動識別：IPv4 落在下方網段內即視為已連上此 WiFi。</div>
-        </div>
-        <div class="form-group">
-          <label>綁定網段（IPv4）</label>
-          <input type="text" id="ssidRangeInput" placeholder="例如：192.168.31.*">
-          <div class="hint-text">此 WiFi 分配給裝置的網段（整段放行，DHCP 換 IP 也適用）。留空 = 不強制 WiFi 條件，只比對下方 IPv4 清單。</div>
+          <div class="hint-text">公司打卡用的 WiFi 名稱（識別標籤，會寫入打卡紀錄）。判定以自動抓取的 IPv4 為準，不做網段比對。</div>
         </div>
         <div class="form-group">
           <label>允許打卡的 IPv4 清單</label>
           <input type="text" id="allowedIPsInput" placeholder="例如：192.168.31.*">
-          <div class="hint-text">留空 = 不限制此條件（但上方綁定網段仍會生效）。多個用逗號分隔，支援萬用字元（192.168.31.* = 整段放行，DHCP 換 IP 也不用改設定）。</div>
+          <div class="hint-text">留空 = 不限制 IP（任何網路都能打卡）。多個用逗號分隔，支援萬用字元（192.168.31.* = 整段放行，DHCP 換 IP 也不用改設定）。</div>
         </div>
         <div class="form-group">
-          <label class="checkbox-label"><input type="checkbox" id="wifiEnabledInput"> 啟用打卡驗證（WiFi 綁定網段 + IPv4 白名單）</label>
+          <label class="checkbox-label"><input type="checkbox" id="wifiEnabledInput"> 啟用打卡驗證（IPv4 清單）</label>
         </div>
         <button class="btn btn-primary" onclick="saveWifiSettings()">儲存設定</button>
       </div>
@@ -748,7 +743,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.15 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-21 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 綁定 WiFi 名稱 TY_5G（綁定網段自動識別）+ IPv4 清單自動偵測帶入（整段＋精確 IP）)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.16 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-21 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · WiFi 名稱 TY_5G 識別 · 自動抓取 IPv4 自動放行（不綁網段，整段＋精確 IP）)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
@@ -851,17 +846,15 @@ let currentPublicIP = null;  // v4.0.13：公用 IP（內網 IP 抓不到時的�
 let loginAttempts = {};
 let confirmCallback = null;
 
-// ===== v4.0.15 WiFi 名稱(TY_5G) 綁定 + IPv4 白名單打卡 =====
-// 瀏覽器基於資安讀不到連線中的 WiFi 名稱(SSID)，因此改以「綁定網段」識別：
-//   wifi_name = 綁定的 WiFi 名稱（TY_5G）；ssid_ip_range = 該 WiFi 的網段（192.168.31.*）
-//   IPv4 落在綁定網段 → 視為已連上 TY_5G；同時也必須在 allowed_ips 清單內才放行。
-// 管理員開啟 WiFi設定 頁時，系統會自動抓取本機 IPv4 並自動帶入
-// （綁定網段空白才帶入；清單附加保留、整段與精確 IP 都帶入），不需要手動按任何按鈕。
+// ===== v4.0.16 WiFi 名稱(TY_5G) + IPv4 自動抓取自動放行（不再綁定網段） =====
+//   wifi_name  = 公司打卡 WiFi 名稱（TY_5G），作為識別標籤與紀錄，不做網段比對
+//   allowed_ips= 允許打卡的 IPv4 清單（自動抓取後自動放行、附加保留）
+// 管理員開啟 WiFi設定 頁時，系統會自動抓取本機 IPv4 並自動帶入清單
+// （整段 192.168.31.* 與精確 IP 192.168.31.83 都帶入），不需要手動按任何按鈕。
 const WIFI_FACTORY_NAME = 'Office WiFi'; // 舊版從未設定過的原廠值（出現即視為未設定，套用預設）
 function wifiDefaults() {
   return {
-    wifi_name: 'TY_5G',            // 綁定的 WiFi 名稱
-    ssid_ip_range: '192.168.31.*', // 該 WiFi 的綁定網段（IPv4 落在此 = 視為連上 TY_5G）
+    wifi_name: 'TY_5G',   // 公司打卡 WiFi 名稱（識別用，不做網段比對）
     allowed_ips: '192.168.31.*',
     enabled: true,
     updated_at: new Date().toISOString()
@@ -876,7 +869,7 @@ function ipSegment(ip) {
 function splitIpList(str) {
   return (str || '').split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
 }
-// 補齊新版欄位（v4.0.15：加回 WiFi 名稱綁定 + 綁定網段；舊版 require_ssid 移除）
+// 補齊新版欄位（v4.0.16：只保留 WiFi 名稱 + IPv4 清單；綁定網段與舊勾選一律移除）
 function normalizeWifiSettings(target) {
   if (!target) return;
   const w = target.wifiSettings;
@@ -884,12 +877,8 @@ function normalizeWifiSettings(target) {
     (!w.allowed_ips && (!w.wifi_name || w.wifi_name === WIFI_FACTORY_NAME));
   if (untouched) { target.wifiSettings = wifiDefaults(); return; }
   delete target.wifiSettings.require_ssid;   // v4.0.13 的雙條件勾選已廢除
-  // v4.0.14 使用者升級：沒有 SSID 綁定欄位 → 補上 TY_5G，網段由既有清單推導
+  delete target.wifiSettings.ssid_ip_range;  // v4.0.16：不再綁定網段（舊資料清掉，避免殘留影響）
   if (!w.wifi_name) w.wifi_name = 'TY_5G';
-  if (!w.ssid_ip_range) {
-    const segs = splitIpList(w.allowed_ips).map(ipSegment).filter(Boolean);
-    w.ssid_ip_range = segs[0] || '192.168.31.*';
-  }
   if (w.enabled === undefined) w.enabled = true;
 }
 
@@ -901,7 +890,7 @@ function loadDB() {
     if (raw) {
       const parsed = JSON.parse(raw);
       // Migration: ensure all required fields exist
-      normalizeWifiSettings(parsed); // v4.0.15：WiFi 名稱綁定 + 綁定網段 + IPv4 白名單欄位補齊
+      normalizeWifiSettings(parsed); // v4.0.16：WiFi 名稱 + IPv4 清單欄位補齊（移除綁定網段）
       if (!parsed.schedule) parsed.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
       if (!parsed.attendance) parsed.attendance = [];
       if (!parsed.employees) parsed.employees = [];
@@ -935,7 +924,7 @@ function loadDB() {
     attendance: [],
     leave_requests: [],
     deleted_employees: [],
-    wifiSettings: wifiDefaults(), // v4.0.15：綁定 TY_5G（網段 192.168.31.*）+ IPv4 白名單（預設啟用）
+    wifiSettings: wifiDefaults(), // v4.0.16：WiFi 名稱 TY_5G + IPv4 清單 192.168.31.*（預設啟用，自動抓取放行）
     schedule: { start_time: '09:00', end_time: '18:00', enabled: true },
     payrollConfig: { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' },
     salary_settings: {},
@@ -1021,7 +1010,7 @@ function isIPAllowed(ip, allowedIPsStr) {
   });
 }
 
-// ===== v4.0.13 內網 IPv4 自動抓取（v4.0.15 沿用，供綁定網段/白名單自動帶入） =====
+// ===== v4.0.13 內網 IPv4 自動抓取（v4.0.16 沿用，供 IPv4 清單自動帶入放行） =====
 // 瀏覽器基於隱私不會直接提供區網 IP，只能透過 WebRTC 的 ICE candidate 取得；
 // Chrome 可能以 mDNS（xxx.local）遮蔽，此時回傳 null，改以公用 IP 備援。
 function isPrivateIPv4(ip) {
@@ -1059,7 +1048,7 @@ function detectLocalIPv4() {
   });
 }
 
-// 回傳 { ip, lan, public }：優先使用內網 IPv4，抓不到才用公用 IP（v4.0.15 沿用：抓到內網就不再取公用，減少網路請求）
+// 回傳 { ip, lan, public }：優先使用內網 IPv4，抓不到才用公用 IP（v4.0.16 沿用：抓到內網就不再取公用，減少網路請求）
 async function detectIPv4() {
   var lan = null, pub = null;
   try { lan = await detectLocalIPv4(); } catch (e) { lan = null; }
@@ -1070,63 +1059,42 @@ async function detectIPv4() {
   return { ip: lan || pub || 'unknown', lan: lan || null, public: pub || null };
 }
 
-// ===== v4.0.15 打卡閘門：綁定 WiFi 名稱(TY_5G) 的網段 + IPv4 白名單，兩者都要符合 =====
-// 瀏覽器讀不到 SSID，故以綁定網段識別：IPv4 落在 ssid_ip_range 內 → 視為已連上 TY_5G。
+// ===== v4.0.16 打卡閘門：只核對自動抓取的 IPv4 是否在清單內（不再綁定網段） =====
+// WiFi 名稱(TY_5G) 僅作為識別標籤顯示與寫入打卡紀錄；判定只看 IPv4。
 function evalWifiGate(ip) {
   const w = db.wifiSettings || {};
   const cur = ip || currentIP || 'unknown';
   const allowedIps = (w.allowed_ips || '').trim();
-  const range = (w.ssid_ip_range || '').trim();
   const name = (w.wifi_name || '').trim() || 'TY_5G';
   const ipOK = isIPAllowed(cur, allowedIps);
-  const ssidOK = range ? isIPAllowed(cur, range) : true; // 綁定網段留空 = 不強制 SSID 條件
   return {
     enabled: !!w.enabled, ip: cur, allowedIps: allowedIps,
-    ssidName: name, ssidRange: range, ssidOK: ssidOK, ipOK: ipOK,
-    ok: !w.enabled || (ipOK && ssidOK)
+    ssidName: name, ipOK: ipOK,
+    ok: !w.enabled || ipOK
   };
 }
 
 function wifiFailReason(g) {
-  if (!g.ipOK) {
-    return '您的 IPv4（' + g.ip + '）不在允許打卡的清單內 — 目前清單：' +
-      (g.allowedIps || '（未設定，將不限制）') + '。請確認已連上公司網路，或請管理員將此 IP／網段加入清單。';
-  }
-  if (!g.ssidOK) {
-    return '您的 IPv4（' + g.ip + '）不在 WiFi「' + g.ssidName + '」的綁定網段（' +
-      (g.ssidRange || '未設定') + '）內，請確認已連上 WiFi：' + g.ssidName + ' 後再打卡。';
-  }
-  return '網路環境不符合打卡條件（IPv4：' + g.ip + '）。';
+  return '您的 IPv4（' + g.ip + '）不在允許打卡的清單內 — 目前清單：' +
+    (g.allowedIps || '（未設定，將不限制）') + '。請確認已連上公司 WiFi：' +
+    (g.ssidName || 'TY_5G') + '，或請管理員將此 IP／網段加入清單。';
 }
 
-// v4.0.15：管理員開啟設定頁時自動抓取本機 IPv4 並自動帶入
-//  1) TY_5G 綁定網段：只在「空白」時自動帶入（既有公司網段不洗掉）
-//  2) IPv4 清單：整段（192.168.31.*）＋ 精確 IP（192.168.31.83）都帶入，既有清單附加保留
+// v4.0.16：管理員開啟設定頁時自動抓取本機 IPv4 並自動帶入清單 → 自動放行
+//  IPv4 清單：整段（192.168.31.*）＋ 精確 IP（192.168.31.83）都帶入，既有清單附加保留
 //  僅自動帶入「內網 IPv4」；公用 IP 不自動放行，避免外部網路被加白。
 async function autoRegisterIP(opts) {
   const quiet = !!(opts && opts.quiet);
   const det = await detectIPv4();
   currentIP = det.ip; currentLocalIP = det.lan; currentPublicIP = det.public;
   if (!db.wifiSettings) db.wifiSettings = wifiDefaults();
-  const result = { ip: currentIP, lan: det.lan, public: det.public, added: null, addedRange: null, reason: '' };
+  const result = { ip: currentIP, lan: det.lan, public: det.public, added: null, reason: '' };
   if (!currentIP || currentIP === 'unknown') { result.reason = 'no-ip'; return result; }
   if (!(det.lan && isPrivateIPv4(det.lan))) {
     result.reason = 'public-only'; // 只有公用 IP（瀏覽器遮蔽內網 IP）→ 不自動放行
     return result;
   }
   const seg = ipSegment(det.lan);
-  let dirty = false;
-
-  // 1) 綁定網段（TY_5G）
-  if (!trim(db.wifiSettings.ssid_ip_range) && seg) {
-    db.wifiSettings.ssid_ip_range = seg;
-    result.addedRange = seg;
-    dirty = true;
-    const rInput = document.getElementById('ssidRangeInput');
-    if (rInput) rInput.value = seg;
-  }
-
-  // 2) IPv4 清單（整段 + 精確 IP）
   const list = splitIpList(db.wifiSettings.allowed_ips);
   if (!list.length) {
     result.reason = 'no-limit'; // 清單留空 = 不限制，不自動填
@@ -1138,23 +1106,16 @@ async function autoRegisterIP(opts) {
       result.reason = 'covered';
     } else {
       db.wifiSettings.allowed_ips = list.concat(entries).join(', ');
+      db.wifiSettings.updated_at = new Date().toISOString();
       result.added = entries.join('、');
       result.reason = 'added';
-      dirty = true;
+      saveDB();
     }
-  }
-
-  if (dirty) {
-    db.wifiSettings.updated_at = new Date().toISOString();
-    saveDB();
   }
   const input = document.getElementById('allowedIPsInput');
   if (input) input.value = db.wifiSettings.allowed_ips;
-  if (!quiet && (result.added || result.addedRange)) {
-    const parts = [];
-    if (result.addedRange) parts.push('WiFi「' + (db.wifiSettings.wifi_name || 'TY_5G') + '」綁定網段 ' + result.addedRange);
-    if (result.added) parts.push('IPv4 清單 ' + result.added);
-    showToast('已自動偵測帶入：' + parts.join('；') + '（偵測到 ' + det.lan + '）', 'success');
+  if (!quiet && result.added) {
+    showToast('已自動偵測帶入並放行：' + result.added + '（偵測到 ' + det.lan + '）', 'success');
   }
   return result;
 }
@@ -1748,7 +1709,7 @@ async function loadClockStatus() {
     wifiEl.className = 'wifi-status verified';
     wifiEl.innerHTML = '<span>👑 管理員模式：不受打卡管制，可隨時隨地使用 · IPv4: ' + esc(currentIP) + '</span>';
   } else {
-    // v4.0.15：綁定 WiFi 名稱(以綁定網段識別) + IPv4 白名單，兩者都要符合
+    // v4.0.16：只比對自動抓取的 IPv4 是否在清單內（WiFi 名稱僅供識別）
     const g = evalWifiGate();
     const redetectBtn = '<button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:12px;margin-left:6px;" onclick="redetectNetwork()">🔄 重新偵測</button>';
 
@@ -1757,8 +1718,8 @@ async function loadClockStatus() {
       wifiEl.innerHTML = '<span>⚠️ 打卡驗證已停用（任何網路均可打卡）· IPv4: ' + esc(currentIP) + '</span>';
     } else if (g.ok) {
       wifiEl.className = 'wifi-status verified';
-      wifiEl.innerHTML = '<span>✅ WiFi: ' + esc(g.ssidName) + ' ✓ · IPv4: ' + esc(g.ip) +
-        ' ✓（網段 ' + esc(g.ssidRange || '未設定') + '，符合打卡清單 ' + esc(g.allowedIps || '不限') + '）</span>';
+      wifiEl.innerHTML = '<span>✅ WiFi: ' + esc(g.ssidName) + ' · IPv4: ' + esc(g.ip) +
+        ' ✓（符合打卡清單 ' + esc(g.allowedIps || '不限') + '，已自動放行）</span>';
     } else {
       wifiEl.className = 'wifi-status unverified';
       wifiEl.innerHTML = '<span>❌ ' + esc(wifiFailReason(g)) + '</span>' + redetectBtn;
@@ -2032,7 +1993,7 @@ function clockIn() {
   const today = new Date().toLocaleDateString('en-CA');
   const now = new Date().toLocaleTimeString('en-GB');
   const isAdmin = currentUser.role === 'admin';
-  // v4.0.15：驗證「綁定 WiFi 名稱的網段 + IPv4 白名單」（管理員豁免）
+  // v4.0.16：驗證「自動抓取的 IPv4 是否在清單內」（管理員豁免）
   const gate = evalWifiGate();
   const wifiVerified = isAdmin ? true : gate.ok;
 
@@ -2105,7 +2066,7 @@ function clockOut() {
   const now = new Date().toLocaleTimeString('en-GB');
   const isAdmin = currentUser.role === 'admin';
 
-  // v4.0.15：下班打卡時重新驗證「綁定網段 + IPv4 白名單」— admin exempt
+  // v4.0.16：下班打卡時重新驗證「IPv4 清單」— admin exempt
   const gate = evalWifiGate();
   const wifiVerified = isAdmin ? true : gate.ok;
   if (!isAdmin && gate.enabled && !gate.ok) {
@@ -2695,7 +2656,7 @@ function exportCSV() {
   showToast('CSV已匯出（共 ' + records.length + ' 筆記錄，含請假）', 'success');
 }
 
-// ===== 打卡驗證設定（v4.0.15：WiFi 名稱綁定網段 + IPv4 白名單，開啟頁面即自動抓取並帶入） =====
+// ===== 打卡驗證設定（v4.0.16：WiFi 名稱 + IPv4 清單，開啟頁面即自動抓取並帶入放行） =====
 async function loadWifiSettings() {
   if (!requireAdmin()) return;
   const wifi = db.wifiSettings || {};
@@ -2703,10 +2664,8 @@ async function loadWifiSettings() {
   if (input) input.value = wifi.allowed_ips || '';
   const nameInput = document.getElementById('wifiNameInput');
   if (nameInput) nameInput.value = wifi.wifi_name || 'TY_5G';
-  const rangeInput = document.getElementById('ssidRangeInput');
-  if (rangeInput) rangeInput.value = wifi.ssid_ip_range || '';
   document.getElementById('wifiEnabledInput').checked = !!wifi.enabled;
-  // 自動抓取目前 IPv4 並帶入（綁定網段空白才帶入；清單附加保留整段 + 精確 IP）
+  // 自動抓取目前 IPv4 並帶入清單放行（附加保留整段 + 精確 IP）
   const res = await autoRegisterIP();
   refreshWifiDetectInfo(res);
 }
@@ -2719,10 +2678,7 @@ function refreshWifiDetectInfo(res) {
 
   const note = document.getElementById('wifiAutoNote');
   if (note) {
-    const parts = [];
-    if (res && res.addedRange) parts.push('綁定網段 <strong>' + esc(res.addedRange) + '</strong>');
-    if (res && res.added) parts.push('清單 <strong>' + esc(res.added) + '</strong>');
-    if (parts.length) note.innerHTML = '✅ 已自動帶入：' + parts.join('、');
+    if (res && res.added) note.innerHTML = '✅ 已自動帶入並放行：<strong>' + esc(res.added) + '</strong>';
     else if (res && res.reason === 'covered') note.innerHTML = '✅ 您的 IP 已在清單內，無需變動';
     else if (res && res.reason === 'no-limit') note.innerHTML = '⚠️ 清單目前留空 = 不限制 IP';
     else if (res && res.reason === 'public-only') note.innerHTML = '⚠️ 只抓到公用 IP，未自動帶入';
@@ -2744,17 +2700,14 @@ function saveWifiSettings() {
   if (!requireAdmin()) return;
   const allowed = trim(document.getElementById('allowedIPsInput').value);
   const name = trim(document.getElementById('wifiNameInput').value) || 'TY_5G';
-  const range = trim(document.getElementById('ssidRangeInput').value);
   db.wifiSettings = {
     wifi_name: name,
-    ssid_ip_range: range,
     allowed_ips: allowed,
     enabled: document.getElementById('wifiEnabledInput').checked,
     updated_at: new Date().toISOString()
   };
   saveDB();
-  showToast('打卡設定已儲存！（WiFi：' + name + ' · 綁定網段：' + (range || '不限制') +
-    ' · 允許清單：' + (allowed || '不限IP') + '）', 'success');
+  showToast('打卡設定已儲存！（WiFi：' + name + ' · 允許清單：' + (allowed || '不限IP') + '）', 'success');
   loadClockStatus();
 }
 
@@ -3236,7 +3189,7 @@ function importFullData(event) {
           return;
         }
         db = imported;
-        normalizeWifiSettings(db); // v4.0.15
+        normalizeWifiSettings(db); // v4.0.16
         if (!db.schedule) db.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
         if (!db.payrollConfig) db.payrollConfig = { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' };
         if (!db.salary_settings) db.salary_settings = {};
@@ -3265,7 +3218,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '4.0.15.20260921';
+const BUILD_ID = '4.0.16.20260921';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
@@ -3723,7 +3676,7 @@ function mergeDB(cloudDb) {
     const lts = db[k].updated_at || '', cts = cloudDb[k].updated_at || '';
     if (cts && (!lts || cts > lts)) db[k] = cloudDb[k];
   });
-  normalizeWifiSettings(db); // v4.0.15
+  normalizeWifiSettings(db); // v4.0.16
   if (!db.schedule) db.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
 
   // v4.0.2: 人資模組合併 — 計算參數以 updated_at 新者為準；員工薪資設定以 employee_id 為業務鍵、updated_at 新者優先
