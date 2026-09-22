@@ -245,7 +245,7 @@
         <summary>📋 系統流程</summary>
         <div class="guide-body">
           <div class="guide-step"><span class="n">1</span><span><strong>員工登入</strong> — 輸入公司配發的員工編號與密碼登入系統。</span></div>
-          <div class="guide-step"><span class="n">2</span><span><strong>上下班打卡</strong> — 於公司 WiFi／網路環境按下「上班打卡／下班打卡」（管理員不受 WiFi 管制）。系統自動記錄時間、IP 與遲到早退。</span></div>
+          <div class="guide-step"><span class="n">2</span><span><strong>上下班打卡</strong> — 於公司 WiFi／網路環境按下「上班打卡／下班打卡」（管理員不受打卡管制）。系統自動記錄時間、IP 與遲到早退。</span></div>
           <div class="guide-step"><span class="n">3</span><span><strong>請假申請</strong> — 於「請假」頁填寫假別、日期與原因送出（特休、病假、生理假、事假、婚假、喪假、產假、其他）。</span></div>
           <div class="guide-step"><span class="n">4</span><span><strong>管理員審批</strong> — 管理員於「請假審批」頁核准或駁回，員工即時看到結果。</span></div>
         </div>
@@ -254,7 +254,7 @@
         <summary>📖 使用辦法</summary>
         <div class="guide-body">
           <strong>🕘 打卡規則</strong><br>
-          · 打卡時系統會自動驗證網路：<strong>電腦</strong>請用桌面「<strong>TY_5G 打卡</strong>」小工具開啟本頁（以系統指令讀取 WiFi 名稱，<b>必須是 TY_5G 才放行</b>）；<strong>手機／直接開網頁</strong>讀不到 WiFi 名稱，改由系統<b>自動抓取公司外網 IP 並自動連動放行</b>（出口 IP 與公司相同就放行，人在外面則擋下，公司換 IP 會自動更新）。為避免重複打卡，按鈕每次按下後有 3 秒冷卻時間。<br>
+          · 打卡時系統會<strong>自動驗證位置</strong>：<strong>① GPS 定位</strong> — 打卡會自動取得定位，必須在<strong>公司座標的允許範圍內</strong>才放行（人不在公司就擋下）；<strong>② WiFi 名稱（SSID）</strong> — 電腦請用桌面「<strong>TY_5G 打卡</strong>」小工具開啟本頁，小工具會以系統指令<strong>自動讀取目前連上的 WiFi 名稱</strong>，<b>必須是 TY_5G 才放行</b>。兩者都取得時<strong>都要符合</strong>；只有其中一種就用那一種判定，都沒有就擋下。為避免重複打卡，按鈕每次按下後有 3 秒冷卻時間。<br>
           · 同一天可<strong>多次打卡</strong>：按下班卡後可再按上班卡開始下一段（例如午休外出、外出洽公返回），當日工時會自動加總；<strong>每一次打卡都會在考勤紀錄中各自成一列</strong>。<br>
           · 系統依排班時間自動判定遲到／早退；工作時數自動計算，當日合計超過標準每日工時的部分計為加班。<br>
           · 補班日（國定假日）打卡時，勾選「補班」並選擇要抵扣的平日請假，即可自動抵扣、不重複扣薪；忘記勾選可於當日下班後使用「📝 補登記」補登記。<br>
@@ -320,7 +320,7 @@
         <div class="clock-card">
           <div class="clock-date" id="clockDate">載入中...</div>
           <div class="clock-time" id="clockTime">00:00:00</div>
-          <div class="wifi-status checking" id="wifiStatus"><span>🔄 正在偵測網路環境...</span></div>
+          <div class="wifi-status checking" id="wifiStatus"><span>🔄 正在偵測打卡環境（GPS 定位 / WiFi 名稱）...</span></div>
           <div style="margin: 24px 0;">
             <div class="clock-status">
               <div class="status-item">
@@ -588,15 +588,19 @@
 
     <!-- Admin WiFi Settings -->
     <div id="page-admin-wifi" class="page">
-      <div class="section-title">打卡驗證設定（WiFi TY_5G · 名稱驗證 + 外網 IP 自動連動）</div>
+      <div class="section-title">打卡驗證設定（GPS 定位 ＋ WiFi 名稱 TY_5G 自動抓取）</div>
       <div class="card">
         <div class="info-banner blue">
-          <span>ℹ️</span>
-          <span><strong>① 電腦（最嚴）：</strong>員工用桌面的「<strong>TY_5G 打卡</strong>」小工具開啟本頁，小工具會以系統指令讀取目前連上的 WiFi 名稱並帶入，<strong>名稱必須是 TY_5G 才放行</strong>，不是就擋下。</span>
+          <span>📍</span>
+          <span><strong>① GPS 定位（手機／有 GPS 的筆電）：</strong>員工打卡時系統自動取得定位，<strong>必須在公司座標的允許範圍內</strong>才放行；人不在公司範圍內一律擋下。</span>
         </div>
         <div class="info-banner" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0;">
-          <span>🌐</span>
-          <span><strong>② 手機／直接開網頁（外網 IP 自動連動）：</strong>網頁讀不到 WiFi 名稱（瀏覽器安全限制），改以<strong>公司外網（公用）IP</strong>判定 — 您用公司網路開啟本頁時系統會<strong>自動抓取、自動帶入</strong>；員工連公司 WiFi 出口 IP 相同就<strong>自動放行</strong>，人在外面 IP 不同就擋下。公司外網 IP 若換了（同一條線路浮動），系統會<strong>自動連動更新</strong>，完全免手動輸入。</span>
+          <span>📶</span>
+          <span><strong>② WiFi 名稱（SSID）自動抓取（電腦）：</strong>瀏覽器基於安全限制讀不到 WiFi 名稱，電腦請用桌面的「<strong>TY_5G 打卡</strong>」小工具開啟本頁，小工具會以系統指令<strong>自動讀取目前連上的 WiFi 名稱並帶入</strong>，<strong>必須是 TY_5G 才放行</strong>，不是就擋下。</span>
+        </div>
+        <div class="info-banner" style="background:#f5f3ff; color:#5b21b6; border:1px solid #ddd6fe;">
+          <span>🔗</span>
+          <span><strong>兩者關係（預設嚴格）：</strong>員工必須<strong>同時</strong>「GPS 在公司範圍內」<strong>且</strong>「連上 WiFi TY_5G」才能打卡，缺一即擋下。⚠️ 桌機通常沒有 GPS，嚴格模式下桌機會被擋下 — 若要讓桌機只用 WiFi 名稱打卡，請取消勾選最下方的「<strong>嚴格模式</strong>」（改為有什麼就驗什麼）。</span>
         </div>
         <div class="info-banner" style="background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;">
           <span>👑</span>
@@ -609,21 +613,16 @@
         <div id="currentIPDisplay" style="margin-bottom: 20px; padding: 16px; background: var(--bg); border-radius: 10px; font-size: 13.5px;">
           <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;">
             <strong>目前偵測結果：</strong>
-            <span>內網 IPv4：<span id="adminCurrentIP" style="font-family:monospace;color:var(--primary);">載入中...</span></span>
-            <span>外網 IP：<span id="adminPublicIP" style="font-family:monospace;color:var(--primary);">載入中...</span></span>
+            <span>IP：<span id="adminCurrentIP" style="font-family:monospace;color:var(--primary);">載入中...</span></span>
+            <span>GPS 定位：<span id="adminGpsNow" style="font-family:monospace;color:var(--primary);">載入中...</span></span>
+            <span>距公司：<span id="adminGpsDist" style="font-family:monospace;color:var(--primary);">—</span></span>
             <span id="wifiAutoNote" style="font-size:12.5px;color:var(--text-secondary);"></span>
             <button class="btn btn-outline btn-sm" id="redetectBtn" onclick="redetectNetwork()">🔄 重新偵測</button>
           </div>
           <div style="margin-top:8px;">
-            <strong>公司外網 IP（系統自動抓取、自動連動、自動帶入放行）：</strong>
-            <span id="adminWanIp" style="font-family:monospace;color:var(--primary);">載入中...</span>
-            <span id="adminWanIpAt" style="font-size:12px;color:var(--text-secondary);"></span>
-          </div>
-          <div style="margin-top:8px;">
-            <strong>TY_5G 內網網段（備援，勾選下方開關時才用）：</strong>
-            <span id="adminSsidIp" style="font-family:monospace;color:var(--primary);">載入中...</span>
-            <span id="adminSsidSeg" style="font-family:monospace;color:var(--text-secondary);font-size:12.5px;"></span>
-            <span id="adminSsidIpAt" style="font-size:12px;color:var(--text-secondary);"></span>
+            <strong>公司地址座標（打卡允許範圍的中心）：</strong>
+            <span id="adminSiteGps" style="font-family:monospace;color:var(--primary);">載入中...</span>
+            <span id="adminSiteGpsAt" style="font-size:12px;color:var(--text-secondary);"></span>
           </div>
           <div style="margin-top:6px;">
             <strong>本機 WiFi 名稱（SSID）：</strong>
@@ -633,20 +632,40 @@
           <div id="wifiDetectWarn" style="display:none;margin-top:10px;font-size:12.5px;color:#9a3412;"></div>
         </div>
         <div class="form-group">
+          <label>公司地址座標（GPS）</label>
+          <button class="btn btn-outline btn-sm" id="captureLocationBtn" onclick="captureCompanyLocation()">📍 抓取目前位置設為公司地址</button>
+          <div class="schedule-row" style="margin-top:10px;">
+            <div class="form-group"><label>緯度（lat）</label><input type="text" id="gpsLatInput" placeholder="例如：22.999900"></div>
+            <div class="form-group"><label>經度（lng）</label><input type="text" id="gpsLngInput" placeholder="例如：120.200000"></div>
+          </div>
+          <div class="hint-text">在公司現場按「📍 抓取目前位置」即可<strong>自動帶入</strong>，也可手動輸入／微調。尚未設定座標時，只有 WiFi 名稱驗證會生效。</div>
+        </div>
+        <div class="form-group">
+          <label>允許打卡的誤差半徑（公尺）</label>
+          <input type="number" id="gpsRadiusInput" min="10" max="5000" step="10" placeholder="50">
+          <div class="hint-text">預設 <strong>50 公尺</strong>（嚴格，等同走進公司才放行）。GPS 在室內可能有 20~50 公尺誤差，若員工常被誤擋，可放寬到 100~200 公尺。</div>
+        </div>
+        <div class="form-group">
+          <label>地址備註（選填）</label>
+          <input type="text" id="gpsNoteInput" placeholder="例如：台南總公司 3 樓">
+        </div>
+        <div class="form-group">
           <label>WiFi 名稱（SSID）</label>
           <input type="text" id="wifiNameInput" placeholder="例如：TY_5G">
-          <div class="hint-text">公司打卡用的 WiFi 名稱。電腦用打卡小工具時會逐一比對這個名稱（不分大小寫），不是就擋下。</div>
+          <div class="hint-text">公司打卡用的 WiFi 名稱（不分大小寫）；有多台分享器時可用逗號分隔，例如「TY_5G, TY_5G_2F」。電腦用打卡小工具時會自動比對，不是就擋下。</div>
         </div>
         <div class="form-group">
-          <label class="checkbox-label"><input type="checkbox" id="wifiEnabledInput"> 啟用打卡驗證（只放行連上 TY_5G 的裝置）</label>
+          <label class="checkbox-label"><input type="checkbox" id="wifiEnabledInput"> 啟用打卡驗證（GPS 在公司範圍內 ＋ WiFi 名稱 TY_5G 才放行）</label>
         </div>
         <div class="form-group">
-          <label class="checkbox-label"><input type="checkbox" id="wifiWanAutoInput"> 外網 IP 自動連動（公司換 IP 時自動更新並放行）</label>
-          <div class="hint-text">✅ 預設<strong>勾選</strong>：公司外網 IP 若在同一個線路區段內變動（如 1.2.3.4 → 1.2.3.9），系統會<strong>自動更新登記值並放行</strong>，不必管理員手動處理。若取消勾選，外網 IP 必須<strong>完全相同</strong>才放行。</div>
+          <label class="checkbox-label"><input type="checkbox" id="gpsRequiredInput"> 啟用 GPS 定位驗證</label>
         </div>
         <div class="form-group">
-          <label class="checkbox-label"><input type="checkbox" id="wifiAllowNoSsidInput"> 額外允許「沒有 WiFi 名稱」的裝置以內網網段打卡（備援）</label>
-          <div class="hint-text">⚠️ 預設<strong>不勾選</strong>：外網 IP 判定是主要依據，準確又免設定。勾選後，外網 IP 不符的裝置還會再比對 TY_5G 內網網段（安全性較低：同一網段的別台分享器也可能通過）。</div>
+          <label class="checkbox-label"><input type="checkbox" id="ssidRequiredInput"> 啟用 WiFi 名稱（SSID）驗證</label>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label"><input type="checkbox" id="strictBothInput"> 嚴格模式：GPS 與 WiFi 名稱「兩者都要符合」才放行</label>
+          <div class="hint-text">✅ 預設<strong>勾選</strong>：員工必須<strong>同時</strong>在公司 GPS 範圍內 且 連上 TY_5G 才能打卡（最嚴，人在外面連錯 WiFi 也擋得掉）。⚠️ 桌機通常沒有 GPS，勾選後桌機無法打卡 — 若員工用桌機打卡，請取消勾選改為「有什麼就驗什麼」。</div>
         </div>
         <button class="btn btn-primary" onclick="saveWifiSettings()">儲存設定</button>
       </div>
@@ -766,10 +785,10 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.0.22 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-22 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · WiFi 名稱 TY_5G · 電腦驗證 SSID（打卡小工具）· 手機／無名稱裝置以外網 IP 自動抓取連動放行)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.1.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-22 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證改為 GPS 定位（公司座標 + 允許半徑，自動抓取）＋ WiFi 名稱 TY_5G 自動抓取（打卡小工具），已移除 IP／外網 IP／網段判定)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
-          <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受WiFi管制，隨時隨地使用</td></tr>
+          <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受打卡管制，隨時隨地使用</td></tr>
           <tr><td style="color:var(--text-secondary)">IP偵測服務</td><td>ipify.org / httpbin.org</td></tr>
           <tr><td style="color:var(--text-secondary)">Session 逾時</td><td>8 小時自動登出</td></tr>
         </table>
@@ -866,35 +885,44 @@ let currentUser = null;
 let currentIP = null;
 let currentLocalIP = null;   // v4.0.13：裝置內網 IPv4（例：192.168.31.83）
 let currentPublicIP = null;  // v4.0.13：公用 IP（內網 IP 抓不到時的備援比對）
-let currentSSID = null;      // v4.0.22：WiFi 名稱（由 Windows 打卡小工具以 ?ssid= 帶入，網頁本身讀不到）
-let currentSSIDFrom = '';    // v4.0.22：SSID 來源（tool = 小工具帶入 / empty = 未帶入）
+let currentSSID = null;      // WiFi 名稱（由 Windows 打卡小工具以 ?ssid= 帶入，網頁本身讀不到）
+let currentSSIDFrom = '';    // SSID 來源（tool = 小工具帶入 / empty = 未帶入）
+let currentGPS = null;       // v4.1.0：本次 GPS 定位結果 { lat, lng, accuracy, at }
+let lastGPSReason = '';      // v4.1.0：最近一次定位失敗原因（denied / unavailable / timeout / unsupported）
 let loginAttempts = {};
 let confirmCallback = null;
 
-// ===== v4.0.22 打卡驗證：WiFi 名稱(SSID) 實名驗證 + 外網 IP(WAN) 自動抓取連動放行 =====
+// ===== v4.1.0 打卡驗證：GPS 定位 ＋ WiFi 名稱(SSID) 自動抓取 =====
+// （v4.1.0 起「IP／外網 IP／網段」判定全面移除，IP 僅供打卡紀錄與顯示，不再作為放行依據）
 //   wifi_name     = 公司打卡 WiFi 名稱（TY_5G）
-//   wan_ip        = 公司「外網（公用）IP」，系統自動抓取、自動連動更新、自動帶入放行
-//   wan_auto      = 外網 IP 浮動自動連動（同一 /24 視為同一條線路換 IP，自動更新登記值並放行）
-//   ssid_ip       = TY_5G 內網浮動 IP（備援；僅在管理員勾選「允許無名稱裝置」時用於網段判定）
-//   allow_no_ssid = 是否放行「沒帶入 WiFi 名稱」的裝置（手機）；預設 false
-//   last_ip       = 最近一次偵測到的 IP（自動記錄，僅供顯示與稽核）
+//   ssid_list     = 允許的 WiFi 名稱清單（逗號分隔；預設只有 TY_5G）
+//   gps_lat/lng   = 公司地址座標（管理員按「📍 抓取目前位置」自動帶入）
+//   gps_radius    = 允許打卡的誤差半徑（公尺，預設 50）
+//   gps_required  = 啟用 GPS 定位驗證
+//   ssid_required = 啟用 WiFi 名稱驗證
+//   strict_both   = 嚴格模式：GPS 與 SSID 兩者都要符合才放行（桌機無 GPS 時會被擋下）
 // 判定順序：
-//   ① 有帶入 SSID（Windows 打卡小工具以 netsh 讀取後帶入網址）→ 名稱必須等於 TY_5G，否則一律擋下
-//   ② 沒帶入 SSID（手機／直接開網頁）→ 比對「公司外網 IP」：
-//      完全相同 → 放行；同一 /24 且開啟自動連動 → 自動更新登記值並放行；否則擋下
-//   ③ 外網 IP 不符 且管理員勾選「允許無 WiFi 名稱的裝置」→ 退回 TY_5G 內網網段判定
-//   ④ 停用打卡驗證 → 全放行（僅供臨時狀況使用）
+//   ① 停用打卡驗證 → 全放行（僅供臨時狀況使用）
+//   ② 嚴格模式 → GPS 在範圍內 且 SSID 符合 → 放行，否則擋下
+//   ③ 一般模式（GPS 與 SSID 都啟用）→「有什麼就驗什麼」：
+//      GPS 與 SSID 都取得 → 兩者都要符合；只有 GPS（手機）→ 看距離；只有 SSID（桌機）→ 看名稱；兩者都沒有 → 擋下
+//   ④ 只啟用其中一項 → 以該項為準
 const WIFI_FACTORY_NAME = 'Office WiFi'; // 舊版從未設定過的原廠值（出現即視為未設定，套用預設）
-const SSID_FLOATING_DEFAULT = '192.168.31.83'; // TY_5G 出廠預設浮動 IP（管理員開設定頁即自動更新）
+const GPS_DEFAULT_RADIUS = 50;           // v4.1.0：預設允許半徑（公尺，管理員可於設定頁調整 10~5000）
+const GPS_FRESH_MS = 60000;              // v4.1.0：定位結果 60 秒內可沿用，逾時重新定位
 function wifiDefaults() {
   return {
+    mode: 'gps',               // v4.1.0：GPS 定位 + SSID 名稱驗證（IP 判定已移除）
     wifi_name: 'TY_5G',        // 公司打卡 WiFi 名稱
-    wan_ip: '',                // v4.0.22：公司外網（公用）IP，系統自動抓取、自動連動更新
-    wan_ip_at: '',             // v4.0.22：外網 IP 最近更新時間
-    wan_auto: true,            // v4.0.22：外網 IP 浮動時自動連動更新（同 /24 視為同一條線路）
-    ssid_ip: SSID_FLOATING_DEFAULT, // TY_5G 的浮動 IP（備援網段判定用）
-    ssid_ip_at: '',
-    allow_no_ssid: false,      // 是否放行「沒帶入 WiFi 名稱」的裝置（手機／直接開網頁）
+    ssid_list: 'TY_5G',        // 允許的 WiFi 名稱清單（逗號分隔）
+    gps_lat: null,             // 公司地址緯度（管理員自動抓取帶入）
+    gps_lng: null,             // 公司地址經度
+    gps_radius: GPS_DEFAULT_RADIUS, // 允許打卡的誤差半徑（公尺）
+    gps_at: '',                // 公司地址座標最近更新時間
+    gps_note: '',              // 公司地址備註（例如「台南總公司」）
+    gps_required: true,        // 啟用 GPS 定位驗證
+    ssid_required: true,       // 啟用 WiFi 名稱驗證
+    strict_both: true,         // 嚴格模式：GPS 與 SSID 兩者都要符合（v4.1.0 預設開啟）
     last_ip: '',               // 最近偵測到的 IP（系統自動記錄，僅供顯示）
     last_ip_at: '',
     enabled: true,
@@ -910,36 +938,31 @@ function ipSegment(ip) {
 function splitIpList(str) {
   return (str || '').split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
 }
-// 補齊新版欄位（v4.0.22：WiFi 名稱 + 外網 IP + TY_5G 網段（浮動 IP）+ 最近 IP 記錄；舊網段/清單一律移除）
+// 補齊新版欄位（v4.1.0：GPS 公司地址座標 + WiFi 名稱清單；舊的 IP／外網／網段欄位一律清除）
 function normalizeWifiSettings(target) {
   if (!target) return;
   const w = target.wifiSettings;
-  const hasLegacy = !!(w && (w.allowed_ips || w.ssid_ip || w.ssid_ip_range || w.last_ip || w.wan_ip));
-  const untouched = !w || typeof w !== 'object' ||
-    (!hasLegacy && (!w.wifi_name || w.wifi_name === WIFI_FACTORY_NAME));
+  const untouched = !w || typeof w !== 'object' || !w.wifi_name || w.wifi_name === WIFI_FACTORY_NAME;
   if (untouched) { target.wifiSettings = wifiDefaults(); return; }
-  // v4.0.22：舊欄位整理（allowed_ips／ssid_ip_range／require_ssid 一律清除）
-  const legacyIp = typeof w.allowed_ips === 'string' ? w.allowed_ips : '';
-  delete target.wifiSettings.require_ssid;   // v4.0.13 的雙條件勾選已廢除
-  delete target.wifiSettings.ssid_ip_range;  // v4.0.16 起不再綁定網段（舊資料清掉）
-  delete target.wifiSettings.allowed_ips;    // v4.0.19 起不再需要任何 IP 清單
+  // v4.1.0：舊欄位清除（IP 判定全面移除）
+  ['require_ssid', 'ssid_ip_range', 'allowed_ips', 'wan_ip', 'wan_ip_at', 'wan_auto',
+   'ssid_ip', 'ssid_ip_at', 'allow_no_ssid'].forEach(function(k) { delete w[k]; });
   if (!w.wifi_name) w.wifi_name = 'TY_5G';
-  // TY_5G 網段（供手機／無小工具的裝置判定）：缺值時由 v4.0.19 記錄的 last_ip 或舊清單推導
-  if (!w.ssid_ip || typeof w.ssid_ip !== 'string') {
-    const segs = splitIpList(legacyIp).map(ipSegment).filter(Boolean);
-    w.ssid_ip = segs.length ? segs[0].replace(/\.\*$/, '.1')
-      : (ipSegment(w.last_ip || '') ? w.last_ip : SSID_FLOATING_DEFAULT);
-  }
-  if (!w.ssid_ip_at) w.ssid_ip_at = w.updated_at || '';
-  // v4.0.22：外網 IP（自動抓取連動）— 舊資料沒有就留空，管理員開設定頁即自動帶入
-  if (!w.wan_ip || typeof w.wan_ip !== 'string') w.wan_ip = '';
-  if (!w.wan_ip_at) w.wan_ip_at = '';
-  if (w.wan_auto === undefined || typeof w.wan_auto !== 'boolean') w.wan_auto = true;
-  // v4.0.22：沒帶入 WiFi 名稱的裝置（手機／直接開網頁）預設不放行，改由外網 IP 判定
-  if (w.allow_no_ssid === undefined || typeof w.allow_no_ssid !== 'boolean') w.allow_no_ssid = false;
+  if (!w.ssid_list || typeof w.ssid_list !== 'string') w.ssid_list = w.wifi_name;
+  // 公司地址座標：舊資料沒有 → 留 null（管理員按「抓取目前位置」即自動帶入）
+  w.gps_lat = (typeof w.gps_lat === 'number' && isFinite(w.gps_lat)) ? w.gps_lat : null;
+  w.gps_lng = (typeof w.gps_lng === 'number' && isFinite(w.gps_lng)) ? w.gps_lng : null;
+  const r = parseInt(w.gps_radius, 10);
+  w.gps_radius = (isFinite(r) && r >= 10) ? Math.min(r, 5000) : GPS_DEFAULT_RADIUS;
+  if (!w.gps_at || typeof w.gps_at !== 'string') w.gps_at = '';
+  if (!w.gps_note || typeof w.gps_note !== 'string') w.gps_note = '';
+  if (w.gps_required === undefined || typeof w.gps_required !== 'boolean') w.gps_required = true;
+  if (w.ssid_required === undefined || typeof w.ssid_required !== 'boolean') w.ssid_required = true;
+  if (w.strict_both === undefined || typeof w.strict_both !== 'boolean') w.strict_both = true;
   if (!w.last_ip || typeof w.last_ip !== 'string') w.last_ip = '';
   if (!w.last_ip_at) w.last_ip_at = '';
   if (w.enabled === undefined) w.enabled = true;
+  w.mode = 'gps';
 }
 
 let db = loadDB(); // 必須在 WiFi 預設值/正規化函式之後（loadDB 內部會用到，避免 TDZ）
@@ -950,7 +973,7 @@ function loadDB() {
     if (raw) {
       const parsed = JSON.parse(raw);
       // Migration: ensure all required fields exist
-      normalizeWifiSettings(parsed); // v4.0.22：WiFi 名稱 + 最近 IP 記錄（網段／浮動 IP／額外清單一律移除）
+      normalizeWifiSettings(parsed); // v4.1.0：GPS 公司座標 + WiFi 名稱清單（IP／網段判定已移除）
       if (!parsed.schedule) parsed.schedule = { start_time: '09:00', end_time: '18:00', enabled: true };
       if (!parsed.attendance) parsed.attendance = [];
       if (!parsed.employees) parsed.employees = [];
@@ -984,7 +1007,7 @@ function loadDB() {
     attendance: [],
     leave_requests: [],
     deleted_employees: [],
-    wifiSettings: wifiDefaults(), // v4.0.22：WiFi 名稱 TY_5G，連上抓到 IP 即放行
+    wifiSettings: wifiDefaults(), // v4.1.0：GPS 定位 + WiFi 名稱 TY_5G
     schedule: { start_time: '09:00', end_time: '18:00', enabled: true },
     payrollConfig: { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' },
     salary_settings: {},
@@ -1124,132 +1147,190 @@ async function detectIPv4() {
   return { ip: lan || pub || 'unknown', lan: lan || null, public: pub || null };
 }
 
-// ===== v4.0.22 打卡閘門：WiFi 名稱(SSID) 實名驗證 + 外網 IP(WAN) 自動連動放行 =====
-// ① 有帶入 SSID（Windows 打卡小工具以 netsh 讀取後帶入網址）→ 名稱必須等於 TY_5G，否則一律擋下
-// ② 沒帶入 SSID（手機／直接開網頁）→ 比對「公司外網 IP」：
-//    完全相同 → 放行；同一 /24 且開啟自動連動 → 放行（並由 syncWanIP 自動更新登記值）
-// ③ 外網 IP 不符，且管理員勾選「允許無 WiFi 名稱的裝置」→ 退回 TY_5G 內網網段判定
-// ④ 停用打卡驗證 → 全放行（僅供臨時狀況）
-function evalWifiGate(ip, ssid, pub) {
+// ===== v4.1.0 GPS 定位（打卡驗證主軸） =====
+// 兩點球面距離（公尺，Haversine）
+function haversineMeters(lat1, lng1, lat2, lng2) {
+  if ([lat1, lng1, lat2, lng2].some(function(v) { return typeof v !== 'number' || !isFinite(v); })) return null;
+  const R = 6371000;
+  const rad = function(d) { return d * Math.PI / 180; };
+  const dLat = rad(lat2 - lat1), dLng = rad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return Math.round(2 * R * Math.asin(Math.sqrt(a)));
+}
+// 目前位置與公司登記座標的距離（公尺）；無法計算回傳 null
+function gpsDistanceMeters() {
   const w = db.wifiSettings || {};
-  const raw = (ip || currentIP || '').trim();
-  const hasIP = !!raw && raw !== 'unknown';
+  if (!currentGPS || typeof w.gps_lat !== 'number' || typeof w.gps_lng !== 'number') return null;
+  return haversineMeters(currentGPS.lat, currentGPS.lng, w.gps_lat, w.gps_lng);
+}
+// 原始定位（測試可用 window.__gpsOverride 取代真實 geolocation）
+function detectGPSRaw() {
+  return new Promise(function(resolve) {
+    if (typeof window.__gpsOverride === 'function') {
+      try { window.__gpsOverride().then(resolve); } catch (e) { resolve({ ok: false, reason: 'error' }); }
+      return;
+    }
+    if (!navigator.geolocation) { resolve({ ok: false, reason: 'unsupported' }); return; }
+    let done = false;
+    const finish = function(r) { if (!done) { done = true; resolve(r); } };
+    const timer = setTimeout(function() { finish({ ok: false, reason: 'timeout' }); }, 15000);
+    try {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        clearTimeout(timer);
+        finish({ ok: true, lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy || 0 });
+      }, function(err) {
+        clearTimeout(timer);
+        const c = err && err.code;
+        finish({ ok: false, reason: c === 1 ? 'denied' : (c === 2 ? 'unavailable' : 'timeout') });
+      }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 });
+    } catch (e) { clearTimeout(timer); finish({ ok: false, reason: 'unsupported' }); }
+  });
+}
+// 取得（或沿用）定位結果；force = true 強制重新定位（打卡時使用）
+async function refreshGPS(force) {
+  if (currentGPS && !force && Date.now() - currentGPS.at < GPS_FRESH_MS) { lastGPSReason = ''; return currentGPS; }
+  const r = await detectGPSRaw();
+  if (r && r.ok) {
+    currentGPS = { lat: r.lat, lng: r.lng, accuracy: r.accuracy || 0, at: Date.now() };
+    lastGPSReason = '';
+  } else {
+    currentGPS = null;
+    lastGPSReason = (r && r.reason) || 'error';
+  }
+  return currentGPS;
+}
+// WiFi 名稱清單（逗號分隔）→ 陣列
+function splitSsidList(str) {
+  return (str || '').split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+}
+
+// ===== v4.1.0 打卡閘門：GPS 定位 ＋ WiFi 名稱(SSID) =====
+// ① 停用驗證 → 全放行
+// ② 嚴格模式（strict_both）→ GPS 在範圍內 且 SSID 符合 → 放行
+// ③ 一般模式 →「有什麼驗什麼」：兩者都有 → 都要符合；只有 GPS（手機）→ 看距離；
+//    只有 SSID（桌機／打卡小工具）→ 看名稱；兩者都沒有 → 擋下
+// ④ 只勾其中一項 → 以該項為準
+function evalGate() {
+  const w = db.wifiSettings || {};
   const name = (w.wifi_name || '').trim() || 'TY_5G';
-  // ① SSID 實名驗證：小工具帶入的 SSID 必須等於設定的 WiFi 名稱
-  const s = (ssid === undefined ? (currentSSID || '') : (ssid || '')).trim();
-  const ssidMatched = !!s;
-  const ssidOK = ssidMatched && s.toLowerCase() === name.toLowerCase();
-  // ② 外網 IP（WAN）判定：手機／直接開網頁的裝置用「公司對外 IP」識別
-  const wanIp = (w.wan_ip || '').trim();
-  const p = (pub === undefined ? (currentPublicIP || '') : (pub || '')).trim();
-  const wanSeg = ipSegment(wanIp);
-  const wanExact = !!wanIp && !!p && p === wanIp;
-  const wanFloating = !!wanIp && !!p && !!w.wan_auto && !!wanSeg && ipSegment(p) === wanSeg;
-  const wanOK = wanExact || wanFloating;
-  // ③ 內網網段判定（備援，只在管理員勾選「允許無 WiFi 名稱的裝置」時使用）
-  const segIp = (w.ssid_ip || '').trim();
-  const seg = ipSegment(segIp);
-  const segOK = hasIP && !!seg && isIPAllowed(raw, seg);
-  const allowNoSsid = !!w.allow_no_ssid;
-  let ok;
-  if (!w.enabled) ok = true;                    // 停用驗證 → 全放行
-  else if (ssidMatched) ok = ssidOK;            // 有 SSID → 嚴格比對名稱（不看 IP）
-  else if (wanOK) ok = true;                    // 無 SSID → 外網 IP 相符（或自動連動範圍內）→ 放行
-  else if (allowNoSsid) ok = segOK;             // 外網 IP 不符且管理員放行 → 比對 TY_5G 網段
-  else ok = false;                              // 都不符 → 不放行
+  const list = splitSsidList(w.ssid_list || name);
+  // WiFi 名稱（SSID）：由 Windows 打卡小工具自動帶入，名稱不分大小寫
+  const s = (currentSSID || '').trim();
+  const hasSSID = !!s;
+  const ssidOK = hasSSID && list.some(function(n) { return n.toLowerCase() === s.toLowerCase(); });
+  // GPS 定位：與公司登記座標的距離是否在允許半徑內
+  const hasSite = typeof w.gps_lat === 'number' && typeof w.gps_lng === 'number' &&
+    isFinite(w.gps_lat) && isFinite(w.gps_lng);
+  const radius = (typeof w.gps_radius === 'number' && w.gps_radius > 0) ? w.gps_radius : GPS_DEFAULT_RADIUS;
+  const hasGPS = !!currentGPS && typeof currentGPS.lat === 'number';
+  const dist = gpsDistanceMeters();
+  const gpsOK = hasGPS && hasSite && dist !== null && dist <= radius;
+  const gpsRequired = w.gps_required !== false;
+  const ssidRequired = w.ssid_required !== false;
+  const strictBoth = !!w.strict_both;
+  const enabled = w.enabled !== false;
+  const bothOn = gpsRequired && ssidRequired; // 兩項驗證都啟用
+  let ok = false, method = '';
+  if (!enabled) { ok = true; method = 'off'; }
+  else if (strictBoth && bothOn) { ok = gpsOK && ssidOK; } // 嚴格模式：GPS 與 WiFi 名稱兩者都要符合
+  else if (bothOn) {
+    // 尚未設定公司座標時 GPS 無從比對 → 退化為以 WiFi 名稱為準（避免整間公司都無法打卡）
+    const gpsUsable = hasGPS && hasSite;
+    if (gpsUsable && hasSSID) ok = gpsOK && ssidOK;
+    else if (gpsUsable) ok = gpsOK;
+    else if (hasSSID) ok = ssidOK;
+    else ok = false;
+  }
+  else if (gpsRequired) ok = gpsOK;
+  else if (ssidRequired) ok = ssidOK;
+  else ok = true;
+  if (ok && !method) method = (hasGPS && hasSSID) ? 'gps+ssid' : (hasGPS ? 'gps' : (hasSSID ? 'ssid' : 'off'));
   return {
-    enabled: !!w.enabled,
-    ip: hasIP ? raw : 'unknown',
-    ssidName: name,
-    ssid: s, ssidOK: ssidOK, ssidMatched: ssidMatched,
-    wanIp: wanIp, wanPub: p, wanSeg: wanSeg, wanExact: wanExact, wanFloating: wanFloating, wanOK: wanOK,
-    wanAuto: !!w.wan_auto,
-    ssidIp: segIp, ssidSeg: seg, segOK: segOK,
-    allowNoSsid: allowNoSsid,
-    lastIp: (w.last_ip || '').trim(),
-    hasIP: hasIP,
-    ok: ok
+    enabled: enabled, ok: ok, method: method,
+    ssidName: name, ssidList: list, ssid: s, hasSSID: hasSSID, ssidOK: ssidOK, ssidRequired: ssidRequired,
+    hasGPS: hasGPS, gpsOK: gpsOK, gpsRequired: gpsRequired,
+    hasSite: hasSite, siteLat: w.gps_lat, siteLng: w.gps_lng, siteAt: w.gps_at || '',
+    radius: radius, distance: dist, accuracy: currentGPS ? currentGPS.accuracy : null,
+    strictBoth: strictBoth, gpsReason: lastGPSReason,
+    ip: currentIP || 'unknown'
   };
 }
 
-function wifiFailReason(g) {
-  const name = g.ssidName || 'TY_5G';
-  if (g.ssidMatched && !g.ssidOK) {
+// 打卡失敗原因（依實際情況給員工明確的處理指引）
+function gateFailReason(g) {
+  const name = (g && g.ssidName) || 'TY_5G';
+  if (!g) return '打卡驗證失敗，請重新整理頁面後再試。';
+  if (g.strictBoth && !g.hasSite) {
+    return '尚未設定公司地址的 GPS 座標（嚴格模式需「GPS 在公司範圍內 ＋ WiFi 名稱 ' + name +
+      '」兩者都符合），目前無法打卡。請管理員在「打卡驗證設定」頁按「📍 抓取目前位置設為公司地址」後儲存。';
+  }
+  if (g.strictBoth && g.hasGPS && !g.gpsOK && g.hasSSID && !g.ssidOK) {
+    return 'GPS 定位不在公司範圍內（距離約 ' + g.distance + ' 公尺），且 WiFi 名稱「' + g.ssid +
+      '」也不是 ' + name + '。請到公司並連上 ' + name + ' 後再打卡。';
+  }
+  if (g.hasGPS && !g.gpsOK && g.hasSSID && !g.ssidOK) {
+    return 'GPS 定位不在公司範圍（距離約 ' + g.distance + ' 公尺，允許 ' + g.radius +
+      ' 公尺），且 WiFi 名稱「' + g.ssid + '」也不是 ' + name + '，無法打卡。';
+  }
+  if (g.hasGPS && !g.gpsOK && g.hasSite) {
+    return '您目前的位置距離公司約 ' + g.distance + ' 公尺，超過允許範圍（' + g.radius +
+      ' 公尺），無法打卡。請到公司後再打卡；若手機定位不準，請開啟定位服務（GPS）與 WiFi 後重試。';
+  }
+  if (g.hasSSID && !g.ssidOK) {
     return '您目前連上的 WiFi 是「' + g.ssid + '」，不是公司 WiFi「' + name +
       '」，無法打卡。請改連 ' + name + ' 後，用桌面的「TY_5G 打卡」小工具重新開啟本頁。';
   }
-  if (!g.ssidMatched && !g.wanIp) {
-    return '尚未登記公司外網 IP，無法確認您是否在公司網路內。請管理員用公司網路開啟「WiFi設定」頁，系統會自動抓取並帶入。';
+  if (g.strictBoth && !g.hasGPS && !g.hasSSID) {
+    return '抓不到 GPS 定位，也沒有 WiFi 名稱（嚴格模式需兩者都符合）。請開啟手機定位服務；電腦請用桌面的「TY_5G 打卡」小工具開啟本頁。';
   }
-  if (!g.ssidMatched && !g.wanPub) {
-    return '抓不到您的外網 IP，無法確認是否連上「' + name + '」。請確認網路連線後，按「🔄 重新偵測」重試。';
+  if (g.strictBoth && !g.hasGPS) {
+    return '抓不到 GPS 定位（嚴格模式需 GPS 也要符合）。請開啟定位服務後重試；若電腦沒有 GPS，請管理員取消勾選「嚴格模式」。';
   }
-  if (!g.ssidMatched && !g.wanOK) {
-    return '您的外網 IP（' + g.wanPub + '）與公司登記的外網 IP（' + g.wanIp + '）不符' +
-      (g.wanAuto ? '（也不在同一段線路）' : '') + '，無法打卡。請改連公司 WiFi「' + name +
-      '」後再試；若公司外網 IP 已更換，請管理員開啟「WiFi設定」頁讓系統自動更新。';
+  if (!g.hasGPS && !g.hasSSID) {
+    if (lastGPSReason === 'denied') {
+      return '您拒絕了定位授權，無法確認是否在公司。請允許瀏覽器取得位置資訊（網址列左側的鎖頭 → 位置 → 允許）後再打卡；電腦請改用桌面的「TY_5G 打卡」小工具。';
+    }
+    if (lastGPSReason === 'unsupported') {
+      return '這個瀏覽器／網址不支援定位（需 HTTPS 或本機環境）。電腦請用桌面的「TY_5G 打卡」小工具開啟本頁（自動帶入 WiFi 名稱驗證）。';
+    }
+    return '抓不到 GPS 定位（' + (lastGPSReason || '未知原因') +
+      '），也沒有 WiFi 名稱，無法確認您是否在公司。請開啟定位服務後按「🔄 重新偵測」；電腦請改用桌面的「TY_5G 打卡」小工具。';
   }
-  if (!g.hasIP) {
-    return '抓不到您的 IP，無法確認是否已連上 WiFi：' + name +
-      '。請確認已連上該 WiFi（或開啟任一網路連線）後，按「🔄 重新偵測」重試。';
+  if (!g.hasSite && g.gpsRequired && !g.hasSSID) {
+    return '尚未設定公司地址的 GPS 座標，無法比對定位。請管理員在「打卡驗證設定」頁按「📍 抓取目前位置設為公司地址」。';
   }
-  if (g.ssidSeg) {
-    return '您的 IP（' + g.ip + '）不在 WiFi「' + name + '」的網段（' + g.ssidSeg +
-      '）。手機／平板請改連 ' + name + '；電腦請用桌面的「TY_5G 打卡」小工具開啟本頁（會自動帶入 WiFi 名稱驗證）。';
-  }
-  return '尚未取得網路 IP，請確認已連上 WiFi：' + name + ' 後再打卡。';
+  return '打卡驗證未通過（GPS 或 WiFi 名稱不符）。請到公司並連上 ' + name + ' 後再打卡，或按「🔄 重新偵測」重試。';
 }
 
-// v4.0.22：打卡紀錄的判定方式標記（稽核用）
-//   ssid      = WiFi 名稱（SSID）實名驗證通過
-//   wan       = 外網 IP 與公司登記值相同
-//   wan-auto  = 外網 IP 同一條線路換 IP，系統自動連動帶入後放行
-//   segment   = 內網網段備援（管理員開放無 WiFi 名稱的裝置）
-function wifiCheckTag(g) {
-  if (!g) return '';
-  if (g.ssidMatched) return 'ssid';
-  if (g.wanExact) return 'wan';
-  if (g.wanFloating) return 'wan-auto';
-  return 'segment';
+// 打卡紀錄的判定方式標記（稽核用）
+//   gps+ssid = GPS 在公司範圍內 且 WiFi 名稱符合
+//   gps      = 僅 GPS 定位通過（手機／無 SSID 裝置）
+//   ssid     = 僅 WiFi 名稱通過（桌機／無 GPS 裝置）
+function gateCheckTag(g) {
+  if (!g || !g.ok) return '';
+  if (g.gpsOK && g.ssidOK) return 'gps+ssid';
+  if (g.gpsOK) return 'gps';
+  if (g.ssidOK) return 'ssid';
+  return 'off';
+}
+// 把驗證結果寫入打卡紀錄（稽核用：判定方式、WiFi 名稱、GPS 座標與距離）
+function applyGateFields(rec, gate, verified) {
+  if (!rec) return rec;
+  rec.wifi_verified = verified ? 1 : 0;
+  rec.wifi_ssid = verified ? ((gate && gate.ssid) || '') : '';
+  rec.wifi_check = verified ? gateCheckTag(gate) : '';
+  rec.check_method = verified ? (gateCheckTag(gate) || ((gate && gate.method) || '')) : '';
+  if (currentGPS) {
+    rec.gps_lat = currentGPS.lat;
+    rec.gps_lng = currentGPS.lng;
+    rec.gps_accuracy = Math.round(currentGPS.accuracy || 0);
+  }
+  if (gate && gate.distance !== null && gate.distance !== undefined) rec.gps_distance = gate.distance;
+  return rec;
 }
 
-// v4.0.22：自動抓取並維護「公司外網 IP」（自動連動：同 /24 換 IP 自動更新登記值並放行）
-//  opts.admin = true → 管理員開設定頁：抓到外網 IP 就無條件更新（公司換線路／換 IP 自動跟上）
-//  一般員工端         → 完全相同 → unchanged；同 /24 且 wan_auto → 自動更新（updated）；否則 no-match 不更新
-// 回傳 { ip, wanIp, updated, ok, reason }
-//  reason = registered / updated / unchanged / no-match / no-wan / no-register
-function syncWanIP(opts) {
-  const isAdmin = !!(opts && opts.admin);
-  if (!db.wifiSettings) db.wifiSettings = wifiDefaults();
-  const w = db.wifiSettings;
-  const before = (w.wan_ip || '').trim();
-  const cur = (currentPublicIP || '').trim();
-  const result = { ip: cur, wanIp: before, updated: false, ok: false, reason: '' };
-  if (!cur || cur === 'unknown') { result.reason = 'no-wan'; return result; }
-  const write = function() {
-    w.wan_ip = cur;
-    w.wan_ip_at = new Date().toISOString();
-    w.updated_at = w.wan_ip_at;
-    saveDB();
-    result.wanIp = cur;
-    result.updated = true;
-    result.ok = true;
-  };
-  if (!before) {
-    // 尚未登記：管理員開設定頁 → 自動帶入；員工端不放行（避免在外面第一次打卡就被登記）
-    if (!isAdmin) { result.reason = 'no-register'; return result; }
-    write(); result.reason = 'registered'; return result;
-  }
-  if (cur === before) { result.reason = 'unchanged'; result.ok = true; return result; }
-  if (isAdmin) { write(); result.reason = 'updated'; return result; }
-  if (w.wan_auto && ipSegment(cur) && ipSegment(cur) === ipSegment(before)) {
-    write(); result.reason = 'updated'; return result; // 同一條線路換 IP → 自動連動更新並放行
-  }
-  result.reason = 'no-match';
-  return result;
-}
-
-// v4.0.22：SSID 通道的簡易防偽記號（小工具帶入 ?ssid=XXX&t=記號，避免人手在網址列亂打）
+// SSID 通道的簡易防偽記號（小工具帶入 ?ssid=XXX&t=記號，避免人手在網址列亂打）
 // 記號 = hash(SSID + 當天日期)，換天自動失效；小工具每天產生的記號不同
 const SSID_SESSION_KEY = 'attendance_ssid';
 function ssidDayStamp(d) {
@@ -1286,39 +1367,7 @@ function resolveSSIDFromURL() {
   return { ssid: '', from: '' };
 }
 
-// v4.0.22：自動抓取並維護 TY_5G 的浮動 IP（供「沒帶入 SSID 的手機／裝置」做網段判定）
-//  opts.admin = true → 管理員開設定頁：抓到內網 IP 就無條件更新（換分享器／換網段自動跟上）
-//  一般員工端         → 只在「與登記值同網段」時更新（浮動追蹤），不同網段絕不更新
-// 回傳 { ip, lan, public, ssidIp, updated, reason }
-//  reason = updated / unchanged / other-lan / public-only / no-ip / no-ssid
-function syncSsidFloatingIP(opts) {
-  const isAdmin = !!(opts && opts.admin);
-  if (!db.wifiSettings) db.wifiSettings = wifiDefaults();
-  const w = db.wifiSettings;
-  const before = (w.ssid_ip || '').trim();
-  const result = { ip: currentIP, lan: currentLocalIP, public: currentPublicIP, ssidIp: before, updated: false, reason: '' };
-  const cur = (currentIP || '').trim();
-  if (!cur || cur === 'unknown') { result.reason = 'no-ip'; return result; }
-  if (!isPrivateIPv4(cur)) { result.reason = 'public-only'; return result; } // 公用 IP 不登記
-  const curSeg = ipSegment(cur);
-  const beforeSeg = ipSegment(before);
-  let shouldUpdate = false;
-  if (!before) { shouldUpdate = true; result.reason = 'no-ssid'; }
-  else if (isAdmin) { shouldUpdate = cur !== before; }
-  else if (beforeSeg && curSeg === beforeSeg) { shouldUpdate = cur !== before; }
-  else { result.reason = 'other-lan'; return result; } // 員工在其他網段：不更新、也不放行
-  if (!shouldUpdate) { result.reason = 'unchanged'; return result; }
-  w.ssid_ip = cur;
-  w.ssid_ip_at = new Date().toISOString();
-  w.updated_at = w.ssid_ip_at;
-  saveDB();
-  result.ssidIp = cur;
-  result.updated = true;
-  if (result.reason !== 'no-ssid') result.reason = 'updated';
-  return result;
-}
-
-// v4.0.22：記錄最近一次偵測到的 IP（僅供顯示／稽核，不影響放行判定）
+// 記錄最近一次偵測到的 IP（僅供顯示／稽核；v4.1.0 起 IP 不再作為放行依據）
 // 回傳 { ip, lan, public, lastIp, updated, reason }
 //  reason = updated / unchanged / no-ip
 function recordDetectedIP(opts) {
@@ -1339,26 +1388,15 @@ function recordDetectedIP(opts) {
   return result;
 }
 
-// 打卡／設定頁共用：抓 IP（內網＋外網）→ 記錄最近 IP → 同步 TY_5G 網段 → 同步公司外網 IP → 回傳結果
-async function autoRegisterIP(opts) {
-  const quiet = !!(opts && opts.quiet);
+// 打卡／設定頁共用：抓 IP（紀錄用）＋ GPS 定位 → 回傳結果
+//  opts.force = true → 強制重新定位（打卡時一定要重新抓，避免沿用舊位置）
+async function refreshNetworkInfo(opts) {
+  const force = !!(opts && opts.force);
   const det = await detectIPv4();
   currentIP = det.ip; currentLocalIP = det.lan; currentPublicIP = det.public;
-  const rec = recordDetectedIP(opts);
-  const syn = syncSsidFloatingIP(opts);
-  const wan = syncWanIP(opts);   // v4.0.22：外網 IP 自動抓取／自動連動／自動帶入
-  const result = {
-    ip: currentIP, lan: det.lan, public: det.public,
-    lanOK: !!(det.lan && isPrivateIPv4(det.lan)),
-    lastIp: rec.lastIp, ssidIp: syn.ssidIp,
-    updated: syn.updated, reason: syn.reason,
-    wanIp: wan.wanIp, wanUpdated: wan.updated, wanReason: wan.reason, wanOK: wan.ok
-  };
-  if (!quiet && wan.updated) {
-    showToast('已自動' + (wan.reason === 'registered' ? '帶入' : '連動更新') +
-      '公司外網 IP：' + wan.wanIp + ' ✓', 'success');
-  }
-  return result;
+  if (db.wifiSettings) recordDetectedIP(opts);
+  await refreshGPS(force);
+  return { ip: currentIP, lan: det.lan, public: det.public, gps: currentGPS, gpsReason: lastGPSReason };
 }
 
 // ===== Late / Early Calculation =====
@@ -1938,53 +1976,49 @@ async function loadClockStatus() {
 
   if (!currentIP || currentIP === 'unknown') {
     wifiEl.className = 'wifi-status checking';
-    wifiEl.innerHTML = '<span>🔄 正在偵測網路環境（內網 IP + 外網 IP）...</span>';
-    // v4.0.13：同時抓取內網 IPv4 與公用 IP（內網優先）
+    wifiEl.innerHTML = '<span>🔄 正在偵測網路環境...</span>';
     const det = await detectIPv4();
     currentIP = det.ip; currentLocalIP = det.lan; currentPublicIP = det.public;
   }
-  if (!currentUser) return; // 防禦：await detectIP 期間使用者可能已登出（v4.0.7 修補的 race，v4.0.11 補強）
-  // v4.0.22：記錄最近 IP（顯示／稽核）＋同步 TY_5G 網段＋同步公司外網 IP
-  // （打卡頁一律非 admin：員工端只在外網 IP 相同／同線路時自動連動，絕不把外部 IP 寫入登記值）
-  let wanSync = { updated: false, reason: '', wanIp: '' };
-  if (db.wifiSettings) {
-    recordDetectedIP();
-    syncSsidFloatingIP({ admin: false });
-    wanSync = syncWanIP({ admin: false }); // v4.0.22：外網 IP 自動連動（同線路換 IP 自動更新並放行）
+  if (!currentUser) return; // 防禦：await 期間使用者可能已登出（v4.0.7 修補的 race，v4.0.11 補強）
+  // v4.1.0：員工端進打卡頁先取得 GPS 定位（60 秒內的結果直接沿用，不重複打擾）
+  const gateOn = !isAdmin && !!(db.wifiSettings && db.wifiSettings.enabled !== false);
+  if (gateOn && !currentGPS) {
+    wifiEl.className = 'wifi-status checking';
+    wifiEl.innerHTML = '<span>📍 正在取得 GPS 定位…（請允許瀏覽器取得位置資訊）</span>';
+    await refreshGPS(false);
+    if (!currentUser) return;
   }
+  if (db.wifiSettings) recordDetectedIP();
 
   if (isAdmin) {
-    // Admin is EXEMPT from IP restrictions — can clock in/out & manage from anywhere
+    // Admin is EXEMPT — can clock in/out & manage from anywhere
     wifiEl.className = 'wifi-status verified';
-    wifiEl.innerHTML = '<span>👑 管理員模式：不受打卡管制，可隨時隨地使用 · 內網 IP: ' + esc(currentIP) +
-      (currentPublicIP ? ' · 外網 IP: ' + esc(currentPublicIP) : '') +
+    wifiEl.innerHTML = '<span>👑 管理員模式：不受打卡管制，可隨時隨地使用 · IP: ' + esc(currentIP || 'unknown') +
+      (currentGPS ? ' · 定位：' + currentGPS.lat.toFixed(5) + ', ' + currentGPS.lng.toFixed(5) : '') +
       (currentSSID ? ' · WiFi: ' + esc(currentSSID) : '') + '</span>';
   } else {
-    // v4.0.22：有 SSID → 嚴格比對名稱；無 SSID → 比對公司外網 IP（自動連動）
-    const g = evalWifiGate();
+    // v4.1.0：GPS 在公司範圍內 ＋ WiFi 名稱 TY_5G（有什麼驗什麼）
+    const g = evalGate();
     const redetectBtn = '<button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:12px;margin-left:6px;" onclick="redetectNetwork()">🔄 重新偵測</button>';
     const toolBtn = '<a class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:12px;margin-left:6px;" href="tools/TY_5G-clockin.bat" download>⬇️ 下載打卡小工具</a>';
 
     if (!g.enabled) {
       wifiEl.className = 'wifi-status disabled';
-      wifiEl.innerHTML = '<span>⚠️ 打卡驗證已停用（任何網路均可打卡）· IP: ' + esc(currentIP) + '</span>';
+      wifiEl.innerHTML = '<span>⚠️ 打卡驗證已停用（任何地點均可打卡）· IP: ' + esc(currentIP || 'unknown') + '</span>';
     } else if (g.ok) {
       wifiEl.className = 'wifi-status verified';
-      if (g.ssidMatched) {
-        wifiEl.innerHTML = '<span>✅ WiFi: ' + esc(g.ssid) + ' ✓（已確認連上公司 WiFi）· IP: ' + esc(g.ip) + '</span>';
-      } else if (wanSync.updated) {
-        wifiEl.innerHTML = '<span>✅ 外網 IP: ' + esc(g.wanPub) + ' ✓（同一條線路，已自動連動帶入 ' +
-          esc(wanSync.wanIp) + '）· 內網 IP: ' + esc(g.ip) + '</span>';
-      } else if (g.wanExact) {
-        wifiEl.innerHTML = '<span>✅ 外網 IP: ' + esc(g.wanPub) + ' ✓（與公司登記相同，已自動放行）· 內網 IP: ' + esc(g.ip) + '</span>';
-      } else {
-        wifiEl.innerHTML = '<span>✅ 已連上 ' + esc(g.ssidName) + ' 網段 · IP: ' + esc(g.ip) +
-          ' ✓（' + esc(g.ssidSeg || '') + '，管理員已開放無 WiFi 名稱的裝置）</span>';
+      const parts = [];
+      if (g.hasGPS) {
+        parts.push(g.hasSite
+          ? '📍 距離公司 ' + g.distance + ' 公尺（允許 ' + g.radius + ' 公尺）✓'
+          : '📍 已定位（公司尚未設定座標）');
       }
+      if (g.hasSSID) parts.push('📶 WiFi ' + esc(g.ssid) + ' ✓');
+      wifiEl.innerHTML = '<span>✅ ' + parts.join(' · ') + ' — 已確認在公司，可打卡</span>';
     } else {
       wifiEl.className = 'wifi-status unverified';
-      wifiEl.innerHTML = '<span>❌ ' + esc(wifiFailReason(g)) + '</span>' +
-        (g.wanIp ? redetectBtn + toolBtn : toolBtn);
+      wifiEl.innerHTML = '<span>❌ ' + esc(gateFailReason(g)) + '</span>' + redetectBtn + toolBtn;
     }
   }
 
@@ -2050,16 +2084,18 @@ async function loadClockStatus() {
   updateMakeupInfo(record); // v4.0.5 補班抵扣面板（任何上班日皆顯示）
 }
 
-// 重新偵測網路（內網 IPv4 / 公用 IP）
+// 重新偵測（內網 IPv4 / 公用 IP / GPS 定位）
 async function redetectNetwork() {
   const btn = document.getElementById('redetectBtn');
   if (btn) { btn.disabled = true; btn.textContent = '🔄 偵測中...'; }
-  currentIP = null; currentLocalIP = null; currentPublicIP = null;
+  currentIP = null; currentLocalIP = null; currentPublicIP = null; currentGPS = null;
   const det = await detectIPv4();
   currentIP = det.ip; currentLocalIP = det.lan; currentPublicIP = det.public;
+  await refreshGPS(true);
   if (btn) { btn.disabled = false; btn.textContent = '🔄 重新偵測'; }
-  showToast('已重新偵測 — 內網 IP：' + (currentIP || 'unknown') +
-    (currentPublicIP ? ' · 外網 IP：' + currentPublicIP : ' · 外網 IP：抓不到') +
+  showToast('已重新偵測 — IP：' + (currentIP || 'unknown') +
+    (currentGPS ? ' · 定位：' + currentGPS.lat.toFixed(5) + ', ' + currentGPS.lng.toFixed(5)
+                : ' · 定位：抓不到（' + (lastGPSReason || '未知') + '）') +
     (currentSSID ? ' · WiFi：' + currentSSID : ''), 'info');
   loadClockStatus();
   if (currentUser && currentUser.role === 'admin' && typeof refreshWifiDetectInfo === 'function') refreshWifiDetectInfo();
@@ -2250,19 +2286,26 @@ function clockCooldownBlocked() {
   return true;
 }
 
-function clockIn() {
+async function clockIn() {
   if (!requireLogin()) return;
   if (clockCooldownBlocked()) return;
   startClockCooldown();
   const today = new Date().toLocaleDateString('en-CA');
   const now = new Date().toLocaleTimeString('en-GB');
   const isAdmin = currentUser.role === 'admin';
-  // v4.0.22：驗證 WiFi 名稱是否為 TY_5G（管理員豁免）
-  const gate = evalWifiGate();
+  // v4.1.0：GPS 定位 + WiFi 名稱驗證（管理員豁免）
+  const gateOn = !isAdmin && !!(db.wifiSettings && db.wifiSettings.enabled !== false);
+  if (gateOn) {
+    showToast('📍 正在取得 GPS 定位，請稍候…', 'info');
+    await refreshGPS(true); // 打卡一律重新定位，避免沿用舊位置
+    if (!currentUser) return; // 防禦：等待定位期間使用者可能已登出
+  }
+  const gate = evalGate();
   const wifiVerified = isAdmin ? true : gate.ok;
 
   if (!isAdmin && gate.enabled && !gate.ok) {
-    showToast('打卡失敗！' + wifiFailReason(gate), 'error');
+    showToast('打卡失敗！' + gateFailReason(gate), 'error');
+    loadClockStatus();
     return;
   }
 
@@ -2291,9 +2334,7 @@ function clockIn() {
     blank.clock_in = now;
     blank.clock_in_ip = currentIP;
     blank.ip_address = blank.ip_address || currentIP;
-    blank.wifi_verified = wifiVerified ? 1 : 0;
-    blank.wifi_ssid = wifiVerified ? (gate.ssid || gate.ssidName || '') : '';
-    blank.wifi_check = wifiVerified ? wifiCheckTag(gate) : '';
+    applyGateFields(blank, gate, wifiVerified);
     blank.status = status;
     blank.updated_at = nowISO;
     if (makeupInfo) {
@@ -2302,29 +2343,29 @@ function clockIn() {
       blank.offset_leave_date = makeupInfo.leave_date;
     }
   } else {
-    db.attendance.push({
+    const rec = {
       id: db.nextAttId++, uid: newAttUid(), employee_id: currentUser.employeeId,
       clock_in: now, clock_out: null, date: today,
       ip_address: currentIP, clock_in_ip: currentIP, clock_out_ip: null,
       wifi_verified: wifiVerified ? 1 : 0,
-      wifi_ssid: wifiVerified ? (gate.ssid || gate.ssidName || '') : '',
-      wifi_check: wifiVerified ? wifiCheckTag(gate) : '',
       status: status, created_at: new Date().toLocaleString('zh-TW'),
       updated_at: nowISO,
       makeup_type: makeupInfo ? 'leave_offset' : undefined,
       offset_leave_id: makeupInfo ? makeupInfo.leave_id : undefined,
       offset_leave_date: makeupInfo ? makeupInfo.leave_date : undefined
-    });
+    };
+    applyGateFields(rec, gate, wifiVerified);
+    db.attendance.push(rec);
   }
   saveDB();
   const lateMsg = status === 'late' ? '（遲到）' : '';
-  const adminMsg = isAdmin ? '（管理員不受WiFi管制）' : '';
+  const adminMsg = isAdmin ? '（管理員不受打卡管制）' : '';
   const makeupMsg = makeupInfo ? '，已登記補班抵扣 ' + makeupInfo.leave_date + ' 的' + leaveTypeText(makeupInfo.leave_type) : '';
   showToast('上班打卡成功！時間：' + now + lateMsg + makeupMsg + adminMsg, 'success');
   loadClockStatus();
 }
 
-function clockOut() {
+async function clockOut() {
   if (!requireLogin()) return;
   if (clockCooldownBlocked()) return;
   startClockCooldown();
@@ -2332,11 +2373,18 @@ function clockOut() {
   const now = new Date().toLocaleTimeString('en-GB');
   const isAdmin = currentUser.role === 'admin';
 
-  // v4.0.22：下班打卡時重新驗證 WiFi 名稱是否為 TY_5G — admin exempt
-  const gate = evalWifiGate();
+  // v4.1.0：下班打卡時重新定位並驗證（GPS + WiFi 名稱）— admin exempt
+  const gateOn = !isAdmin && !!(db.wifiSettings && db.wifiSettings.enabled !== false);
+  if (gateOn) {
+    showToast('📍 正在取得 GPS 定位，請稍候…', 'info');
+    await refreshGPS(true);
+    if (!currentUser) return;
+  }
+  const gate = evalGate();
   const wifiVerified = isAdmin ? true : gate.ok;
   if (!isAdmin && gate.enabled && !gate.ok) {
-    showToast('打卡失敗！' + wifiFailReason(gate), 'error');
+    showToast('打卡失敗！' + gateFailReason(gate), 'error');
+    loadClockStatus();
     return;
   }
 
@@ -2349,8 +2397,7 @@ function clockOut() {
 
   record.clock_out = now;
   record.clock_out_ip = currentIP;
-  record.wifi_ssid = wifiVerified ? (gate.ssid || gate.ssidName || '') : '';
-  record.wifi_check = wifiVerified ? wifiCheckTag(gate) : '';
+  applyGateFields(record, gate, wifiVerified);
   record.updated_at = new Date().toISOString();
   // Re-calculate status with both clock_in and clock_out
   record.status = calcAttendanceStatus(record.clock_in, now);
@@ -2923,51 +2970,52 @@ function exportCSV() {
   showToast('CSV已匯出（共 ' + records.length + ' 筆記錄，含請假）', 'success');
 }
 
-// ===== 打卡驗證設定（v4.0.22：WiFi 名稱驗證 + 公司外網 IP 自動抓取／自動連動／自動放行） =====
+// ===== 打卡驗證設定（v4.1.0：GPS 定位 + WiFi 名稱 TY_5G 自動抓取） =====
 async function loadWifiSettings() {
   if (!requireAdmin()) return;
-  const wifi = db.wifiSettings || {};
-  const nameInput = document.getElementById('wifiNameInput');
-  if (nameInput) nameInput.value = wifi.wifi_name || 'TY_5G';
-  document.getElementById('wifiEnabledInput').checked = !!wifi.enabled;
-  const wanAutoInput = document.getElementById('wifiWanAutoInput');
-  if (wanAutoInput) wanAutoInput.checked = wifi.wan_auto !== false;
-  const allowInput = document.getElementById('wifiAllowNoSsidInput');
-  if (allowInput) allowInput.checked = !!wifi.allow_no_ssid;
-  // v4.0.22：自動抓取內網＋外網 IP，並自動帶入／連動更新公司外網 IP（管理員端無條件更新）
-  const res = await autoRegisterIP({ admin: true });
-  refreshWifiDetectInfo(res);
+  const w = db.wifiSettings || {};
+  const setVal = function(id, v) { const el = document.getElementById(id); if (el) el.value = v; };
+  setVal('wifiNameInput', w.wifi_name || 'TY_5G');
+  const enabled = document.getElementById('wifiEnabledInput'); if (enabled) enabled.checked = w.enabled !== false;
+  const gpsReq = document.getElementById('gpsRequiredInput'); if (gpsReq) gpsReq.checked = w.gps_required !== false;
+  const ssidReq = document.getElementById('ssidRequiredInput'); if (ssidReq) ssidReq.checked = w.ssid_required !== false;
+  const strict = document.getElementById('strictBothInput'); if (strict) strict.checked = !!w.strict_both;
+  setVal('gpsLatInput', (typeof w.gps_lat === 'number') ? String(w.gps_lat) : '');
+  setVal('gpsLngInput', (typeof w.gps_lng === 'number') ? String(w.gps_lng) : '');
+  setVal('gpsRadiusInput', w.gps_radius || GPS_DEFAULT_RADIUS);
+  setVal('gpsNoteInput', w.gps_note || '');
+  refreshWifiDetectInfo(); // 先立即帶出既有設定（不等 GPS／IP，避免畫面卡在「載入中」）
+  try { await refreshNetworkInfo({ force: false }); } catch (e) {}
+  refreshWifiDetectInfo(); // 定位／IP 回來後再更新一次
 }
 
-// 顯示偵測結果：內網 IP / 外網 IP / WiFi 名稱 / 公司外網 IP 與放行狀態
-function refreshWifiDetectInfo(res) {
+// 顯示偵測結果：IP / GPS 定位 / 公司地址座標 / WiFi 名稱 / 放行狀態
+function refreshWifiDetectInfo() {
   const setTxt = function(id, txt) { const el = document.getElementById(id); if (el) el.textContent = txt; };
-  setTxt('adminCurrentIP', currentLocalIP || (isPrivateIPv4(currentIP) ? currentIP : '（無法取得）'));
-  setTxt('adminPublicIP', currentPublicIP || (currentIP && currentIP !== 'unknown' && !isPrivateIPv4(currentIP) ? currentIP : '（無）'));
-
+  const setHtml = function(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; };
   const w = db.wifiSettings || {};
-  // v4.0.22：公司外網 IP（自動抓取／自動連動／自動帶入放行）
-  setTxt('adminWanIp', (w.wan_ip || '（尚未抓取）'));
-  const wanAt = document.getElementById('adminWanIpAt');
-  if (wanAt) {
-    if (w.wan_ip_at) {
-      const dw = new Date(w.wan_ip_at);
-      wanAt.textContent = isNaN(dw.getTime()) ? '' : '（更新於 ' + dw.toLocaleString('zh-TW') + '）';
-    } else { wanAt.textContent = ''; }
-  }
-  const seg = ipSegment(w.ssid_ip || '');
-  setTxt('adminSsidIp', (w.ssid_ip || '（尚未抓取）'));
-  setTxt('adminSsidSeg', seg ? '→ 放行網段 ' + seg : '');
-  const at = document.getElementById('adminSsidIpAt');
-  if (at) {
-    if (w.ssid_ip_at) {
-      const d = new Date(w.ssid_ip_at);
-      at.textContent = isNaN(d.getTime()) ? '' : '（更新於 ' + d.toLocaleString('zh-TW') + '）';
-    } else { at.textContent = ''; }
+  setTxt('adminCurrentIP', currentIP || '（無法取得）');
+  setTxt('adminGpsNow', currentGPS
+    ? (currentGPS.lat.toFixed(6) + ', ' + currentGPS.lng.toFixed(6) + '（±' + Math.round(currentGPS.accuracy) + 'm）')
+    : '（抓不到 — ' + (lastGPSReason || '未知原因') + '）');
+  const dist = gpsDistanceMeters();
+  const radius = w.gps_radius || GPS_DEFAULT_RADIUS;
+  setTxt('adminGpsDist', dist === null ? '—' : (dist + ' 公尺' + (dist <= radius ? ' ✓ 在範圍內' : ' ✗ 超出 ' + radius + ' 公尺')));
+  const hasSite = typeof w.gps_lat === 'number' && typeof w.gps_lng === 'number';
+  setTxt('adminSiteGps', hasSite ? (w.gps_lat.toFixed(6) + ', ' + w.gps_lng.toFixed(6)) : '（尚未設定 — 請按上方「📍 抓取目前位置」）');
+  const siteAt = document.getElementById('adminSiteGpsAt');
+  if (siteAt) {
+    let s = '';
+    if (w.gps_at) {
+      const d = new Date(w.gps_at);
+      if (!isNaN(d.getTime())) s = '（設定於 ' + d.toLocaleString('zh-TW') + '）';
+    }
+    if (w.gps_note) s += ' · ' + w.gps_note;
+    siteAt.textContent = s;
   }
   // 本機 WiFi 名稱：只有用打卡小工具開啟本頁才讀得到（網頁本身受限讀不到 SSID）
   if (currentSSID) {
-    const g = evalWifiGate();
+    const g = evalGate();
     setTxt('adminSsidName', currentSSID + (g.ssidOK ? ' ✓' : ' ✗'));
     setTxt('adminSsidNameNote', g.ssidOK
       ? '（由打卡小工具帶入，與設定名稱相符）'
@@ -2979,59 +3027,95 @@ function refreshWifiDetectInfo(res) {
 
   const note = document.getElementById('wifiAutoNote');
   if (note) {
-    const g = evalWifiGate();
-    if (g.ssidMatched && g.ssidOK) {
-      note.innerHTML = '✅ WiFi 名稱驗證通過：<strong>' + esc(g.ssid) + '</strong>（小工具帶入）';
-    } else if (g.ssidMatched) {
-      note.innerHTML = '❌ WiFi 名稱「' + esc(g.ssid) + '」與設定「' + esc(g.ssidName) + '」不符';
-    } else if (res && res.wanReason === 'registered') {
-      note.innerHTML = '🌐 已<strong>自動抓取並帶入</strong>公司外網 IP：<strong>' + esc(res.wanIp) + '</strong>（員工連公司網路即自動放行）';
-    } else if (res && res.wanUpdated) {
-      note.innerHTML = '🌐 公司外網 IP 已<strong>自動連動更新</strong>為：<strong>' + esc(res.wanIp) + '</strong>';
-    } else if (g.wanExact) {
-      note.innerHTML = '🌐 外網 IP <strong>' + esc(g.wanPub) + '</strong> 與公司登記值相同 ✓ 已自動放行';
-    } else if (res && res.wanReason === 'no-match') {
-      note.innerHTML = '⚠️ 目前外網 IP（' + esc(g.wanPub || '抓不到') + '）與公司登記值（' +
-        esc(g.wanIp) + '）不同 — 已更新為目前值，請確認這是在公司網路下開啟';
-    } else if (!g.wanIp) {
-      note.innerHTML = '⚠️ 尚未抓取到公司外網 IP，手機打卡會被擋下。請確認網路連線後按「🔄 重新偵測」';
-    } else if (!currentPublicIP) {
-      note.innerHTML = '⚠️ 抓不到外網 IP — 請確認網路連線後按「🔄 重新偵測」';
+    const g = evalGate();
+    if (!g.enabled) {
+      setHtml('wifiAutoNote', '⚠️ 打卡驗證已停用（任何地點皆可打卡）');
+    } else if (g.ok) {
+      const parts = [];
+      if (g.hasGPS && g.hasSite) parts.push('📍 距離 ' + g.distance + ' m ✓');
+      if (g.hasSSID) parts.push('📶 ' + esc(g.ssid) + ' ✓');
+      setHtml('wifiAutoNote', '✅ 驗證通過：' + parts.join(' · ') + '（' + esc(gateCheckTag(g)) + '）');
     } else {
-      note.innerHTML = '✅ 已連上 ' + esc(w.wifi_name || 'TY_5G') + ' 網段（IP ' + esc(g.ip) + '）';
+      setHtml('wifiAutoNote', '❌ ' + esc(gateFailReason(g)));
     }
   }
 
   const warn = document.getElementById('wifiDetectWarn');
   if (warn) {
-    if (!currentPublicIP) {
+    const reasonTxt = lastGPSReason === 'denied' ? '您拒絕了定位授權'
+      : (lastGPSReason === 'unsupported' ? '此瀏覽器／網址不支援定位（需 HTTPS）'
+      : (lastGPSReason === 'timeout' || lastGPSReason === 'unavailable' ? '定位逾時或無法取得' : '抓不到定位'));
+    if (!hasSite) {
       warn.style.display = '';
-      warn.innerHTML = '⚠️ 抓不到外網 IP（可能被防火牆／代理伺服器擋住，或目前無網路連線），手機／直接開網頁的裝置會被擋下。替代做法：① 按「🔄 重新偵測」重試或改用另一瀏覽器；② 電腦一律改用桌面「TY_5G 打卡」小工具（驗證 WiFi 名稱，不受 IP 影響）；③ 暫時取消勾選「啟用打卡驗證」。';
+      warn.innerHTML = (w.strict_both !== false)
+        ? '⚠️ 尚未設定公司地址座標 — 目前是「<strong>嚴格模式</strong>」，GPS 與 WiFi 名稱都要符合，員工（含手機）一律無法打卡。請在公司現場按上方「📍 抓取目前位置設為公司地址」後按「儲存設定」。'
+        : '⚠️ 尚未設定公司地址座標 — GPS 驗證暫不生效，目前只有 WiFi 名稱驗證會放行員工打卡。請在公司現場按上方「📍 抓取目前位置設為公司地址」後按「儲存設定」。';
+    } else if (!currentGPS) {
+      warn.style.display = '';
+      warn.innerHTML = '⚠️ ' + reasonTxt + '。請確認已開啟手機／電腦的定位服務；電腦（無 GPS）建議一律改用桌面「TY_5G 打卡」小工具（自動帶入 WiFi 名稱驗證）。';
     } else {
       warn.style.display = 'none';
     }
   }
 }
 
+// 管理員：以「目前位置」設定公司地址座標（自動抓取，免手動輸入）
+async function captureCompanyLocation() {
+  if (!requireAdmin()) return;
+  const btn = document.getElementById('captureLocationBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '📍 定位中...'; }
+  const g = await refreshGPS(true);
+  if (btn) { btn.disabled = false; btn.textContent = '📍 抓取目前位置設為公司地址'; }
+  if (!g) {
+    showToast('抓不到 GPS 定位（' + (lastGPSReason || '未知原因') +
+      '）。請確認已開啟定位服務，或在 HTTPS 環境下開啟本頁', 'error');
+    refreshWifiDetectInfo();
+    return;
+  }
+  if (!db.wifiSettings) db.wifiSettings = wifiDefaults();
+  db.wifiSettings.gps_lat = g.lat;
+  db.wifiSettings.gps_lng = g.lng;
+  db.wifiSettings.gps_at = new Date().toISOString();
+  db.wifiSettings.updated_at = db.wifiSettings.gps_at;
+  saveDB();
+  const latI = document.getElementById('gpsLatInput'); if (latI) latI.value = String(g.lat);
+  const lngI = document.getElementById('gpsLngInput'); if (lngI) lngI.value = String(g.lng);
+  showToast('已抓取公司地址座標：' + g.lat.toFixed(6) + ', ' + g.lng.toFixed(6) + ' ✓ 請按「儲存設定」', 'success');
+  refreshWifiDetectInfo();
+}
+
 function saveWifiSettings() {
   if (!requireAdmin()) return;
-  const name = trim(document.getElementById('wifiNameInput').value) || 'TY_5G';
+  const prev = db.wifiSettings || wifiDefaults();
+  const val = function(id) { const el = document.getElementById(id); return el ? String(el.value || '') : ''; };
+  const chk = function(id) { const el = document.getElementById(id); return !!(el && el.checked); };
+  const name = trim(val('wifiNameInput')) || 'TY_5G';
+  const lat = parseFloat(val('gpsLatInput'));
+  const lng = parseFloat(val('gpsLngInput'));
+  const r = parseInt(val('gpsRadiusInput'), 10);
+  const hasLat = isFinite(lat), hasLng = isFinite(lng);
+  const changed = hasLat && hasLng && (lat !== prev.gps_lat || lng !== prev.gps_lng);
   db.wifiSettings = {
+    mode: 'gps',
     wifi_name: name,
-    wan_ip: (db.wifiSettings && db.wifiSettings.wan_ip) || '',      // 外網 IP 由系統自動抓取／連動，不手動輸入
-    wan_ip_at: (db.wifiSettings && db.wifiSettings.wan_ip_at) || '',
-    wan_auto: !!(document.getElementById('wifiWanAutoInput') && document.getElementById('wifiWanAutoInput').checked),
-    ssid_ip: (db.wifiSettings && db.wifiSettings.ssid_ip) || SSID_FLOATING_DEFAULT, // 網段由系統維護，不手動覆寫
-    ssid_ip_at: (db.wifiSettings && db.wifiSettings.ssid_ip_at) || new Date().toISOString(),
-    allow_no_ssid: !!(document.getElementById('wifiAllowNoSsidInput') && document.getElementById('wifiAllowNoSsidInput').checked),
-    last_ip: (db.wifiSettings && db.wifiSettings.last_ip) || '', // 最近 IP 由系統自動記錄，不手動輸入
-    last_ip_at: (db.wifiSettings && db.wifiSettings.last_ip_at) || '',
-    enabled: document.getElementById('wifiEnabledInput').checked,
+    ssid_list: val('wifiNameInput') || name,   // 允許多組名稱（逗號分隔）
+    gps_lat: hasLat ? lat : null,
+    gps_lng: hasLng ? lng : null,
+    gps_radius: (isFinite(r) && r >= 10) ? Math.min(r, 5000) : GPS_DEFAULT_RADIUS,
+    gps_at: (hasLat && hasLng) ? (changed ? new Date().toISOString() : (prev.gps_at || new Date().toISOString())) : '',
+    gps_note: val('gpsNoteInput'),
+    gps_required: chk('gpsRequiredInput'),
+    ssid_required: chk('ssidRequiredInput'),
+    strict_both: chk('strictBothInput'),
+    last_ip: prev.last_ip || '',
+    last_ip_at: prev.last_ip_at || '',
+    enabled: chk('wifiEnabledInput'),
     updated_at: new Date().toISOString()
   };
   saveDB();
-  showToast('打卡設定已儲存！（WiFi：' + name + ' · 外網 IP：' +
-    (db.wifiSettings.wan_ip || '尚未抓取') + (db.wifiSettings.wan_auto ? ' · 自動連動' : '') + '）', 'success');
+  showToast('打卡設定已儲存！（GPS 半徑 ' + db.wifiSettings.gps_radius + ' 公尺 · 公司座標：' +
+    (hasLat && hasLng ? lat.toFixed(5) + ', ' + lng.toFixed(5) : '尚未設定') +
+    ' · WiFi：' + name + (db.wifiSettings.strict_both ? ' · 嚴格模式' : '') + '）', 'success');
   loadClockStatus();
 }
 
@@ -3542,7 +3626,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '4.0.22.20260922';
+const BUILD_ID = '4.1.0.20260922';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
