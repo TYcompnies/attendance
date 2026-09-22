@@ -785,7 +785,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.1.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-22 · 免憑證多通道同步 · 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證改為 GPS 定位（公司座標 + 允許半徑，自動抓取）＋ WiFi 名稱 TY_5G 自動抓取（打卡小工具），已移除 IP／外網 IP／網段判定)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.1.1 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-22 · 免憑證多通道同步 · 跨裝置／跨 IP／跨網域自動連動（免輸入同步碼）· 同瀏覽器多分頁即時同步 · 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證改為 GPS 定位（公司座標 + 允許半徑，自動抓取）＋ WiFi 名稱 TY_5G 自動抓取（打卡小工具），已移除 IP／外網 IP／網段判定)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受打卡管制，隨時隨地使用</td></tr>
@@ -1022,9 +1022,48 @@ function loadDB() {
 let syncTimer = null;
 let syncPending = false;      // true = 本機有尚未上傳雲端的變更
 let syncRetryTimer = null;    // 推播失敗的自動重試計時器
+
+// ===== v4.1.1：同瀏覽器多分頁／多視窗即時連動（BroadcastChannel）=====
+// 同一台電腦開兩個分頁時，原本要等 30 秒雲端輪詢才看得到彼此的變更；
+// 有了這個通道，任一頁打卡後其他分頁立刻更新（不需等雲端、也不需輸入任何東西）。
+const BC_NAME = 'attendance-sync-v1';
+const BC_SELF = (Math.random().toString(36).slice(2) + Date.now().toString(36));
+let bcChannel = null;
+function initBroadcastChannel() {
+  if (bcChannel || typeof BroadcastChannel === 'undefined') return;
+  try {
+    bcChannel = new BroadcastChannel(BC_NAME);
+    bcChannel.onmessage = function(ev) {
+      var d = ev && ev.data;
+      if (!d || d.from === BC_SELF || !d.db || !d.db.employees) return;
+      try {
+        var before = JSON.stringify(db);
+        mergeDB(d.db);          // 只合併、不回推雲端（雲端由推播的那個分頁負責）
+        saveLocalOnly();
+        if (JSON.stringify(db) !== before) {
+          addSyncLog('BC', 'ok', '同瀏覽器其他分頁已更新，本頁即時同步', 0);
+          if (typeof refreshAllViews === 'function') refreshAllViews();
+        }
+      } catch (e) {}
+    };
+  } catch (e) { bcChannel = null; }
+}
+function bcBroadcast() {
+  if (!bcChannel) return;
+  try { bcChannel.postMessage({ from: BC_SELF, db: db, at: Date.now() }); } catch (e) {}
+}
+
+// v4.1.1：立即推播（打卡等關鍵操作用，不等 2 秒 debounce，讓別台裝置馬上看到）
+function pushNow() {
+  if (!getSyncKey()) return;
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(function() { pushToCloud(true); }, 300);
+}
+
 function saveDB() {
   localStorage.setItem(DB_KEY, JSON.stringify(db));
   syncPending = true;
+  bcBroadcast(); // v4.1.1：同瀏覽器其他分頁即時更新
   // Cloud sync: debounce so rapid changes (e.g. clock ticks) don't spam the API
   if (syncTimer) clearTimeout(syncTimer);
   syncTimer = setTimeout(function() { if (getSyncKey()) pushToCloud(true); }, 2000);
@@ -2362,6 +2401,7 @@ async function clockIn() {
   const adminMsg = isAdmin ? '（管理員不受打卡管制）' : '';
   const makeupMsg = makeupInfo ? '，已登記補班抵扣 ' + makeupInfo.leave_date + ' 的' + leaveTypeText(makeupInfo.leave_type) : '';
   showToast('上班打卡成功！時間：' + now + lateMsg + makeupMsg + adminMsg, 'success');
+  pushNow(); // v4.1.1：立即推播雲端，其他裝置馬上看得到（不等 2 秒 debounce）
   loadClockStatus();
 }
 
@@ -2415,6 +2455,7 @@ async function clockOut() {
   dayRecs.forEach(function(r) { const w = calcWorkHours(r); if (w) dayMin += w.minutes; });
   const dayMsg = dayRecs.length > 1 ? '，本日累計 ' + formatMinutesText(dayMin) : '';
   showToast('下班打卡成功！本次工時：' + hours + ' 小時' + dayMsg + extraMsg, 'success');
+  pushNow(); // v4.1.1：立即推播雲端，其他裝置馬上看得到
   loadClockStatus();
 }
 
@@ -3626,7 +3667,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '4.1.0.20260922';
+const BUILD_ID = '4.1.1.20260922';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
@@ -3705,10 +3746,13 @@ function freeChannelName(id) {
   if (i < 0) return '自訂通道';
   return '通道 ' + (i < 3 ? 'ABC'.charAt(i) : String(i + 1));
 }
+// v4.1.1：所有免憑證通道都回「尚無資料」→ 代表雲端是全新的（允許首次推播建立資料）
+// 若只是網路逾時／連線失敗，則不視為空雲端，新裝置會暫停推播以保護既有資料
+let freePullAllEmpty = false;
 // v4.0.1：讀取 — 依序嘗試所有通道，回傳「_last_sync 最新」且格式正確的那一份
 async function freePull() {
   var ids = freeChannelList();
-  var best = null, bestTime = 0, lastErr = null;
+  var best = null, bestTime = 0, lastErr = null, emptyCount = 0;
   for (var i = 0; i < ids.length; i++) {
     var ctrl = new AbortController();
     var t = setTimeout(function() { ctrl.abort(); }, 12000);
@@ -3725,8 +3769,10 @@ async function freePull() {
       if (i === 0 && ts > 0) { /* 主通道有效即優先採用，但仍繼續探測以確保取到最新 */ }
     } catch (e) {
       lastErr = lastErr || e;
+      if (e && e.message === '通道尚無資料') emptyCount++;
     } finally { clearTimeout(t); }
   }
+  freePullAllEmpty = (!best && emptyCount === ids.length);
   if (best) return best;
   throw (lastErr || new Error('所有免憑證通道均無回應'));
 }
@@ -3775,6 +3821,16 @@ const GITHUB_API_BASE = 'https://api.github.com/repos/' + GITHUB_OWNER + '/' + G
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/sync/';
 // v3.0：舊版 extendsclass.com API 已完全移除（OPTIONS preflight 回應 500，瀏覽器無法使用）
 let syncInProgress = false;
+// v4.1.1：全新裝置保護 — 本機仍是出廠種子資料（只有 admin、沒有任何考勤／假單）時，
+// 若還沒成功讀到雲端，絕不把這份空資料推上雲端（否則會把全公司的真實資料覆蓋掉）。
+// 常見情境：換新網域／新手機／清過快取後第一次開啟，雲端還沒讀回來就先被推播清空。
+let firstCloudPullDone = false;
+function isSeedOnlyDB() {
+  try {
+    var emps = (db.employees || []).filter(function(e) { return e && e.employee_id; });
+    return emps.length <= 1 && (db.attendance || []).length === 0 && (db.leave_requests || []).length === 0;
+  } catch (e) { return false; }
+}
 let pushFromPull = false;  // v2.7：標記「這次 push 是 pullFromCloud 觸發的」，避免 push→pull→push 無限循環
 let lastSyncError = '';    // v2.8：記錄最後一次同步錯誤訊息，顯示在徽章 title 中
 let syncRetryDelay = 10000; // v2.8：動態重試延遲（指數退避）
@@ -4185,6 +4241,13 @@ function mirrorToGitHub(key) {
 async function pushToCloud(silent, noBadge, skipPull) {
   var key = getSyncKey();
   if (!key) return;
+  // v4.1.1：全新裝置尚未確認雲端狀態時，跳過推播（保護雲端既有資料不被出廠種子覆蓋）
+  if (!firstCloudPullDone && !freePullAllEmpty && isSeedOnlyDB()) {
+    syncPending = true;
+    addSyncLog('SKIP', 'warn', '尚未完成首次雲端拉取，暫不推播（保護雲端資料）', 0);
+    if (!silent) showToast('正在確認雲端資料，稍後自動同步…', 'info');
+    return;
+  }
   if (syncInProgress) { syncPending = true; return; }
   syncInProgress = true;
   var ok = false;
@@ -4379,6 +4442,7 @@ async function pullFromCloud(silent) {
       saveLocalOnly();
       changed = snap() !== beforeSnap;
       success = true;
+      firstCloudPullDone = true; // v4.1.1：已確認雲端內容，之後可正常推播
       syncFailCount = 0;
       addSyncLog('GET', 'ok', channel + '｜' + (changed ? '資料有更新' : '資料一致'), 200);
     }
@@ -4508,6 +4572,13 @@ const AUTOSYNC_INTERVAL = 30000; // 30 秒自動同步一次（避免 rate limit
 function startAutoSync() {
   if (autoSyncStarted) return;
   autoSyncStarted = true;
+  initBroadcastChannel(); // v4.1.1：同瀏覽器多分頁即時連動
+  // v4.1.1：網路從離線恢復時立即同步（原本只靠 30 秒輪詢，恢復網路會慢半拍）
+  window.addEventListener('online', function() {
+    if (!getSyncKey()) return;
+    addSyncLog('ONLINE', 'ok', '網路已恢復，立即同步', 0);
+    setTimeout(function() { pullFromCloud(true); }, 400);
+  });
   async function autoSyncOnce() {
     if (autoSyncLock) return;
     autoSyncLock = true;
@@ -4783,6 +4854,9 @@ function loadSyncSettings() {
     diag += '<br><span style="color:var(--text-secondary);font-size:11px;font-family:monospace;">[' + syncState.join(' | ') + ']</span>';
     statusEl.innerHTML = '<strong style="color:var(--success)">✅ 雲端同步已啟用（自動同步中）</strong>' +
       '<br><span style="color:var(--text-secondary);font-size:12px;">每 30 秒自動同步一次；切回此頁面時也會立即同步。' +
+      '<br>🌐 <strong>跨裝置／跨網域自動連動</strong>：不同電腦、手機、不同 IP、不同網址（網域）都連到同一個雲端空間，' +
+      '<strong>完全不必輸入同步碼</strong>；打卡後立即上傳，其他裝置 30 秒內自動更新（同一瀏覽器開多個分頁則即時更新）。' +
+      '<br>雲端通道：' + freeChannelList().length + ' 組（任一組可用即可同步，互為備援）' +
       '<br>最後同步：' + esc(db._last_sync || '尚未同步') + ' · 資料大小：' + getDbSizeKB() + ' KB' + diag + '</span>' +
       '<br><span style="color:var(--text-secondary);font-size:11px;margin-top:4px;display:block;">💡 手機同步不正常？請在手機瀏覽器「清除快取」或長按重新整理按鈕選擇「強制重新載入」。</span>';
     document.getElementById('syncCodeDisplay').value = key;
