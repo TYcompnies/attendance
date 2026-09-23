@@ -263,7 +263,7 @@
           · 給薪規則：<span class="guide-tag">支薪</span>特休、婚假、喪假、產假 ／ <span class="guide-tag">半薪</span>病假、生理假 ／ <span class="guide-tag">不支薪</span>事假、其他。<br>
           · 同一天同時有打卡紀錄與假單時，以實際出勤為準、不重複扣薪。<br>
           <strong>☁️ 資料同步</strong><br>
-          · 所有資料每 30 秒自動雲端同步，任何裝置開啟本網址即自動取得最新資料，無需輸入任何代碼。<br>
+          · 所有資料每 5 秒自動雲端同步，任何裝置（不同瀏覽器／IP／網域／國家）開啟本網址即自動取得最新資料，無需輸入任何代碼。<br>
         </div>
       </details>
     </div>
@@ -728,7 +728,7 @@
         <div class="card-header"><div class="card-title">☁️ 雲端同步（跨裝置）</div></div>
         <div class="info-banner blue">
           <span>ℹ️</span>
-          <span>資料會自動同步到雲端（免憑證、免設定），<strong>所有紀錄不會遺失</strong>。啟用後<strong>每 30 秒自動同步</strong>、手機切回畫面立即同步，<strong>同步後系統裡所有項目（員工、考勤、統計、WiFi、排班、薪資設定）都會自動更新</strong>。換裝置只需：在新裝置打開本網址，<strong>約 2 秒自動連接完成，免輸入任何代碼</strong>。</span>
+          <span>資料會自動同步到雲端（免憑證、免設定），<strong>所有紀錄不會遺失</strong>。啟用後<strong>每 5 秒自動同步</strong>（無變化時自動降速）、手機切回畫面立即同步，<strong>同步後系統裡所有項目（員工、考勤、統計、WiFi、排班、薪資設定）都會自動更新</strong>。換裝置只需：在新裝置（或另一個瀏覽器、另一個網域、國外）打開本網址，<strong>約 2 秒自動連接完成，免輸入任何代碼</strong>。</span>
         </div>
         <div id="syncStatusBox" style="padding:14px 16px;background:var(--bg);border-radius:10px;margin-bottom:16px;font-size:14px;">
           <span id="syncStatusText">載入中...</span>
@@ -756,7 +756,7 @@
           <div class="form-group" style="background:#ecfdf5;padding:12px;border-radius:8px;margin-bottom:12px;border:1px solid #a7f3d0;">
             <label style="font-size:13px;color:#065f46;">⚡ 零設定自動同步（v4.0.1 免憑證 · 多通道冗餘）</label>
             <div style="font-size:12px;color:#065f46;margin-top:4px;">
-              本系統使用<strong>免憑證雲端通道</strong>：不需 Token、不需輸入同步碼。<strong>任何裝置、任何瀏覽器、任何網域</strong>開啟網頁後約 1 秒會自動連接並下載最新資料，之後每 30 秒自動雙向同步。<br>
+              本系統使用<strong>免憑證雲端通道</strong>：不需 Token、不需輸入同步碼。<strong>任何裝置、任何瀏覽器、任何網域、任何國家</strong>開啟網頁後約 1 秒會自動連接並下載最新資料，之後每 5 秒自動雙向同步（同一電腦多分頁則即時同步）。<br>
               資料會<strong>同時寫入 3 條獨立通道</strong>，任一條失效都不影響同步；並在背景備份一份到 GitHub。
             </div>
           </div>
@@ -785,7 +785,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.1.1 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-22 · 免憑證多通道同步 · 跨裝置／跨 IP／跨網域自動連動（免輸入同步碼）· 同瀏覽器多分頁即時同步 · 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證改為 GPS 定位（公司座標 + 允許半徑，自動抓取）＋ WiFi 名稱 TY_5G 自動抓取（打卡小工具），已移除 IP／外網 IP／網段判定)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.2.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-23 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證改為 GPS 定位（公司座標 + 允許半徑，自動抓取）＋ WiFi 名稱 TY_5G 自動抓取（打卡小工具），已移除 IP／外網 IP／網段判定)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受打卡管制，隨時隨地使用</td></tr>
@@ -1029,24 +1029,41 @@ let syncRetryTimer = null;    // 推播失敗的自動重試計時器
 const BC_NAME = 'attendance-sync-v1';
 const BC_SELF = (Math.random().toString(36).slice(2) + Date.now().toString(36));
 let bcChannel = null;
-function initBroadcastChannel() {
-  if (bcChannel || typeof BroadcastChannel === 'undefined') return;
+let bcInited = false;
+// v4.2.0：合併其他分頁送來的資料。
+// 關鍵防護 —— 只有「內容真的變了」才寫回 localStorage。否則 A 寫入觸發 B 的 storage 事件、
+// B 又寫入觸發 A…會變成無限互推（storage 事件每次寫入都會再觸發一次）。
+function applyTabUpdate(incoming, tag) {
   try {
-    bcChannel = new BroadcastChannel(BC_NAME);
-    bcChannel.onmessage = function(ev) {
-      var d = ev && ev.data;
-      if (!d || d.from === BC_SELF || !d.db || !d.db.employees) return;
-      try {
-        var before = JSON.stringify(db);
-        mergeDB(d.db);          // 只合併、不回推雲端（雲端由推播的那個分頁負責）
-        saveLocalOnly();
-        if (JSON.stringify(db) !== before) {
-          addSyncLog('BC', 'ok', '同瀏覽器其他分頁已更新，本頁即時同步', 0);
-          if (typeof refreshAllViews === 'function') refreshAllViews();
-        }
-      } catch (e) {}
-    };
-  } catch (e) { bcChannel = null; }
+    if (!incoming || !incoming.employees) return;
+    var before = JSON.stringify(db);
+    mergeDB(incoming);          // 只合併、不回推雲端（雲端由推播的那個分頁負責）
+    if (JSON.stringify(db) !== before) {
+      saveLocalOnly();
+      addSyncLog(tag, 'ok', '同瀏覽器其他分頁已更新，本頁即時同步', 0);
+      if (typeof refreshAllViews === 'function') refreshAllViews();
+    }
+  } catch (e) {}
+}
+function initBroadcastChannel() {
+  if (bcInited) return;
+  bcInited = true;
+  if (typeof BroadcastChannel !== 'undefined') {
+    try {
+      bcChannel = new BroadcastChannel(BC_NAME);
+      bcChannel.onmessage = function(ev) {
+        var d = ev && ev.data;
+        if (!d || d.from === BC_SELF || !d.db) return;
+        applyTabUpdate(d.db, 'BC');
+      };
+    } catch (e) { bcChannel = null; }
+  }
+  // v4.2.0：storage 事件備援 — 部分瀏覽器（舊 Safari、隱私模式、部分內嵌 WebView）
+  // 不支援 BroadcastChannel，但 storage 事件在所有同源分頁都會觸發，涵蓋率更高。
+  window.addEventListener('storage', function(e) {
+    if (!e || e.key !== DB_KEY || !e.newValue) return;
+    try { applyTabUpdate(JSON.parse(e.newValue), 'TAB'); } catch (err) {}
+  });
 }
 function bcBroadcast() {
   if (!bcChannel) return;
@@ -3667,7 +3684,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '4.1.1.20260922';
+const BUILD_ID = '4.2.0.20260923';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
@@ -3749,74 +3766,133 @@ function freeChannelName(id) {
 // v4.1.1：所有免憑證通道都回「尚無資料」→ 代表雲端是全新的（允許首次推播建立資料）
 // 若只是網路逾時／連線失敗，則不視為空雲端，新裝置會暫停推播以保護既有資料
 let freePullAllEmpty = false;
-// v4.0.1：讀取 — 依序嘗試所有通道，回傳「_last_sync 最新」且格式正確的那一份
-async function freePull() {
-  var ids = freeChannelList();
-  var best = null, bestTime = 0, lastErr = null, emptyCount = 0;
-  for (var i = 0; i < ids.length; i++) {
-    var ctrl = new AbortController();
-    var t = setTimeout(function() { ctrl.abort(); }, 12000);
-    try {
-      var res = await fetch(freeStoreURL(ids[i]) + '?_=' + Date.now(), { signal: ctrl.signal, mode: 'cors', cache: 'no-store' });
-      clearTimeout(t);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      var txt = await res.text();
-      if (!txt || !txt.trim()) throw new Error('通道尚無資料');
-      var obj = JSON.parse(txt);
-      if (!obj || !obj.employees) throw new Error('通道資料格式異常');
-      var ts = Date.parse(obj._last_sync || '') || 0;
-      if (ts > bestTime) { bestTime = ts; best = obj; best = Object.assign({}, obj, { _channel_id: ids[i] }); }
-      if (i === 0 && ts > 0) { /* 主通道有效即優先採用，但仍繼續探測以確保取到最新 */ }
-    } catch (e) {
-      lastErr = lastErr || e;
-      if (e && e.message === '通道尚無資料') emptyCount++;
-    } finally { clearTimeout(t); }
+
+// ===== v4.2.0：通道健康度（跨國／跨網域時自動挑最快、最穩的通道）=====
+// 背景：同一個通道在不同國家／不同電信的延遲差異很大（有的 200ms、有的 8 秒甚至逾時）。
+// 舊版固定「先主通道、失敗才換備援」，在跨國情境下一次同步可能卡 12 秒才會換通道。
+// 現在每次請求都記錄成功率與延遲，優先打表現最好的通道，並行探測，取最新的一份資料。
+let channelHealth = {};
+function chRecord(id, ok, ms) {
+  var h = channelHealth[id] || (channelHealth[id] = { ok: 0, fail: 0, ms: 0, lastOkAt: 0 });
+  if (ok) { h.ok++; h.ms = h.ms ? Math.round((h.ms * 2 + ms) / 3) : ms; h.lastOkAt = Date.now(); }
+  else h.fail++;
+}
+function chScore(id) {
+  var h = channelHealth[id] || { ok: 0, fail: 0, ms: 0, lastOkAt: 0 };
+  var total = h.ok + h.fail;
+  var rate = total ? h.ok / total : 0.5;          // 從未用過 → 中性分數，維持原順序
+  var recent = h.lastOkAt && (Date.now() - h.lastOkAt < 120000) ? 60 : 0;
+  return rate * 1000 - Math.min(h.ms || 3000, 10000) / 100 + recent;
+}
+function chSorted() {
+  return freeChannelList().slice().sort(function(a, b) { return chScore(b) - chScore(a); });
+}
+function chSummary() {
+  return chSorted().map(function(id) {
+    var h = channelHealth[id] || { ok: 0, fail: 0, ms: 0 };
+    return freeChannelName(id) + '(' + h.ok + '✓/' + h.fail + '✗' + (h.ms ? ' ' + h.ms + 'ms' : '') + ')';
+  }).join(' · ');
+}
+
+// v4.2.0：讀取 — 並行探測所有通道，回傳「_last_sync 最新」且格式正確的那一份
+// opts.quick = true 時只打目前最健康的那一個通道（輪詢用），把每分鐘請求數壓到最低；
+// 但 quick 模式不判定「雲端是空的」——只查一個通道不足以證明雲端沒資料，避免新裝置誤推播覆蓋。
+async function freePull(opts) {
+  var quick = !!(opts && opts.quick);
+  var ids = chSorted();
+  var targets = quick ? ids.slice(0, 1) : ids;
+  var lastErr = null, emptyCount = 0;
+  function fetchOne(id) {
+    return new Promise(function(resolve) {
+      var ctrl = new AbortController();
+      var t0 = Date.now();
+      var t = setTimeout(function() { ctrl.abort(); }, quick ? 6000 : 12000);
+      fetch(freeStoreURL(id) + '?_=' + Date.now(), { signal: ctrl.signal, mode: 'cors', cache: 'no-store' })
+        .then(function(res) {
+          clearTimeout(t);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.text();
+        })
+        .then(function(txt) {
+          if (!txt || !txt.trim()) throw new Error('通道尚無資料');
+          var obj = JSON.parse(txt);
+          if (!obj || !obj.employees) throw new Error('通道資料格式異常');
+          chRecord(id, true, Date.now() - t0);
+          resolve({ ok: true, id: id, obj: Object.assign({}, obj, { _channel_id: id }), ts: Date.parse(obj._last_sync || '') || 0 });
+        })
+        .catch(function(e) {
+          clearTimeout(t);
+          chRecord(id, false, 0);
+          resolve({ ok: false, id: id, err: e, empty: !!(e && e.message === '通道尚無資料') });
+        });
+    });
   }
-  freePullAllEmpty = (!best && emptyCount === ids.length);
+  var results = await Promise.all(targets.map(fetchOne));
+  var best = null, bestTime = 0;
+  results.forEach(function(r) {
+    if (!r.ok) { lastErr = lastErr || r.err; if (r.empty) emptyCount++; return; }
+    if (r.ts > bestTime) { bestTime = r.ts; best = r.obj; }
+  });
+  // v4.2.0 自癒：快輪詢只查單一通道，萬一那個通道剛好落後（例如它上一次寫入失敗），
+  // 會拿到比本機更舊的資料。此時自動補做一次全通道比對，絕不讓資料倒退。
+  if (best && quick) {
+    var localTs = 0;
+    try { localTs = Date.parse((typeof db !== 'undefined' && db && db._last_sync) || '') || 0; } catch (e) { localTs = 0; }
+    if (localTs && bestTime && bestTime < localTs - 1000) {
+      addSyncLog('GET', 'warn', '快速通道資料落後，自動改查全部通道', 0);
+      try {
+        var full = await freePull();       // 不帶 opts → 完整模式，不會再遞迴
+        if (full) return full;
+      } catch (eFull) { /* 補查失敗就沿用原本那份，不讓同步失敗 */ }
+    }
+  }
+  if (!quick) freePullAllEmpty = (!best && emptyCount === targets.length);
   if (best) return best;
   throw (lastErr || new Error('所有免憑證通道均無回應'));
 }
-// v4.0.1：寫入 — 先寫主通道；失敗才依序嘗試備援通道。全部失敗才丟出錯誤。
+// v4.2.0：寫入 — 並行寫入所有通道（任一成功即算同步成功）
+// 舊版是「先寫主通道，成功後才慢慢補寫備援」，跨國時備援通道常常沒寫到，
+// 一旦主通道資料損毀就會全部裝置一起壞掉。改成並行全寫，所有通道隨時都是最新。
 async function freePush(obj) {
-  var ids = freeChannelList();
+  var ids = chSorted();
   var body = JSON.stringify(obj);
-  var lastErr = null;
-  for (var i = 0; i < ids.length; i++) {
-    var ctrl = new AbortController();
-    var t = setTimeout(function() { ctrl.abort(); }, 15000);
-    try {
-      var res = await fetch(freeStoreURL(ids[i]), {
+  function putOne(id) {
+    return new Promise(function(resolve) {
+      var ctrl = new AbortController();
+      var t0 = Date.now();
+      var t = setTimeout(function() { ctrl.abort(); }, 15000);
+      fetch(freeStoreURL(id), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: body,
         signal: ctrl.signal,
         mode: 'cors'
-      });
-      clearTimeout(t);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return freeChannelName(ids[i]);
-    } catch (e) {
-      lastErr = e;
-    } finally { clearTimeout(t); }
+      })
+        .then(function(res) {
+          clearTimeout(t);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          chRecord(id, true, Date.now() - t0);
+          resolve({ ok: true, id: id });
+        })
+        .catch(function(e) {
+          clearTimeout(t);
+          chRecord(id, false, 0);
+          resolve({ ok: false, id: id, err: e });
+        });
+    });
   }
-  throw (lastErr || new Error('所有免憑證通道均無回應'));
+  var results = await Promise.all(ids.map(putOne));
+  var okList = results.filter(function(r) { return r.ok; });
+  if (!okList.length) {
+    var firstErr = null;
+    results.forEach(function(r) { firstErr = firstErr || r.err; });
+    throw (firstErr || new Error('所有免憑證通道均無回應'));
+  }
+  return (okList.length === ids.length) ? '全通道(' + okList.length + ')' : '通道·' + okList.length + '/' + ids.length;
 }
 // v4.0.1：背景將同一份資料補寫到其他通道（純保險，失敗完全靜默）
-async function freeMirrorAll(obj) {
-  var ids = freeChannelList();
-  if (ids.length < 2) return;
-  var body = JSON.stringify(obj);
-  for (var i = 1; i < ids.length; i++) {
-    try {
-      await fetch(freeStoreURL(ids[i]), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: body,
-        mode: 'cors'
-      });
-    } catch (e) { /* 靜默：備援通道失敗不影響主流程 */ }
-  }
-}
+// v4.2.0：freePush 已並行寫入全部通道，此處保留空實作以相容既有呼叫點
+async function freeMirrorAll(obj) { /* v4.2.0：已由 freePush 並行全寫取代 */ }
 const GITHUB_API_BASE = 'https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/sync/';
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/sync/';
 // v3.0：舊版 extendsclass.com API 已完全移除（OPTIONS preflight 回應 500，瀏覽器無法使用）
@@ -4391,9 +4467,13 @@ let pendingPull = false;
 // v2.12：連續失敗計數器 — 超過 3 次自動重置同步狀態
 let syncFailCount = 0;
 
-async function pullFromCloud(silent) {
+// v4.2.0：lastPullChanged 供自動同步引擎判斷「雲端剛是否有新資料」，
+// 有變化就立刻把輪詢拉回最速（5 秒），沒變化則逐步退避省流量。
+let lastPullChanged = false;
+async function pullFromCloud(silent, opts) {
   const key = getSyncKey();
   if (!key) return;
+  lastPullChanged = false;
   // v2.12：如果同步進行中，標記 pendingPull 並返回（不再無限遞迴 setTimeout）
   if (syncInProgress) { pendingPull = true; return; }
   syncInProgress = true;
@@ -4406,8 +4486,8 @@ async function pullFromCloud(silent) {
     var channel = '';
     // ===== v4.0：免憑證主通道優先（永不過期、免設定）=====
     try {
-      cloudDb = await freePull();
-      channel = '免憑證' + freeChannelName(cloudDb._channel_id);
+      cloudDb = await freePull(opts);
+      channel = '免憑證' + freeChannelName(cloudDb._channel_id) + ((opts && opts.quick) ? '(快)' : '');
       errStatus = 200;
     } catch (eFree) {
       addSyncLog('GET', 'warn', '免憑證通道無回應（' + (eFree.message || eFree.name || '') + '），改用 GitHub 備援', 0);
@@ -4441,6 +4521,7 @@ async function pullFromCloud(silent) {
       db._last_sync = new Date().toISOString();
       saveLocalOnly();
       changed = snap() !== beforeSnap;
+      lastPullChanged = !!changed;   // v4.2.0：供同步引擎調整輪詢速度
       success = true;
       firstCloudPullDone = true; // v4.1.1：已確認雲端內容，之後可正常推播
       syncFailCount = 0;
@@ -4566,40 +4647,75 @@ async function manualSync() {
 // ===== 自動同步引擎 =====
 // v2.11：簡化同步流程 — 不再先 push 再 pull，改為單一 pullFromCloud（GET → merge → push-back 如有變化）
 //        一次同步最多 2 次 API 呼叫（GET + 有變化時 PUT），大幅降低 502 錯誤
-// v2.9：間隔 30 秒避免 rate limit；autoSyncLock 互斥鎖避免並行；手機切回畫面立即同步
+// v4.2.0：間隔改為自適應（5 / 15 / 30 秒）；autoSyncLock 互斥鎖避免並行；手機切回畫面立即同步
 let autoSyncStarted = false;
-const AUTOSYNC_INTERVAL = 30000; // 30 秒自動同步一次（避免 rate limit）
+// ===== v4.2.0：自適應快輪詢（「時刻自動連動」的核心）=====
+// 舊版固定 30 秒輪詢 → 別台裝置打卡後，這台最慢要 30 秒才看得到，體感是「沒有自動同步」。
+// 新版依情境動態調整：
+//   · 畫面在使用中      → 每 5 秒（跨瀏覽器／跨國最慢 5 秒內可見，接近即時）
+//   · 連續 4 輪都沒變化 → 退避到 15 秒（省流量、避免打爆免憑證通道）
+//   · 分頁在背景        → 30 秒（瀏覽器本來就會節流背景計時器，省電）
+// 一旦偵測到雲端有新資料 → 立刻回到 5 秒並馬上重整畫面。
+const AUTOSYNC_FAST = 5000;
+const AUTOSYNC_IDLE = 15000;
+const AUTOSYNC_HIDDEN = 30000;
+const AUTOSYNC_INTERVAL = AUTOSYNC_FAST; // 相容舊參考
+let autoSyncTimer = null;
+let idleRounds = 0;    // 連續「雲端沒有新資料」的輪數
+let pollRound = 0;     // 總輪數：每 6 輪做一次全通道完整校驗
+let lastAutoSyncAt = 0;
+function nextSyncDelay() {
+  if (typeof document !== 'undefined' && document.hidden) return AUTOSYNC_HIDDEN;
+  if (idleRounds >= 4) return AUTOSYNC_IDLE;
+  return AUTOSYNC_FAST;
+}
+function scheduleAutoSync() {
+  if (autoSyncTimer) clearTimeout(autoSyncTimer);
+  autoSyncTimer = setTimeout(runAutoSync, nextSyncDelay());
+}
+async function runAutoSync() {
+  try { await autoSyncOnce(); } catch (e) { /* 同步引擎永不因例外停止 */ }
+  scheduleAutoSync();
+}
+async function autoSyncOnce() {
+  if (autoSyncLock) return;
+  autoSyncLock = true;
+  try {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) { updateSyncBadge('offline'); return; }
+    if (!getSyncKey()) { updateSyncBadge('offline'); return; }
+    lastAutoSyncAt = Date.now();
+    updateSyncBadge('syncing');
+    pollRound++;
+    // v4.2.0：輪詢時只打最健康的單一通道（把每分鐘請求數壓到 1/3），
+    // 但每 6 輪做一次全通道比對，確保不會因為單一通道落後而漏掉最新資料。
+    var quick = (pollRound % 6 !== 0);
+    await pullFromCloud(true, { quick: quick });
+    if (lastPullChanged) idleRounds = 0;
+    else idleRounds = Math.min(idleRounds + 1, 10);
+  } finally {
+    autoSyncLock = false;
+  }
+}
 function startAutoSync() {
   if (autoSyncStarted) return;
   autoSyncStarted = true;
   initBroadcastChannel(); // v4.1.1：同瀏覽器多分頁即時連動
-  // v4.1.1：網路從離線恢復時立即同步（原本只靠 30 秒輪詢，恢復網路會慢半拍）
+  // v4.1.1：網路從離線恢復時立即同步（原本只靠輪詢，恢復網路會慢半拍）
   window.addEventListener('online', function() {
     if (!getSyncKey()) return;
     addSyncLog('ONLINE', 'ok', '網路已恢復，立即同步', 0);
+    idleRounds = 0;
     setTimeout(function() { pullFromCloud(true); }, 400);
   });
-  async function autoSyncOnce() {
-    if (autoSyncLock) return;
-    autoSyncLock = true;
-    try {
-      if (typeof navigator !== 'undefined' && !navigator.onLine) { updateSyncBadge('offline'); return; }
-      if (!getSyncKey()) { updateSyncBadge('offline'); return; }
-      updateSyncBadge('syncing');
-      // v2.11：只調 pullFromCloud — 內部會 merge 並在「有變化或有未推本機變更」時自動 push-back
-      // 不再先 pushToCloud — 那會多一次 PUT，容易觸發 extendsclass.com 502
-      await pullFromCloud(true);
-    } finally {
-      autoSyncLock = false;
-    }
-  }
-  setInterval(autoSyncOnce, AUTOSYNC_INTERVAL);
   function onVisible() {
     if (!getSyncKey() || document.hidden) return;
+    idleRounds = 0;   // 使用者回到畫面 → 立刻回到最速輪詢並同步一次
     autoSyncOnce();
   }
   document.addEventListener('visibilitychange', onVisible);
   window.addEventListener('focus', onVisible);
+  window.addEventListener('pageshow', onVisible); // v4.2.0：手機返回鍵／bfcache 也會觸發
+  scheduleAutoSync();
 }
 
 // v2.13：清除所有同步狀態變數和計時器 — 斷開/重建/連接同步前必須呼叫
@@ -4852,11 +4968,14 @@ function loadSyncSettings() {
     else if (lastSyncError) diag += '<br><span style="color:var(--danger);">⚠️ 最後錯誤：' + esc(lastSyncError) + '</span>';
     else diag += '<br><span style="color:var(--success);">✅ 網路正常，自動同步運作中</span>';
     diag += '<br><span style="color:var(--text-secondary);font-size:11px;font-family:monospace;">[' + syncState.join(' | ') + ']</span>';
-    statusEl.innerHTML = '<strong style="color:var(--success)">✅ 雲端同步已啟用（自動同步中）</strong>' +
-      '<br><span style="color:var(--text-secondary);font-size:12px;">每 30 秒自動同步一次；切回此頁面時也會立即同步。' +
-      '<br>🌐 <strong>跨裝置／跨網域自動連動</strong>：不同電腦、手機、不同 IP、不同網址（網域）都連到同一個雲端空間，' +
-      '<strong>完全不必輸入同步碼</strong>；打卡後立即上傳，其他裝置 30 秒內自動更新（同一瀏覽器開多個分頁則即時更新）。' +
-      '<br>雲端通道：' + freeChannelList().length + ' 組（任一組可用即可同步，互為備援）' +
+    statusEl.innerHTML = '<strong style="color:var(--success)">✅ 雲端同步已啟用（即時自動連動中）</strong>' +
+      '<br><span style="color:var(--text-secondary);font-size:12px;">使用中每 <strong>5 秒</strong>自動同步一次（無變化時自動降速省流量、背景分頁 30 秒）；切回此頁面時也會立即同步。' +
+      '<br>🌐 <strong>跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動</strong>：不同電腦、不同瀏覽器（Chrome／Edge／Safari）、手機、' +
+      '不同 IP、不同網址（網域）、不同國家，全部連到同一個雲端空間，<strong>完全不必輸入同步碼</strong>；' +
+      '打卡後立即上傳，其他裝置最慢 5 秒內自動更新。' +
+      '<br>⚡ 同一台電腦開多個分頁／視窗：<strong>即時更新</strong>（不等雲端輪詢）。' +
+      '<br>雲端通道：' + freeChannelList().length + ' 組並行讀寫（自動挑最快、最穩的通道，任一組可用即可同步）' +
+      '<br><span style="font-size:11px;font-family:monospace;">通道狀態：' + esc(chSummary()) + '</span>' +
       '<br>最後同步：' + esc(db._last_sync || '尚未同步') + ' · 資料大小：' + getDbSizeKB() + ' KB' + diag + '</span>' +
       '<br><span style="color:var(--text-secondary);font-size:11px;margin-top:4px;display:block;">💡 手機同步不正常？請在手機瀏覽器「清除快取」或長按重新整理按鈕選擇「強制重新載入」。</span>';
     document.getElementById('syncCodeDisplay').value = key;
@@ -5164,7 +5283,7 @@ document.querySelectorAll('[data-page]').forEach(function(el) {
     setSyncKey(DEFAULT_SYNC_KEY);
     doInitialSync();
   }
-  startAutoSync(); // 開啟自動同步引擎：每 30 秒 + 手機切回畫面時自動同步
+  startAutoSync(); // 開啟自動同步引擎：使用中每 5 秒（自適應降速）+ 手機切回畫面時立即同步
   // v2.7：初始同步徽章狀態
   updateSyncBadge(getSyncKey() ? 'synced' : 'offline');
   checkSyncWarning();
