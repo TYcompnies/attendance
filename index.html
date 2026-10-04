@@ -476,8 +476,8 @@
           <input type="text" id="employeeSearchInput" placeholder="搜尋員工編號或姓名..." oninput="loadEmployees()">
         </div>
         <div class="table-wrapper">
-          <table><thead><tr><th>員工編號</th><th>姓名</th><th>部門</th><th>角色</th><th>狀態</th><th>今日</th><th>建立時間</th><th>操作</th></tr></thead>
-          <tbody id="employeesTableBody"><tr><td colspan="8" class="empty-state">載入中...</td></tr></tbody>
+          <table><thead><tr><th>員工編號</th><th>姓名</th><th>部門</th><th>角色</th><th>狀態</th><th>🧬 人臉</th><th>今日</th><th>建立時間</th><th>操作</th></tr></thead>
+          <tbody id="employeesTableBody"><tr><td colspan="9" class="empty-state">載入中...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -588,19 +588,19 @@
 
     <!-- Admin WiFi Settings -->
     <div id="page-admin-wifi" class="page">
-      <div class="section-title">打卡驗證設定（GPS 定位 ＋ WiFi 名稱 TY_5G 自動抓取）</div>
+      <div class="section-title">打卡驗證設定（MAC 位址認證 ＋ 人臉辨識／活體偵測 ＋ GPS 定位）</div>
       <div class="card">
-        <div class="info-banner blue">
-          <span>📍</span>
-          <span><strong>① GPS 定位（手機／有 GPS 的筆電）：</strong>員工打卡時系統自動取得定位，<strong>必須在公司座標的允許範圍內</strong>才放行；人不在公司範圍內一律擋下。</span>
-        </div>
         <div class="info-banner" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0;">
-          <span>📶</span>
-          <span><strong>② WiFi 名稱（SSID）自動抓取（電腦）：</strong>瀏覽器基於安全限制讀不到 WiFi 名稱，電腦請用桌面的「<strong>TY_5G 打卡</strong>」小工具開啟本頁，小工具會以系統指令<strong>自動讀取目前連上的 WiFi 名稱並帶入</strong>，<strong>必須是 TY_5G 才放行</strong>，不是就擋下。</span>
+          <span>🔐</span>
+          <span><strong>① MAC 位址認證（電腦／主要）：</strong>比對<strong>公司路由器（基地台）的 MAC（BSSID）</strong>。WiFi 名稱（SSID）隨便就能偽造，<strong>MAC 幾乎無法偽造</strong> → 真正證明「人連的是公司的網路」。瀏覽器基於安全限制讀不到 MAC，請用桌面的「<strong>TY_5G 打卡</strong>」小工具開啟本頁（<strong>v5.0 新版會自動讀取並帶入 MAC</strong>）。</span>
         </div>
         <div class="info-banner" style="background:#f5f3ff; color:#5b21b6; border:1px solid #ddd6fe;">
-          <span>🔗</span>
-          <span><strong>兩者關係（預設嚴格）：</strong>員工必須<strong>同時</strong>「GPS 在公司範圍內」<strong>且</strong>「連上 WiFi TY_5G」才能打卡，缺一即擋下。⚠️ 桌機通常沒有 GPS，嚴格模式下桌機會被擋下 — 若要讓桌機只用 WiFi 名稱打卡，請取消勾選最下方的「<strong>嚴格模式</strong>」（改為有什麼就驗什麼）。</span>
+          <span>🧬</span>
+          <span><strong>② 人臉辨識 ＋ 活體偵測（手機／有鏡頭的裝置）：</strong>打卡時<strong>自動開啟前鏡頭</strong>，請員工<strong>眨眼 ＋ 左右轉頭</strong>（活體偵測，防照片／影片／面具假冒），再與本人註冊的臉部特徵做<strong>AI 深度比對</strong>。⚠️ <strong>不會儲存任何照片</strong>，只存 128 維特徵向量；員工需先在「員工管理」註冊人臉。</span>
+        </div>
+        <div class="info-banner blue">
+          <span>📍</span>
+          <span><strong>③ GPS 定位（手機／有 GPS 的筆電）：</strong>員工打卡時系統自動取得定位，<strong>必須在公司座標的允許範圍內</strong>才放行；人不在公司範圍內一律擋下。</span>
         </div>
         <div class="info-banner" style="background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;">
           <span>👑</span>
@@ -608,7 +608,7 @@
         </div>
         <div class="info-banner" style="background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe;">
           <span>🛠️</span>
-          <span>Windows 打卡小工具：<a href="tools/TY_5G-clockin.bat" download style="font-weight:600;">點此下載 TY_5G-clockin.bat</a> → 放到員工電腦桌面，<strong>每天打卡就雙擊它</strong>（會自動讀取 WiFi 名稱並開啟打卡頁，不需手動輸入任何東西）。</span>
+          <span>Windows 打卡小工具（<strong>v5.0 已升級：自動讀取路由器 MAC ＋ 裝置 MAC</strong>）：<a href="tools/TY_5G-clockin.bat" download style="font-weight:600;">點此下載 TY_5G-clockin.bat</a> → 放到員工電腦桌面，<strong>每天打卡就雙擊它</strong>（自動帶入 MAC 並開啟打卡頁，不需手動輸入任何東西）。⚠️ 舊版小工具請重新下載，否則只會帶 WiFi 名稱、沒有 MAC。</span>
         </div>
         <div id="currentIPDisplay" style="margin-bottom: 20px; padding: 16px; background: var(--bg); border-radius: 10px; font-size: 13.5px;">
           <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;">
@@ -628,6 +628,19 @@
             <strong>本機 WiFi 名稱（SSID）：</strong>
             <span id="adminSsidName" style="font-family:monospace;color:var(--primary);">（未帶入 — 手機／未用打卡小工具）</span>
             <span id="adminSsidNameNote" style="font-size:12px;color:var(--text-secondary);"></span>
+          </div>
+          <div style="margin-top:6px;">
+            <strong>路由器 MAC（BSSID）：</strong>
+            <span id="adminMacNow" style="font-family:monospace;color:var(--primary);">（未帶入 — 請用打卡小工具開啟本頁）</span>
+            <span id="adminMacNote" style="font-size:12px;color:var(--text-secondary);"></span>
+          </div>
+          <div style="margin-top:6px;">
+            <strong>裝置網卡 MAC：</strong>
+            <span id="adminDevMacNow" style="font-family:monospace;color:var(--primary);">（未帶入）</span>
+          </div>
+          <div style="margin-top:6px;">
+            <strong>鏡頭／人臉模型：</strong>
+            <span id="adminFaceStatus" style="color:var(--primary);">載入中...</span>
           </div>
           <div id="wifiDetectWarn" style="display:none;margin-top:10px;font-size:12.5px;color:#9a3412;"></div>
         </div>
@@ -649,23 +662,70 @@
           <label>地址備註（選填）</label>
           <input type="text" id="gpsNoteInput" placeholder="例如：台南總公司 3 樓">
         </div>
+        <div class="form-group" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border, #e2e8f0);">
+          <label style="font-size:15px;font-weight:700;">🔐 MAC 位址白名單（公司路由器／基地台的 BSSID）</label>
+          <input type="text" id="macListInput" placeholder="例如：A0:BB:CC:11:22:33, 11-22-33-44-55-66">
+          <div style="margin-top:8px;">
+            <button class="btn btn-outline btn-sm" onclick="captureCurrentMAC()">🔍 把本機偵測到的路由器 MAC 加入白名單</button>
+          </div>
+          <div class="hint-text">多台分享器／多樓層請用逗號分隔。寫法不拘（<code>A0:BB:CC:11:22:33</code>、<code>a0-bb-cc-11-22-33</code>、<code>A0BBCC112233</code> 皆可，系統會自動正規化比對）。在公司現場用打卡小工具開一次本頁，再按上面按鈕即可<strong>自動帶入</strong>。</div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label"><input type="checkbox" id="macRequiredInput"> 啟用 MAC 位址認證（電腦／打卡小工具帶入）</label>
+          <div class="hint-text">✅ 建議<strong>勾選</strong>：這是最難偽造的「人在公司」證據。⚠️ 手機讀不到 MAC（系統限制），勾選時手機必須靠 GPS 或人臉；若嚴格模式下手機會被擋，請改為「一般模式（有什麼驗什麼）」。</div>
+        </div>
+        <div class="form-group">
+          <label>裝置網卡 MAC 白名單（選用：綁定公務機）</label>
+          <input type="text" id="deviceMacListInput" placeholder="例如：1A:2B:3C:4D:5E:6F">
+          <div class="hint-text">只想讓特定幾台電腦打卡時使用。留空 + 不勾選下方項目 = 不限制裝置。</div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label"><input type="checkbox" id="deviceMacRequiredInput"> 啟用裝置 MAC 綁定（只允許白名單內的電腦打卡）</label>
+        </div>
+
+        <div class="form-group" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border, #e2e8f0);">
+          <label style="font-size:15px;font-weight:700;">🧬 人臉辨識 ＋ 活體偵測</label>
+          <div class="hint-text">員工需先在「員工管理」頁按「📸 註冊人臉」建立特徵；之後打卡會自動開前鏡頭做活體偵測與比對。<strong>系統不儲存照片</strong>，只保存 128 維特徵向量。</div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label"><input type="checkbox" id="faceRequiredInput"> 啟用人臉辨識 ＋ 活體偵測</label>
+        </div>
+        <div class="form-group">
+          <label>活體偵測動作</label>
+          <select id="livenessModeSelect">
+            <option value="blink">眨一次眼（最快，約 2 秒）</option>
+            <option value="blink_turn">眨眼 ＋ 左右轉頭（建議，約 3–4 秒）</option>
+            <option value="blink_turn_mouth">眨眼 ＋ 轉頭 ＋ 張嘴（最嚴謹，約 5–6 秒）</option>
+          </select>
+          <div class="hint-text">活體偵測用來確認鏡頭前是<strong>真人</strong>而非照片／螢幕／預錄影片。</div>
+        </div>
+        <div class="form-group">
+          <label>人臉比對門檻（0–1，越小越嚴）</label>
+          <input type="number" id="faceThresholdInput" min="0.2" max="1" step="0.05" placeholder="0.6">
+          <div class="hint-text">臉部特徵向量的距離門檻，預設 <strong>0.6</strong>（業界常用值）。常誤判失敗可放寬到 0.65–0.7；想更嚴可調到 0.5。</div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label"><input type="checkbox" id="faceFallbackInput"> 漸進式：鏡頭／網路異常或未註冊人臉時，改靠 GPS＋MAC 放行（不阻斷打卡）</label>
+          <div class="hint-text">✅ 建議<strong>勾選</strong>：避免因鏡頭故障、光線差、模型載入失敗害員工打卡不了。⚠️ 唯一仍會擋下的情況是「鏡頭前的人與註冊臉明確不符」（疑似代打卡）。</div>
+        </div>
+
         <div class="form-group">
           <label>WiFi 名稱（SSID）</label>
           <input type="text" id="wifiNameInput" placeholder="例如：TY_5G">
-          <div class="hint-text">公司打卡用的 WiFi 名稱（不分大小寫）；有多台分享器時可用逗號分隔，例如「TY_5G, TY_5G_2F」。電腦用打卡小工具時會自動比對，不是就擋下。</div>
+          <div class="hint-text">公司打卡用的 WiFi 名稱（不分大小寫）；有多台分享器時可用逗號分隔。v5.0 起 MAC 認證為主，<strong>SSID 驗證預設關閉</strong>（可自行勾選啟用作為第二層把關）。</div>
         </div>
         <div class="form-group">
-          <label class="checkbox-label"><input type="checkbox" id="wifiEnabledInput"> 啟用打卡驗證（GPS 在公司範圍內 ＋ WiFi 名稱 TY_5G 才放行）</label>
+          <label class="checkbox-label"><input type="checkbox" id="wifiEnabledInput"> 啟用打卡驗證（依下方勾選的項目判定是否放行）</label>
         </div>
         <div class="form-group">
-          <label class="checkbox-label"><input type="checkbox" id="gpsRequiredInput"> 啟用 GPS 定位驗證</label>
+          <label class="checkbox-label"><input type="checkbox" id="gpsRequiredInput"> 啟用 GPS 定位驗證（手機）</label>
         </div>
         <div class="form-group">
-          <label class="checkbox-label"><input type="checkbox" id="ssidRequiredInput"> 啟用 WiFi 名稱（SSID）驗證</label>
+          <label class="checkbox-label"><input type="checkbox" id="ssidRequiredInput"> 啟用 WiFi 名稱（SSID）驗證（輔助）</label>
         </div>
         <div class="form-group">
-          <label class="checkbox-label"><input type="checkbox" id="strictBothInput"> 嚴格模式：GPS 與 WiFi 名稱「兩者都要符合」才放行</label>
-          <div class="hint-text">✅ 預設<strong>勾選</strong>：員工必須<strong>同時</strong>在公司 GPS 範圍內 且 連上 TY_5G 才能打卡（最嚴，人在外面連錯 WiFi 也擋得掉）。⚠️ 桌機通常沒有 GPS，勾選後桌機無法打卡 — 若員工用桌機打卡，請取消勾選改為「有什麼就驗什麼」。</div>
+          <label class="checkbox-label"><input type="checkbox" id="strictBothInput"> 嚴格模式：所有已勾選的驗證「每一項都要符合」才放行</label>
+          <div class="hint-text">✅ 勾選（最嚴）：每一項啟用的驗證都要通過，缺一即擋下（例如勾了 MAC 但小工具沒帶入 MAC → 直接擋）。⚠️ 取消勾選則改為「有什麼就驗什麼」：手機沒 MAC 就只看 GPS／人臉，桌機沒 GPS 就只看 MAC — <strong>混合辦公環境建議取消勾選</strong>，才不會有裝置被誤擋。</div>
         </div>
         <button class="btn btn-primary" onclick="saveWifiSettings()">儲存設定</button>
       </div>
@@ -785,7 +845,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v4.2.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-09-23 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證改為 GPS 定位（公司座標 + 允許半徑，自動抓取）＋ WiFi 名稱 TY_5G 自動抓取（打卡小工具），已移除 IP／外網 IP／網段判定)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v5.0.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-10-04 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證改為 MAC 位址認證（公司路由器 BSSID，Windows 打卡小工具自動帶入）＋ 手機人臉辨識與活體偵測（眨眼／轉頭）＋ GPS 定位（公司座標 + 允許半徑，自動抓取）＋ WiFi 名稱 TY_5G（選配），本機裝置 MAC 為選配，已移除 IP／外網 IP／網段判定)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受打卡管制，隨時隨地使用</td></tr>
@@ -859,6 +919,30 @@
   </div>
 </div>
 
+<!-- v5.0.0 人臉辨識 / 活體偵測 Modal（打卡驗證與人臉註冊共用） -->
+<div class="modal-overlay" id="faceModal">
+  <div class="modal" style="max-width:540px;">
+    <div class="modal-header">
+      <div class="modal-title" id="faceModalTitle">人臉驗證</div>
+      <button class="modal-close" onclick="closeFaceModal()">&times;</button>
+    </div>
+    <div style="text-align:center;">
+      <div style="position:relative;display:inline-block;width:100%;max-width:440px;">
+        <video id="faceVideo" autoplay playsinline muted
+               style="width:100%;border-radius:12px;background:#111;aspect-ratio:4/3;object-fit:cover;"></video>
+        <canvas id="faceCanvas" style="position:absolute;left:0;top:0;width:100%;height:100%;border-radius:12px;pointer-events:none;"></canvas>
+      </div>
+      <div id="faceGuide" style="margin-top:12px;font-size:15px;font-weight:700;color:var(--primary);">準備中…</div>
+      <div id="faceSteps" style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;font-size:13px;"></div>
+      <div id="faceHint" style="margin-top:8px;font-size:12.5px;color:var(--text-secondary);"></div>
+      <div style="margin-top:14px;">
+        <button class="btn btn-outline btn-sm" onclick="closeFaceModal()">取消</button>
+        <button class="btn btn-primary btn-sm" id="faceCaptureBtn" style="display:none;margin-left:8px;" onclick="faceManualCapture()">📸 立即拍攝</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Confirm Dialog -->
 <div class="confirm-overlay" id="confirmDialog">
   <div class="confirm-box">
@@ -887,47 +971,78 @@ let currentLocalIP = null;   // v4.0.13：裝置內網 IPv4（例：192.168.31.8
 let currentPublicIP = null;  // v4.0.13：公用 IP（內網 IP 抓不到時的備援比對）
 let currentSSID = null;      // WiFi 名稱（由 Windows 打卡小工具以 ?ssid= 帶入，網頁本身讀不到）
 let currentSSIDFrom = '';    // SSID 來源（tool = 小工具帶入 / empty = 未帶入）
+let currentMAC = null;       // v5.0.0：目前連上的路由器 MAC（BSSID，由小工具以 ?mac= 帶入）
+let currentDeviceMAC = null; // v5.0.0：本機網卡 MAC（由小工具以 ?dmac= 帶入，用於裝置綁定）
+let currentMACFrom = '';     // v5.0.0：MAC 來源（url / session / ''）
+let lastFaceResult = null;   // v5.0.0：最近一次人臉辨識結果 { ok, score, liveness, reason, at }
 let currentGPS = null;       // v4.1.0：本次 GPS 定位結果 { lat, lng, accuracy, at }
 let lastGPSReason = '';      // v4.1.0：最近一次定位失敗原因（denied / unavailable / timeout / unsupported）
 let loginAttempts = {};
 let confirmCallback = null;
 
-// ===== v4.1.0 打卡驗證：GPS 定位 ＋ WiFi 名稱(SSID) 自動抓取 =====
-// （v4.1.0 起「IP／外網 IP／網段」判定全面移除，IP 僅供打卡紀錄與顯示，不再作為放行依據）
-//   wifi_name     = 公司打卡 WiFi 名稱（TY_5G）
-//   ssid_list     = 允許的 WiFi 名稱清單（逗號分隔；預設只有 TY_5G）
-//   gps_lat/lng   = 公司地址座標（管理員按「📍 抓取目前位置」自動帶入）
-//   gps_radius    = 允許打卡的誤差半徑（公尺，預設 50）
-//   gps_required  = 啟用 GPS 定位驗證
-//   ssid_required = 啟用 WiFi 名稱驗證
-//   strict_both   = 嚴格模式：GPS 與 SSID 兩者都要符合才放行（桌機無 GPS 時會被擋下）
+// ===== v5.0.0 打卡驗證：MAC 位址認證 ＋ 人臉辨識／活體偵測 ＋ GPS 定位 =====
+// （v4.1.0 起「IP／外網 IP／網段」判定全面移除；v5.0.0 起主軸改為 MAC 位址，IP 僅供紀錄顯示）
+//   ★ mac_list          = 公司路由器／基地台的 MAC（BSSID）白名單（逗號分隔）
+//       · SSID（WiFi 名稱）可以隨便偽造，MAC（BSSID）幾乎無法偽造 → 真正證明「人連的是公司的 AP」
+//       · 瀏覽器讀不到 MAC（安全限制）→ 由 Windows 打卡小工具以 ?mac= 自動帶入
+//   ★ device_mac_list   = 裝置網卡 MAC 白名單（選用：綁定特定公務機）
+//   ★ face_required     = 啟用人臉辨識 ＋ 活體偵測（手機／有鏡頭的筆電）
+//       · 打卡時開前鏡頭 → 眨眼 ＋ 轉頭（活體）→ 與本人註冊的臉部特徵比對
+//       · face_fallback = true（漸進式）：無鏡頭／未註冊／比對失敗 → 退回 GPS＋MAC 判定，不會害全公司打卡失敗
+//   gps_lat/lng/radius  = 公司地址座標與允許半徑（手機定位）
+//   ssid_list           = WiFi 名稱白名單（輔助；MAC 認證啟用後可關閉）
+//   strict_both         = 嚴格模式：所有「已啟用」的驗證都要符合才放行
 // 判定順序：
 //   ① 停用打卡驗證 → 全放行（僅供臨時狀況使用）
-//   ② 嚴格模式 → GPS 在範圍內 且 SSID 符合 → 放行，否則擋下
-//   ③ 一般模式（GPS 與 SSID 都啟用）→「有什麼就驗什麼」：
-//      GPS 與 SSID 都取得 → 兩者都要符合；只有 GPS（手機）→ 看距離；只有 SSID（桌機）→ 看名稱；兩者都沒有 → 擋下
-//   ④ 只啟用其中一項 → 以該項為準
+//   ② 嚴格模式 → 每一項已啟用的驗證都要通過（缺資料視為不通過）
+//   ③ 一般模式 →「有什麼就驗什麼」：能驗的都要過；什麼都驗不到 → 擋下
 const WIFI_FACTORY_NAME = 'Office WiFi'; // 舊版從未設定過的原廠值（出現即視為未設定，套用預設）
 const GPS_DEFAULT_RADIUS = 50;           // v4.1.0：預設允許半徑（公尺，管理員可於設定頁調整 10~5000）
 const GPS_FRESH_MS = 60000;              // v4.1.0：定位結果 60 秒內可沿用，逾時重新定位
+const FACE_DEFAULT_THRESHOLD = 0.6;      // v5.0.0：人臉特徵比對阈值（歐氏距離，越小越嚴）
 function wifiDefaults() {
   return {
-    mode: 'gps',               // v4.1.0：GPS 定位 + SSID 名稱驗證（IP 判定已移除）
+    mode: 'mac',               // v5.0.0：MAC 位址認證為主軸（+ 人臉／GPS 輔助）
     wifi_name: 'TY_5G',        // 公司打卡 WiFi 名稱
     ssid_list: 'TY_5G',        // 允許的 WiFi 名稱清單（逗號分隔）
+    mac_list: '',              // v5.0.0：公司路由器 MAC（BSSID）白名單，逗號分隔
+    mac_required: true,        // v5.0.0：啟用 MAC 位址認證
+    device_mac_list: '',       // v5.0.0：裝置網卡 MAC 白名單（選用）
+    device_mac_required: false,// v5.0.0：啟用裝置 MAC 綁定
+    face_required: false,      // v5.0.0：啟用人臉辨識＋活體偵測（預設關閉，可漸進導入）
+    face_threshold: FACE_DEFAULT_THRESHOLD,
+    liveness_mode: 'blink_turn', // v5.0.0：blink（只眨眼）/ blink_turn（眨眼+轉頭）/ blink_turn_mouth（三動作）
+    face_fallback: true,       // v5.0.0：漸進式（無鏡頭／未註冊／失敗 → 退回 GPS＋MAC）
+    last_mac: '',              // v5.0.0：最近偵測到的路由器 MAC（僅供顯示／一鍵帶入白名單）
+    last_mac_at: '',
+    last_device_mac: '',       // v5.0.0：最近偵測到的裝置網卡 MAC
     gps_lat: null,             // 公司地址緯度（管理員自動抓取帶入）
     gps_lng: null,             // 公司地址經度
     gps_radius: GPS_DEFAULT_RADIUS, // 允許打卡的誤差半徑（公尺）
     gps_at: '',                // 公司地址座標最近更新時間
     gps_note: '',              // 公司地址備註（例如「台南總公司」）
     gps_required: true,        // 啟用 GPS 定位驗證
-    ssid_required: true,       // 啟用 WiFi 名稱驗證
-    strict_both: true,         // 嚴格模式：GPS 與 SSID 兩者都要符合（v4.1.0 預設開啟）
+    ssid_required: false,      // v5.0.0：MAC 認證上線後，SSID 名稱驗證預設關閉（可自行開啟）
+    strict_both: true,         // 嚴格模式：所有已啟用的驗證都要符合
     last_ip: '',               // 最近偵測到的 IP（系統自動記錄，僅供顯示）
     last_ip_at: '',
     enabled: true,
     updated_at: new Date().toISOString()
   };
+}
+// ===== v5.0.0：MAC 位址正規化與比對 =====
+// 常見寫法：AA:BB:CC:11:22:33 / aa-bb-cc-11-22-33 / AABB.CC11.2233 → 一律轉成 AABBCC112233 比對
+function normalizeMAC(v) {
+  return String(v == null ? '' : v).toUpperCase().replace(/[^0-9A-F]/g, '');
+}
+function splitMacList(str) {
+  return (str || '').split(',').map(function(s) { return normalizeMAC(s); })
+    .filter(function(s) { return s.length >= 6; });
+}
+function macDisplay(v) {
+  var m = normalizeMAC(v);
+  if (!m) return '';
+  return (m.match(/.{1,2}/g) || []).join(':');
 }
 // 由 IP 推導 /24 網段（192.168.31.83 → 192.168.31.*）
 function ipSegment(ip) {
@@ -961,8 +1076,21 @@ function normalizeWifiSettings(target) {
   if (w.strict_both === undefined || typeof w.strict_both !== 'boolean') w.strict_both = true;
   if (!w.last_ip || typeof w.last_ip !== 'string') w.last_ip = '';
   if (!w.last_ip_at) w.last_ip_at = '';
+  // ===== v5.0.0：MAC 認證 ＋ 人臉辨識欄位 =====
+  if (!w.mac_list || typeof w.mac_list !== 'string') w.mac_list = '';
+  if (w.mac_required === undefined || typeof w.mac_required !== 'boolean') w.mac_required = true;
+  if (!w.device_mac_list || typeof w.device_mac_list !== 'string') w.device_mac_list = '';
+  if (w.device_mac_required === undefined || typeof w.device_mac_required !== 'boolean') w.device_mac_required = false;
+  if (w.face_required === undefined || typeof w.face_required !== 'boolean') w.face_required = false;
+  var ft = parseFloat(w.face_threshold);
+  w.face_threshold = (isFinite(ft) && ft > 0.1 && ft < 1.2) ? ft : FACE_DEFAULT_THRESHOLD;
+  if (!w.liveness_mode || ['blink', 'blink_turn', 'blink_turn_mouth'].indexOf(w.liveness_mode) < 0) w.liveness_mode = 'blink_turn';
+  if (w.face_fallback === undefined || typeof w.face_fallback !== 'boolean') w.face_fallback = true;
+  if (!w.last_mac || typeof w.last_mac !== 'string') w.last_mac = '';
+  if (!w.last_mac_at) w.last_mac_at = '';
+  if (!w.last_device_mac || typeof w.last_device_mac !== 'string') w.last_device_mac = '';
   if (w.enabled === undefined) w.enabled = true;
-  w.mode = 'gps';
+  w.mode = 'mac';
 }
 
 let db = loadDB(); // 必須在 WiFi 預設值/正規化函式之後（loadDB 內部會用到，避免 TDZ）
@@ -1261,50 +1389,457 @@ function splitSsidList(str) {
   return (str || '').split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
 }
 
-// ===== v4.1.0 打卡閘門：GPS 定位 ＋ WiFi 名稱(SSID) =====
+// ===== v5.0.0 人臉辨識 ＋ 活體偵測 =====
+// 為什麼需要：MAC／GPS 只能證明「裝置在公司的網路／位置」，無法證明「操作的人就是本人」。
+// 手機打卡時同步開啟前鏡頭，先做活體偵測（眨眼、轉頭）確認是真人，再比對臉部特徵確認是本人。
+//   · 模型：face-api.js（TensorFlow.js）— tiny_face_detector + face_landmark_68_tiny + face_recognition
+//   · 活體：以 68 個臉部特徵點計算 EAR（眼睛長寬比，偵測眨眼）、鼻尖相對雙眼中心的水平偏移（偵測轉頭）
+//   · 比對：128 維臉部特徵向量的歐氏距離，預設 ≤ 0.6 視為同一人
+//   · 降級：無鏡頭／未註冊／CDN 載入失敗 → 依「漸進式」設定退回 GPS＋MAC 判定（不會害全公司打卡失敗）
+const FACE_CDN_BASES = [
+  'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15',
+  'https://unpkg.com/@vladmandic/face-api@1.7.15'
+];
+const FACE_BLINK_CLOSE = 0.22;   // EAR 低於此值視為閉眼
+const FACE_BLINK_OPEN = 0.26;    // EAR 高於此值且之前閉眼 → 計一次眨眼
+const FACE_TURN_RATIO = 0.12;    // 鼻尖水平偏移 ÷ 兩眼距離，超過即視為轉頭
+const FACE_MOUTH_OPEN = 0.35;    // MAR 高於此值視為張嘴
+const FACE_MOUTH_CLOSE = 0.28;   // MAR 低於此值且之前張嘴 → 計一次張嘴
+const FACE_TIMEOUT_MS = 25000;   // 單次驗證最長等待時間
+let faceAPIReady = false;
+let faceAPILoading = null;
+let faceAPIFailed = false;
+let faceStream = null;
+let faceManualTrigger = false;
+function faceCameraSupported() {
+  return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+}
+function faceThreshold() {
+  var t = parseFloat(db && db.wifiSettings && db.wifiSettings.face_threshold);
+  return (isFinite(t) && t > 0.1 && t < 1.2) ? t : FACE_DEFAULT_THRESHOLD;
+}
+function loadExternalScript(src) {
+  return new Promise(function(resolve, reject) {
+    var s = document.createElement('script');
+    s.src = src; s.async = true;
+    s.onload = function() { resolve(true); };
+    s.onerror = function() { reject(new Error('CDN 載入失敗')); };
+    document.head.appendChild(s);
+  });
+}
+// 模型只在真正需要（開鏡頭）時才載入，避免每位員工開頁面都下載 2MB 模型
+async function ensureFaceAPI() {
+  if (faceAPIReady) return true;
+  if (faceAPIFailed) return false;
+  if (faceAPILoading) return faceAPILoading;
+  faceAPILoading = (async function() {
+    for (var i = 0; i < FACE_CDN_BASES.length; i++) {
+      var base = FACE_CDN_BASES[i];
+      try {
+        if (typeof window.faceapi === 'undefined') await loadExternalScript(base + '/dist/face-api.js');
+        if (typeof window.faceapi === 'undefined') throw new Error('face-api.js 未載入');
+        await window.faceapi.nets.tinyFaceDetector.loadFromUri(base + '/model');
+        await window.faceapi.nets.faceLandmark68TinyNet.loadFromUri(base + '/model');
+        await window.faceapi.nets.faceRecognitionNet.loadFromUri(base + '/model');
+        faceAPIReady = true;
+        return true;
+      } catch (e) { /* 換下一個 CDN 重試 */ }
+    }
+    faceAPIFailed = true;
+    return false;
+  })();
+  return faceAPILoading;
+}
+// ===== 活體偵測幾何計算（純數學，不需額外模型） =====
+function faceDist2(a, b) { return Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)); }
+function faceCentroid(pts) {
+  var sx = 0, sy = 0;
+  for (var i = 0; i < pts.length; i++) { sx += pts[i].x; sy += pts[i].y; }
+  return { x: sx / pts.length, y: sy / pts.length };
+}
+// EAR（Eye Aspect Ratio）：眼睛長寬比。睜眼約 0.30，閉眼會掉到 0.15 以下
+function eyeAspectRatio(eye) {
+  if (!eye || eye.length < 6) return null;
+  var v = faceDist2(eye[1], eye[5]) + faceDist2(eye[2], eye[4]);
+  var h = 2 * faceDist2(eye[0], eye[3]);
+  return h ? v / h : null;
+}
+// MAR（Mouth Aspect Ratio）：嘴巴長寬比，張嘴時明顯上升
+function mouthAspectRatio(mouth) {
+  if (!mouth || mouth.length < 20) return null;
+  var v = faceDist2(mouth[13], mouth[19]) + faceDist2(mouth[14], mouth[18]) + faceDist2(mouth[15], mouth[17]);
+  var h = 3 * faceDist2(mouth[0], mouth[11]);
+  return h ? v / h : null;
+}
+// 轉頭比例：鼻尖相對於雙眼中心的水平偏移 ÷ 兩眼距離（正值=右轉、負值=左轉）
+function faceYawRatio(lm) {
+  try {
+    var le = lm.getLeftEye(), re = lm.getRightEye(), nose = lm.getNose();
+    if (!le || !re || !nose || nose.length < 4) return null;
+    var lc = faceCentroid(le), rc = faceCentroid(re);
+    var eyeDist = faceDist2(lc, rc);
+    if (!eyeDist) return null;
+    var midX = (lc.x + rc.x) / 2;
+    return (nose[3].x - midX) / eyeDist;
+  } catch (e) { return null; }
+}
+// 128 維臉部特徵向量的歐氏距離（越小越像同一人）
+function faceVectorDistance(a, b) {
+  if (!a || !b || a.length !== b.length) return null;
+  var s = 0;
+  for (var i = 0; i < a.length; i++) { var d = a[i] - b[i]; s += d * d; }
+  return Math.sqrt(s);
+}
+function faceDescriptorOf(emp) {
+  if (!emp || !emp.face_descriptor) return null;
+  var v = emp.face_descriptor;
+  if (Array.isArray(v) && v.length >= 64) return v;
+  return null;
+}
+function sleepMs(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+// ===== 鏡頭 Modal =====
+function openFaceModal(cfg) {
+  var m = document.getElementById('faceModal');
+  if (!m) return;
+  document.getElementById('faceModalTitle').textContent = (cfg && cfg.title) || '人臉驗證';
+  document.getElementById('faceHint').textContent = (cfg && cfg.hint) || '';
+  var btn = document.getElementById('faceCaptureBtn');
+  if (btn) btn.style.display = (cfg && cfg.manual) ? '' : 'none';
+  m.style.display = 'flex';
+}
+function closeFaceModal() {
+  var m = document.getElementById('faceModal');
+  if (m) m.style.display = 'none';
+  stopFaceStream();
+}
+function stopFaceStream() {
+  try {
+    if (faceStream) { faceStream.getTracks().forEach(function(t) { t.stop(); }); faceStream = null; }
+    var v = document.getElementById('faceVideo');
+    if (v) v.srcObject = null;
+    var c = document.getElementById('faceCanvas');
+    if (c) { var cx = c.getContext('2d'); if (cx) cx.clearRect(0, 0, c.width, c.height); }
+  } catch (e) {}
+}
+function faceManualCapture() { faceManualTrigger = true; }
+function updateFaceGuide(state) {
+  var stepsEl = document.getElementById('faceSteps');
+  var guideEl = document.getElementById('faceGuide');
+  if (!stepsEl || !guideEl) return;
+  var chip = function(done, text) {
+    return '<span style="padding:4px 10px;border-radius:999px;font-size:12.5px;' +
+      (done ? 'background:#dcfce7;color:#166534;' : 'background:#f1f5f9;color:#64748b;') + '">' +
+      (done ? '✓ ' : '○ ') + text + '</span>';
+  };
+  var html = '';
+  if (state.needBlink) html += chip(state.blink > 0, '眨眼');
+  if (state.needTurn) html += chip(state.turnL && state.turnR, '左右轉頭');
+  if (state.needMouth) html += chip(state.mouth > 0, '張嘴');
+  html += chip(state.det, '偵測到臉');
+  stepsEl.innerHTML = html;
+  if (!state.det) guideEl.textContent = '請將臉部置於鏡頭畫面中央（光線充足處）';
+  else if (state.needBlink && state.blink === 0) guideEl.textContent = '請眨一次眼';
+  else if (state.needTurn && !(state.turnL && state.turnR)) guideEl.textContent = state.turnL ? '請轉向右邊' : '請先轉向左邊，再轉向右邊';
+  else if (state.needMouth && state.mouth === 0) guideEl.textContent = '請張開嘴巴一次';
+  else guideEl.textContent = '驗證中，請稍候…';
+}
+// 在 video 上畫出臉部框與特徵點（讓員工知道有抓到臉）
+function drawFaceOverlay(det) {
+  var c = document.getElementById('faceCanvas');
+  var v = document.getElementById('faceVideo');
+  if (!c || !v) return;
+  if (c.width !== v.videoWidth) { c.width = v.videoWidth || 640; c.height = v.videoHeight || 480; }
+  var cx = c.getContext('2d');
+  if (!cx) return;
+  cx.clearRect(0, 0, c.width, c.height);
+  if (!det) return;
+  var box = det.detection && det.detection.box;
+  if (box) {
+    cx.strokeStyle = '#22c55e'; cx.lineWidth = 3;
+    cx.strokeRect(box.x, box.y, box.width, box.height);
+  }
+  if (det.landmarks && det.landmarks.positions) {
+    cx.fillStyle = '#22c55e';
+    det.landmarks.positions.forEach(function(p) { cx.beginPath(); cx.arc(p.x, p.y, 1.2, 0, Math.PI * 2); cx.fill(); });
+  }
+}
+
+// ===== 核心：開鏡頭做「活體偵測 ＋ 取得臉部特徵」 =====
+// cfg: { title, hint, needBlink, needTurn, needMouth, manual, timeoutMs }
+// 回傳 { ok, descriptor, liveness:{blink,turnL,turnR,mouth}, reason }
+//   reason: camera-denied / no-camera / model-load-failed / no-face / timeout / cancelled
+async function faceCaptureSession(cfg) {
+  var c = cfg || {};
+  var needBlink = c.needBlink !== false;
+  var needTurn = !!c.needTurn;
+  var needMouth = !!c.needMouth;
+  var out = { ok: false, descriptor: null, liveness: { blink: 0, turnL: false, turnR: false, mouth: 0 }, reason: '' };
+  if (!faceCameraSupported()) { out.reason = 'no-camera'; return out; }
+  var ready = await ensureFaceAPI();
+  if (!ready) { out.reason = 'model-load-failed'; return out; }
+  openFaceModal({ title: c.title || '人臉驗證', hint: c.hint || '', manual: !!c.manual });
+  try {
+    faceStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+  } catch (e) { closeFaceModal(); out.reason = 'camera-denied'; return out; }
+  var video = document.getElementById('faceVideo');
+  if (!video) { stopFaceStream(); out.reason = 'no-camera'; return out; }
+  video.srcObject = faceStream;
+  try { await video.play(); } catch (e) {}
+  await sleepMs(600);
+
+  var state = { blink: 0, turnL: false, turnR: false, mouth: 0, det: false, needBlink: needBlink, needTurn: needTurn, needMouth: needMouth };
+  var eyeClosed = false, mouthOpen = false;
+  var startAt = Date.now();
+  var timeout = c.timeoutMs || FACE_TIMEOUT_MS;
+  var opts = null;
+  try { opts = new window.faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }); } catch (e) { opts = undefined; }
+  try {
+    while (Date.now() - startAt < timeout) {
+      if (!document.getElementById('faceModal') || document.getElementById('faceModal').style.display === 'none') {
+        out.reason = 'cancelled'; break;
+      }
+      var det = null;
+      try {
+        det = await window.faceapi.detectSingleFace(video, opts).withFaceLandmarks(true).withFaceDescriptor();
+      } catch (e) { det = null; }
+      if (det) {
+        state.det = true;
+        try {
+          var lm = det.landmarks;
+          var earL = eyeAspectRatio(lm.getLeftEye());
+          var earR = eyeAspectRatio(lm.getRightEye());
+          var ear = (earL !== null && earR !== null) ? (earL + earR) / 2 : (earL !== null ? earL : earR);
+          if (ear !== null && isFinite(ear)) {
+            if (ear < FACE_BLINK_CLOSE) eyeClosed = true;
+            else if (ear > FACE_BLINK_OPEN && eyeClosed) { eyeClosed = false; state.blink++; }
+          }
+          var yaw = faceYawRatio(lm);
+          if (yaw !== null && isFinite(yaw)) { if (yaw < -FACE_TURN_RATIO) state.turnL = true; if (yaw > FACE_TURN_RATIO) state.turnR = true; }
+          if (needMouth) {
+            var mar = mouthAspectRatio(lm.getMouth());
+            if (mar !== null && isFinite(mar)) {
+              if (mar > FACE_MOUTH_OPEN) mouthOpen = true;
+              else if (mar < FACE_MOUTH_CLOSE && mouthOpen) { mouthOpen = false; state.mouth++; }
+            }
+          }
+          if (det.descriptor) out.descriptor = Array.from(det.descriptor);
+        } catch (e) {}
+      } else { state.det = false; }
+      drawFaceOverlay(det);
+      updateFaceGuide(state);
+      out.liveness = { blink: state.blink, turnL: state.turnL, turnR: state.turnR, mouth: state.mouth };
+      var doneBlink = !needBlink || state.blink > 0;
+      var doneTurn = !needTurn || (state.turnL && state.turnR);
+      var doneMouth = !needMouth || state.mouth > 0;
+      if (doneBlink && doneTurn && doneMouth && out.descriptor) { out.ok = true; break; }
+      if (faceManualTrigger && out.descriptor) { faceManualTrigger = false; out.ok = true; break; }
+      await sleepMs(120);
+    }
+  } finally {
+    closeFaceModal();
+  }
+  if (!out.ok && !out.reason) out.reason = out.descriptor ? 'liveness-incomplete' : 'no-face';
+  if (!out.ok && (Date.now() - startAt) >= timeout) out.reason = 'timeout';
+  return out;
+}
+function livenessModeFlags(mode) {
+  var m = mode || 'blink_turn';
+  return { needBlink: m !== 'off', needTurn: m.indexOf('turn') >= 0, needMouth: m.indexOf('mouth') >= 0 };
+}
+// 打卡時的人臉驗證（測試可用 window.__faceOverride 取代）
+// 回傳 { ok, score, liveness, reason }；reason = not-registered / no-camera / model-load-failed / mismatch / timeout …
+async function runFaceVerification(employeeId) {
+  if (typeof window.__faceOverride === 'function') {
+    try { return await window.__faceOverride(employeeId); } catch (e) { return { ok: false, score: null, liveness: null, reason: 'error' }; }
+  }
+  var res = { ok: false, score: null, liveness: null, reason: '' };
+  var emp = (db.employees || []).filter(function(e) { return e.employee_id === employeeId; })[0];
+  if (!emp) { res.reason = 'no-employee'; return res; }
+  var target = faceDescriptorOf(emp);
+  if (!target) { res.reason = 'not-registered'; return res; }
+  if (!faceCameraSupported()) { res.reason = 'no-camera'; return res; }
+  var f = livenessModeFlags(db.wifiSettings && db.wifiSettings.liveness_mode);
+  var cap = await faceCaptureSession({
+    title: '打卡人臉驗證', hint: '請完成活體動作（眨眼／轉頭）後自動拍照比對，約 3–6 秒',
+    needBlink: f.needBlink, needTurn: f.needTurn, needMouth: f.needMouth
+  });
+  res.liveness = cap.liveness;
+  if (!cap.ok || !cap.descriptor) { res.reason = cap.reason || 'no-face'; return res; }
+  var d = faceVectorDistance(cap.descriptor, target);
+  res.score = (d === null) ? null : Math.round(d * 10000) / 10000;
+  if (d !== null && d <= faceThreshold()) res.ok = true;
+  else res.reason = 'mismatch';
+  return res;
+}
+// 員工註冊人臉（管理員於員工管理頁，或員工本人於打卡頁）
+async function registerFaceFor(employeeId) {
+  var emp = (db.employees || []).filter(function(e) { return e.employee_id === employeeId; })[0];
+  if (!emp) { showToast('找不到員工資料', 'error'); return false; }
+  if (!faceCameraSupported()) {
+    showToast('此裝置沒有可用的鏡頭（手機請用瀏覽器開啟，勿用無鏡頭的桌機）', 'error');
+    return false;
+  }
+  showToast('正在載入人臉模型，首次約需幾秒…', 'info');
+  var ready = await ensureFaceAPI();
+  if (!ready) {
+    showToast('人臉模型載入失敗（網路異常），請稍後再試；目前仍可用 GPS／MAC 打卡', 'error');
+    return false;
+  }
+  var cap = await faceCaptureSession({
+    title: '註冊人臉：' + emp.name,
+    hint: '請看著鏡頭並眨一次眼，系統會自動拍攝並建立臉部特徵（照片不會被儲存，只存特徵向量）',
+    needBlink: true, needTurn: false, needMouth: false, manual: true, timeoutMs: 30000
+  });
+  if (!cap.ok || !cap.descriptor) {
+    var msg = { 'camera-denied': '您拒絕了鏡頭權限，無法註冊', 'no-face': '偵測不到臉部，請在光線充足處重試',
+      'timeout': '註冊逾時，請再試一次', 'cancelled': '已取消註冊' }[cap.reason] || '註冊失敗，請再試一次';
+    showToast(msg, 'error');
+    return false;
+  }
+  emp.face_descriptor = cap.descriptor;
+  emp.face_registered_at = new Date().toISOString();
+  emp.updated_at = emp.face_registered_at;
+  saveDB();
+  showToast('人臉註冊成功！' + emp.name + ' 之後打卡可做臉部比對', 'success');
+  if (typeof loadEmployees === 'function') loadEmployees();
+  if (typeof loadClockStatus === 'function') loadClockStatus();
+  return true;
+}
+function clearFaceFor(employeeId) {
+  var emp = (db.employees || []).filter(function(e) { return e.employee_id === employeeId; })[0];
+  if (!emp) return;
+  delete emp.face_descriptor;
+  delete emp.face_registered_at;
+  emp.updated_at = new Date().toISOString();
+  saveDB();
+  showToast('已清除 ' + emp.name + ' 的人臉資料', 'success');
+  if (typeof loadEmployees === 'function') loadEmployees();
+}
+// v5.0.0：打卡前的驗證前置作業 — 重新定位 ＋ 人臉辨識
+// 結果寫入 currentGPS / lastFaceResult，之後由 evalGate() 統一判定是否放行。
+// 漸進式設計：人臉「無法執行」（無鏡頭／模型載入失敗）時直接略過，改靠 GPS＋MAC，不阻斷打卡。
+async function runGatePreflight(empId) {
+  const w = db.wifiSettings || {};
+  lastFaceResult = null;
+  if (w.gps_required !== false) {
+    showToast('📍 正在取得 GPS 定位，請稍候…', 'info');
+    await refreshGPS(true); // 打卡一律重新定位，避免沿用舊位置
+  }
+  if (typeof currentUser === 'undefined' || !currentUser) return;
+  if (!faceCheckRequired(empId)) return;
+  if (!faceCameraSupported()) {
+    showToast('此裝置沒有可用的鏡頭，改以 GPS／MAC 認證', 'info');
+    return;
+  }
+  try {
+    var fr = await runFaceVerification(empId);
+    lastFaceResult = fr;
+    if (fr && fr.ok) showToast('✅ 人臉驗證通過（相似度 ' + fr.score + '）', 'success');
+    else if (fr && fr.reason === 'model-load-failed') showToast('人臉模型載入失敗，暫以 GPS／MAC 認證', 'warning');
+    else if (fr && fr.reason === 'timeout') showToast('人臉驗證逾時，暫以 GPS／MAC 認證', 'warning');
+  } catch (e) {
+    lastFaceResult = { ok: false, score: null, liveness: null, reason: 'error' };
+  }
+}
+// 本次打卡是否要走人臉驗證（管理員／未註冊／無鏡頭 → 略過）
+function faceCheckRequired(employeeId) {
+  var w = db.wifiSettings || {};
+  if (!w.face_required) return false;
+  if (!w.enabled) return false;
+  var emp = (db.employees || []).filter(function(e) { return e.employee_id === employeeId; })[0];
+  if (!emp) return false;
+  if (!faceDescriptorOf(emp)) return false;   // 沒註冊臉 → 不走人臉（漸進式）
+  return true;
+}
+
+// ===== v5.0.0 打卡閘門：MAC 位址 ＋ 人臉辨識 ＋ GPS 定位 =====
+// 五種驗證可各自開關：MAC(公司路由器) / 裝置 MAC / 人臉辨識 / GPS / WiFi 名稱
 // ① 停用驗證 → 全放行
-// ② 嚴格模式（strict_both）→ GPS 在範圍內 且 SSID 符合 → 放行
-// ③ 一般模式 →「有什麼驗什麼」：兩者都有 → 都要符合；只有 GPS（手機）→ 看距離；
-//    只有 SSID（桌機／打卡小工具）→ 看名稱；兩者都沒有 → 擋下
-// ④ 只勾其中一項 → 以該項為準
-function evalGate() {
+// ② 嚴格模式（strict_both）→ 每一項「已啟用」的驗證都要通過（缺資料視為不通過）
+// ③ 一般模式 →「有什麼驗什麼」：能驗的都要過；一項都驗不到 → 擋下
+//    · 人臉辨識採「漸進式」（face_fallback）：無鏡頭／未註冊／模型載入失敗 → 不列入檢查，改靠 GPS＋MAC
+function evalGate(empId) {
   const w = db.wifiSettings || {};
   const name = (w.wifi_name || '').trim() || 'TY_5G';
   const list = splitSsidList(w.ssid_list || name);
-  // WiFi 名稱（SSID）：由 Windows 打卡小工具自動帶入，名稱不分大小寫
+  // ===== ① WiFi 名稱（SSID）：由 Windows 打卡小工具自動帶入，名稱不分大小寫 =====
   const s = (currentSSID || '').trim();
   const hasSSID = !!s;
   const ssidOK = hasSSID && list.some(function(n) { return n.toLowerCase() === s.toLowerCase(); });
-  // GPS 定位：與公司登記座標的距離是否在允許半徑內
+  // ===== ② MAC 位址（公司路由器 BSSID）：SSID 可偽造，MAC 幾乎無法偽造 =====
+  const macList = splitMacList(w.mac_list);
+  const hasMAC = !!currentMAC;
+  const macNorm = normalizeMAC(currentMAC);
+  const macOK = hasMAC && macList.length > 0 && macList.some(function(m) { return m === macNorm; });
+  // ===== ③ 裝置網卡 MAC（選用：綁定公務機）=====
+  const devList = splitMacList(w.device_mac_list);
+  const hasDevMAC = !!currentDeviceMAC;
+  const devNorm = normalizeMAC(currentDeviceMAC);
+  const devMacOK = hasDevMAC && devList.length > 0 && devList.some(function(m) { return m === devNorm; });
+  // ===== ④ GPS 定位：與公司登記座標的距離是否在允許半徑內 =====
   const hasSite = typeof w.gps_lat === 'number' && typeof w.gps_lng === 'number' &&
     isFinite(w.gps_lat) && isFinite(w.gps_lng);
   const radius = (typeof w.gps_radius === 'number' && w.gps_radius > 0) ? w.gps_radius : GPS_DEFAULT_RADIUS;
   const hasGPS = !!currentGPS && typeof currentGPS.lat === 'number';
   const dist = gpsDistanceMeters();
   const gpsOK = hasGPS && hasSite && dist !== null && dist <= radius;
-  const gpsRequired = w.gps_required !== false;
-  const ssidRequired = w.ssid_required !== false;
+  // ===== ⑤ 人臉辨識 ＋ 活體偵測 =====
+  const faceRequired = !!w.face_required;
+  const faceNeeded = faceRequired && !!empId && faceCheckRequired(empId);
+  const faceCamOK = faceCameraSupported();
+  const faceOK = faceNeeded && !!(lastFaceResult && lastFaceResult.ok);
   const strictBoth = !!w.strict_both;
   const enabled = w.enabled !== false;
-  const bothOn = gpsRequired && ssidRequired; // 兩項驗證都啟用
+  const gpsRequired = w.gps_required !== false;
+  const ssidRequired = w.ssid_required !== false;
+  const macRequired = w.mac_required !== false;
+  const devMacRequired = !!w.device_mac_required;
+
+  // 所有「已啟用」的驗證項目；usable = 有足夠資料可以判斷
+  const checks = [];
+  if (macRequired) checks.push({ key: 'mac', usable: hasMAC && macList.length > 0, ok: macOK, label: 'MAC 位址' });
+  if (devMacRequired) checks.push({ key: 'dmac', usable: hasDevMAC && devList.length > 0, ok: devMacOK, label: '裝置 MAC' });
+  if (faceRequired && faceNeeded) {
+    var faceRunnable = faceCamOK && !faceAPIFailed;
+    if (!w.face_fallback) {
+      // 嚴格模式：只要這位員工有註冊人臉，就一定要通過（跑不了人臉也算失敗）
+      checks.push({ key: 'face', usable: true, ok: faceOK, label: '人臉辨識' });
+    } else if (faceRunnable && lastFaceResult && lastFaceResult.ok === false && lastFaceResult.reason === 'mismatch') {
+      // 漸進式：環境問題（無鏡頭／未註冊／逾時／模型失敗）→ 退回 GPS＋MAC，不阻斷；
+      // 但「鏡頭前的人不是本人」（mismatch）是代打卡的核心訊號 → 仍然擋下
+      checks.push({ key: 'face', usable: true, ok: false, label: '人臉辨識' });
+    } else if (faceRunnable && lastFaceResult && lastFaceResult.ok === true) {
+      // 人臉驗證確實通過 → 記入稽核標記（打卡紀錄的判定方式會出現 face）
+      checks.push({ key: 'face', usable: true, ok: true, label: '人臉辨識' });
+    }
+    // 其餘情境（漸進式且環境問題）→ 不列入檢查，人臉結果仍寫入打卡紀錄供稽核
+  }
+  if (gpsRequired) checks.push({ key: 'gps', usable: hasGPS && hasSite, ok: gpsOK, label: 'GPS 定位' });
+  if (ssidRequired) checks.push({ key: 'ssid', usable: hasSSID, ok: ssidOK, label: 'WiFi 名稱' });
+
   let ok = false, method = '';
   if (!enabled) { ok = true; method = 'off'; }
-  else if (strictBoth && bothOn) { ok = gpsOK && ssidOK; } // 嚴格模式：GPS 與 WiFi 名稱兩者都要符合
-  else if (bothOn) {
-    // 尚未設定公司座標時 GPS 無從比對 → 退化為以 WiFi 名稱為準（避免整間公司都無法打卡）
-    const gpsUsable = hasGPS && hasSite;
-    if (gpsUsable && hasSSID) ok = gpsOK && ssidOK;
-    else if (gpsUsable) ok = gpsOK;
-    else if (hasSSID) ok = ssidOK;
-    else ok = false;
+  else if (strictBoth) {
+    ok = checks.every(function(c) { return c.ok; }); // 嚴格：每項都要過（MAC 沒帶入就直接擋下）
+  } else {
+    const usable = checks.filter(function(c) { return c.usable; });
+    if (usable.length) ok = usable.every(function(c) { return c.ok; });
+    else ok = (checks.length === 0); // 沒啟用任何驗證 → 放行；有啟用但什麼都驗不到 → 擋下
   }
-  else if (gpsRequired) ok = gpsOK;
-  else if (ssidRequired) ok = ssidOK;
-  else ok = true;
-  if (ok && !method) method = (hasGPS && hasSSID) ? 'gps+ssid' : (hasGPS ? 'gps' : (hasSSID ? 'ssid' : 'off'));
+  const passed = checks.filter(function(c) { return c.ok; }).map(function(c) { return c.key; });
+  if (ok && !method) method = passed.length ? passed.join('+') : 'off';
   return {
     enabled: enabled, ok: ok, method: method,
+    checks: checks, failedLabels: checks.filter(function(c) { return !c.ok; }).map(function(c) { return c.label; }),
     ssidName: name, ssidList: list, ssid: s, hasSSID: hasSSID, ssidOK: ssidOK, ssidRequired: ssidRequired,
+    mac: macNorm, macDisplay: macDisplay(currentMAC), macList: macList, hasMAC: hasMAC, macOK: macOK, macRequired: macRequired,
+    deviceMac: devNorm, deviceMacDisplay: macDisplay(currentDeviceMAC), devList: devList, hasDevMAC: hasDevMAC, devMacOK: devMacOK, devMacRequired: devMacRequired,
+    faceRequired: faceRequired, faceNeeded: faceNeeded, faceCamOK: faceCamOK, faceOK: faceOK,
+    faceScore: lastFaceResult ? lastFaceResult.score : null,
+    faceReason: lastFaceResult ? lastFaceResult.reason : '',
+    faceLiveness: lastFaceResult ? lastFaceResult.liveness : null,
+    faceAPIFailed: faceAPIFailed,
     hasGPS: hasGPS, gpsOK: gpsOK, gpsRequired: gpsRequired,
     hasSite: hasSite, siteLat: w.gps_lat, siteLng: w.gps_lng, siteAt: w.gps_at || '',
     radius: radius, distance: dist, accuracy: currentGPS ? currentGPS.accuracy : null,
@@ -1317,6 +1852,29 @@ function evalGate() {
 function gateFailReason(g) {
   const name = (g && g.ssidName) || 'TY_5G';
   if (!g) return '打卡驗證失敗，請重新整理頁面後再試。';
+  // ===== v5.0.0：MAC 與人臉的明確指引最優先（這兩項是現在的主軸）=====
+  if (g.faceRequired && g.faceNeeded && !g.faceOK) {
+    var fr = g.faceReason || '';
+    if (fr === 'mismatch') return '人臉比對未通過（相似度 ' + g.faceScore + '，門檻 ' + faceThreshold() +
+      '），無法打卡。請確認是本人、光線充足後重試；若臉型變化大（換髮型／眼鏡），請管理員重新註冊人臉。';
+    if (fr === 'no-face') return '鏡頭偵測不到臉部，無法打卡。請在光線充足處、臉部置於畫面中央後重試。';
+    if (fr === 'timeout') return '人臉驗證逾時（未完成眨眼／轉頭）。請依畫面指示完成動作後再打卡。';
+    if (fr === 'camera-denied') return '您拒絕了鏡頭權限，無法進行人臉驗證。請允許瀏覽器使用鏡頭（網址列左側鎖頭 → 相機 → 允許）後再打卡。';
+    if (fr === 'model-load-failed') return '人臉模型載入失敗（網路異常）。請檢查網路後重試；系統會暫時改用 GPS／MAC 認證。';
+    return '人臉辨識未通過（' + (fr || '未知原因') + '），無法打卡。請重試或由管理員協助。';
+  }
+  if (g.macRequired && g.hasMAC && !g.macOK) {
+    return '您目前連上的路由器 MAC 是「' + g.macDisplay + '」，不在公司白名單內，無法打卡。請連上公司 WiFi 後，用桌面的「TY_5G 打卡」小工具重新開啟本頁。';
+  }
+  if (g.macRequired && !g.hasMAC && !g.hasGPS && !g.hasSSID) {
+    return '抓不到路由器 MAC，也沒有 GPS 定位。電腦請用桌面的「TY_5G 打卡」小工具開啟本頁（會自動帶入 MAC）；手機請開啟定位服務後重試。';
+  }
+  if (g.macRequired && !g.hasMAC) {
+    return '抓不到路由器 MAC（瀏覽器讀不到，需用打卡小工具帶入）。請用桌面的「TY_5G 打卡」小工具開啟本頁；手機請改用 GPS 定位打卡，或請管理員取消勾選「MAC 認證」。';
+  }
+  if (g.devMacRequired && g.hasDevMAC && !g.devMacOK) {
+    return '這台裝置的網卡 MAC「' + g.deviceMacDisplay + '」不在允許的裝置清單內，無法打卡。請改用已登記的公務機，或請管理員加入此裝置。';
+  }
   if (g.strictBoth && !g.hasSite) {
     return '尚未設定公司地址的 GPS 座標（嚴格模式需「GPS 在公司範圍內 ＋ WiFi 名稱 ' + name +
       '」兩者都符合），目前無法打卡。請管理員在「打卡驗證設定」頁按「📍 抓取目前位置設為公司地址」後儲存。';
@@ -1360,23 +1918,43 @@ function gateFailReason(g) {
 }
 
 // 打卡紀錄的判定方式標記（稽核用）
-//   gps+ssid = GPS 在公司範圍內 且 WiFi 名稱符合
-//   gps      = 僅 GPS 定位通過（手機／無 SSID 裝置）
-//   ssid     = 僅 WiFi 名稱通過（桌機／無 GPS 裝置）
+//   v5.0.0：以實際通過的驗證項目組合，例如 mac+face+gps、mac、gps、ssid
 function gateCheckTag(g) {
   if (!g || !g.ok) return '';
+  if (g.checks && g.checks.length) {
+    var keys = g.checks.filter(function(c) { return c.ok; }).map(function(c) { return c.key; });
+    if (keys.length) return keys.join('+');
+  }
+  if (g.macOK && g.gpsOK) return 'mac+gps';
+  if (g.macOK) return 'mac';
   if (g.gpsOK && g.ssidOK) return 'gps+ssid';
   if (g.gpsOK) return 'gps';
   if (g.ssidOK) return 'ssid';
   return 'off';
 }
-// 把驗證結果寫入打卡紀錄（稽核用：判定方式、WiFi 名稱、GPS 座標與距離）
+// 把驗證結果寫入打卡紀錄（稽核用：判定方式、MAC、人臉相似度、GPS 座標與距離）
 function applyGateFields(rec, gate, verified) {
   if (!rec) return rec;
   rec.wifi_verified = verified ? 1 : 0;
   rec.wifi_ssid = verified ? ((gate && gate.ssid) || '') : '';
   rec.wifi_check = verified ? gateCheckTag(gate) : '';
   rec.check_method = verified ? (gateCheckTag(gate) || ((gate && gate.method) || '')) : '';
+  // v5.0.0：MAC 認證紀錄
+  if (gate) {
+    if (gate.mac) rec.mac_address = gate.mac;
+    if (gate.deviceMac) rec.device_mac = gate.deviceMac;
+    rec.mac_verified = gate.macOK ? 1 : 0;
+    // v5.0.0：人臉辨識紀錄（相似度與活體）
+    if (gate.faceNeeded) {
+      rec.face_verified = gate.faceOK ? 1 : 0;
+      if (gate.faceScore !== null && gate.faceScore !== undefined) rec.face_score = gate.faceScore;
+      if (gate.faceLiveness) {
+        rec.liveness_blink = gate.faceLiveness.blink || 0;
+        rec.liveness_turn = ((gate.faceLiveness.turnL ? 1 : 0) + (gate.faceLiveness.turnR ? 1 : 0));
+        rec.liveness_mouth = gate.faceLiveness.mouth || 0;
+      }
+    }
+  }
   if (currentGPS) {
     rec.gps_lat = currentGPS.lat;
     rec.gps_lng = currentGPS.lng;
@@ -1386,9 +1964,11 @@ function applyGateFields(rec, gate, verified) {
   return rec;
 }
 
-// SSID 通道的簡易防偽記號（小工具帶入 ?ssid=XXX&t=記號，避免人手在網址列亂打）
-// 記號 = hash(SSID + 當天日期)，換天自動失效；小工具每天產生的記號不同
+// 打卡小工具通道的簡易防偽記號（小工具帶入 ?ssid=XXX&mac=YYY&dmac=ZZZ&t=記號，避免人手在網址列亂打）
+// 記號 = hash(內容 + 當天日期)，換天自動失效；小工具每天產生的記號不同
 const SSID_SESSION_KEY = 'attendance_ssid';
+const MAC_SESSION_KEY = 'attendance_mac';       // v5.0.0
+const DMAC_SESSION_KEY = 'attendance_dmac';     // v5.0.0
 function ssidDayStamp(d) {
   const dt = d || new Date();
   return '' + dt.getFullYear() + ('0' + (dt.getMonth() + 1)).slice(-2) + ('0' + dt.getDate()).slice(-2);
@@ -1399,28 +1979,94 @@ function ssidToken(name, day) {
   for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) % 1000000007; }
   return h.toString(16); // 16 進位（PowerShell 端以 Convert.ToString(h,16) 產生相同記號）
 }
-// 由網址（或本次瀏覽器工作階段的快取）取得小工具帶入的 WiFi 名稱
-// 回傳 { ssid, from }；from = url（本次帶入）/ session（同一個瀏覽器工作階段）/ ''（沒帶入，如手機）
-function resolveSSIDFromURL() {
+// v5.0.0：小工具完整記號（含 MAC）— 內容為 ssid|mac|dmac
+function toolToken(ssid, mac, dmac, day) {
+  return ssidToken([normalizeMAC(mac || ''), normalizeMAC(dmac || '')].join('|') + '|' + String(ssid || ''), day);
+}
+// v5.0.0：驗證記號 — 同時接受「新版（含 MAC）」與「舊版（只有 SSID）」，
+// 且容許昨天產生的記號（跨日邊界、時區差異）；舊版小工具下載者仍可繼續用（只是沒有 MAC）。
+function toolTokenValid(ssid, mac, dmac, t) {
+  if (!t) return false;
+  const today = ssidDayStamp();
+  const y = new Date(Date.now() - 86400000);
+  const yday = ssidDayStamp(y);
+  const hasMac = !!(normalizeMAC(mac) || normalizeMAC(dmac));
+  const cands = [];
+  if (hasMac) {
+    // 有帶 MAC → 只接受「含 MAC」的新版記號。
+    // 若此處也接受舊版純 SSID 記號，任何人都能算出 ssidToken('TY_5G') 後自行加 &mac=偽造值，MAC 認證就形同虛設。
+    cands.push(toolToken(ssid, mac, dmac, today), toolToken(ssid, mac, dmac, yday));
+  } else {
+    cands.push(toolToken(ssid, '', '', today), toolToken(ssid, '', '', yday),
+               ssidToken(ssid, today), ssidToken(ssid, yday));
+  }
+  return cands.indexOf(String(t)) >= 0;
+}
+// v5.0.0：由網址（或本次瀏覽器工作階段的快取）取得小工具帶入的「WiFi 名稱 ＋ 路由器 MAC ＋ 裝置 MAC」
+// 回傳 { ssid, mac, dmac, from }；from = url（本次帶入）/ session（同一個瀏覽器工作階段）/ ''（沒帶入，如手機）
+function resolveToolPayload() {
+  // 讀取本瀏覽器工作階段內「已通過記號驗證」的內容
+  function fromSession() {
+    var cs = '', cm = '', cd = '';
+    try {
+      cs = sessionStorage.getItem(SSID_SESSION_KEY) || '';
+      cm = sessionStorage.getItem(MAC_SESSION_KEY) || '';
+      cd = sessionStorage.getItem(DMAC_SESSION_KEY) || '';
+    } catch (e) {}
+    return { ssid: cs, mac: cm, dmac: cd, from: (cs || cm) ? 'session' : '' };
+  }
   try {
     const p = new URLSearchParams(location.search);
-    const s = p.get('ssid');
-    if (s) {
+    const s = p.get('ssid') || '';
+    const m = p.get('mac') || '';
+    const dm = p.get('dmac') || '';
+    if (s || m) {
       const t = p.get('t') || '';
-      if (t === ssidToken(s)) {
+      if (toolTokenValid(s, m, dm, t)) {
         sessionStorage.setItem(SSID_SESSION_KEY, s);
-        // 網址留下 ssid 供重新整理後仍有效（t 用完即丟，避免分享網址長期有效）
+        if (m) sessionStorage.setItem(MAC_SESSION_KEY, normalizeMAC(m)); else sessionStorage.removeItem(MAC_SESSION_KEY);
+        if (dm) sessionStorage.setItem(DMAC_SESSION_KEY, normalizeMAC(dm)); else sessionStorage.removeItem(DMAC_SESSION_KEY);
+        // 網址留下 ssid/mac/dmac 供重新整理後仍有效（t 用完即丟，避免分享網址長期有效）
         const q = new URLSearchParams(location.search);
         q.delete('t');
         history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q.toString() : ''));
-        return { ssid: s, from: 'url' };
+        return { ssid: s, mac: normalizeMAC(m), dmac: normalizeMAC(dm), from: 'url' };
       }
-      return { ssid: '', from: 'bad-token' };
+      // 記號無效：可能是人手改網址，也可能是「重新整理後記號已用完」（網址仍留著 ssid/mac/dmac）。
+      // 後者若直接判定 bad-token，員工按 F5 就會失去 MAC 而無法打卡 → 改回本工作階段已驗證過的內容。
+      const cached = fromSession();
+      if (cached.from === 'session') return cached;
+      return { ssid: '', mac: '', dmac: '', from: 'bad-token' };
     }
-    const cached = sessionStorage.getItem(SSID_SESSION_KEY);
-    if (cached) return { ssid: cached, from: 'session' };
+    return fromSession();
   } catch (e) {}
-  return { ssid: '', from: '' };
+  return { ssid: '', mac: '', dmac: '', from: '' };
+}
+// 由網址（或本次瀏覽器工作階段的快取）取得小工具帶入的 WiFi 名稱
+// 回傳 { ssid, from }；from = url（本次帶入）/ session（同一個瀏覽器工作階段）/ ''（沒帶入，如手機）
+function resolveSSIDFromURL() {
+  const r = resolveToolPayload();
+  return { ssid: r.ssid, from: r.from };
+}
+// v5.0.0：把小工具帶入的 MAC 寫入全域（供打卡判定與設定頁顯示）
+function applyToolMAC(payload) {
+  const p = payload || resolveToolPayload();
+  var nmac = normalizeMAC(p.mac);
+  var ndev = normalizeMAC(p.dmac);
+  currentMAC = nmac || null;
+  currentDeviceMAC = ndev || null;
+  currentMACFrom = nmac ? p.from : '';
+  if (nmac && db && db.wifiSettings) {
+    // 自動記錄最近一次偵測到的 MAC（僅供顯示與「一鍵帶入白名單」，不作為放行依據）
+    var nm = nmac;
+    if (db.wifiSettings.last_mac !== nm) {
+      db.wifiSettings.last_mac = nm;
+      db.wifiSettings.last_mac_at = new Date().toISOString();
+    }
+    if (p.dmac) db.wifiSettings.last_device_mac = normalizeMAC(p.dmac);
+    if (typeof saveLocalOnly === 'function') saveLocalOnly();
+  }
+  return p;
 }
 
 // 記錄最近一次偵測到的 IP（僅供顯示／稽核；v4.1.0 起 IP 不再作為放行依據）
@@ -2055,7 +2701,7 @@ async function loadClockStatus() {
       (currentSSID ? ' · WiFi: ' + esc(currentSSID) : '') + '</span>';
   } else {
     // v4.1.0：GPS 在公司範圍內 ＋ WiFi 名稱 TY_5G（有什麼驗什麼）
-    const g = evalGate();
+    const g = evalGate(currentUser && currentUser.employeeId);
     const redetectBtn = '<button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:12px;margin-left:6px;" onclick="redetectNetwork()">🔄 重新偵測</button>';
     const toolBtn = '<a class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:12px;margin-left:6px;" href="tools/TY_5G-clockin.bat" download>⬇️ 下載打卡小工具</a>';
 
@@ -2349,14 +2995,14 @@ async function clockIn() {
   const today = new Date().toLocaleDateString('en-CA');
   const now = new Date().toLocaleTimeString('en-GB');
   const isAdmin = currentUser.role === 'admin';
-  // v4.1.0：GPS 定位 + WiFi 名稱驗證（管理員豁免）
+  // v5.0.0：MAC 位址 ＋ 人臉辨識 ＋ GPS 定位驗證（管理員豁免）
   const gateOn = !isAdmin && !!(db.wifiSettings && db.wifiSettings.enabled !== false);
   if (gateOn) {
-    showToast('📍 正在取得 GPS 定位，請稍候…', 'info');
-    await refreshGPS(true); // 打卡一律重新定位，避免沿用舊位置
-    if (!currentUser) return; // 防禦：等待定位期間使用者可能已登出
+    applyToolMAC(); // 重新讀取小工具帶入的路由器 MAC／裝置 MAC（可能剛從小工具開啟）
+    await runGatePreflight(currentUser.employeeId);
+    if (!currentUser) return; // 防禦：等待定位／人臉期間使用者可能已登出
   }
-  const gate = evalGate();
+  const gate = evalGate(currentUser.employeeId);
   const wifiVerified = isAdmin ? true : gate.ok;
 
   if (!isAdmin && gate.enabled && !gate.ok) {
@@ -2430,14 +3076,14 @@ async function clockOut() {
   const now = new Date().toLocaleTimeString('en-GB');
   const isAdmin = currentUser.role === 'admin';
 
-  // v4.1.0：下班打卡時重新定位並驗證（GPS + WiFi 名稱）— admin exempt
+  // v5.0.0：下班打卡同樣驗證（MAC ＋ 人臉 ＋ GPS）— admin exempt
   const gateOn = !isAdmin && !!(db.wifiSettings && db.wifiSettings.enabled !== false);
   if (gateOn) {
-    showToast('📍 正在取得 GPS 定位，請稍候…', 'info');
-    await refreshGPS(true);
+    applyToolMAC();
+    await runGatePreflight(currentUser.employeeId);
     if (!currentUser) return;
   }
-  const gate = evalGate();
+  const gate = evalGate(currentUser.employeeId);
   const wifiVerified = isAdmin ? true : gate.ok;
   if (!isAdmin && gate.enabled && !gate.ok) {
     showToast('打卡失敗！' + gateFailReason(gate), 'error');
@@ -2657,7 +3303,7 @@ function loadEmployees() {
   }
 
   if (employees.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">👤</div>' + (searchQuery ? '未找到符合條件的員工' : '暫無員工') + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="icon">👤</div>' + (searchQuery ? '未找到符合條件的員工' : '暫無員工') + '</td></tr>';
     return;
   }
 
@@ -2679,12 +3325,25 @@ function loadEmployees() {
         '<button class="btn btn-outline btn-sm" onclick="openResetPasswordModal(' + e.id + ')">重設密碼</button>' +
         '<button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger);" onclick="confirmDeleteEmployee(' + e.id + ')">刪除</button>' +
       '</div>' : '--';
+    // v5.0.0：人臉註冊狀態（系統只存 128 維特徵向量，不存照片）
+    const faceOn = !!(db.wifiSettings && db.wifiSettings.face_required);
+    const hasFace = !!faceDescriptorOf(e);
+    const faceCell = ('<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
+      (hasFace
+        ? '<span class="badge badge-success">已註冊</span>' +
+          '<button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:12px;" onclick="registerFaceFor(\'' + esc(e.employee_id) + '\')">重拍</button>' +
+          '<button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:12px;color:var(--danger);border-color:var(--danger);" onclick="clearFaceFor(\'' + esc(e.employee_id) + '\')">清除</button>'
+        : '<span style="color:var(--text-secondary);font-size:12px;">未註冊</span>' +
+          '<button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:12px;" onclick="registerFaceFor(\'' + esc(e.employee_id) + '\')">📸 註冊人臉</button>') +
+      '</div>' +
+      (faceOn ? '' : '<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">（人臉驗證目前未啟用）</div>'));
     return '<tr>' +
       '<td style="font-weight:600">' + esc(e.employee_id) + '</td>' +
       '<td>' + esc(e.name) + '</td>' +
       '<td>' + (esc(e.department) || '--') + '</td>' +
       '<td>' + (e.role === 'admin' ? '<span class="badge badge-info">管理員</span>' : '<span class="badge badge-success">員工</span>') + '</td>' +
       '<td>' + (e.active ? '<span class="badge badge-success">在職</span>' : '<span class="badge badge-danger">停用</span>') + '</td>' +
+      '<td>' + faceCell + '</td>' +
       '<td>' + todayStatus + '</td>' +
       '<td style="font-size:12px;color:var(--text-secondary)">' + esc(e.created_at) + '</td>' +
       '<td>' + actions + '</td>' +
@@ -3042,6 +3701,17 @@ async function loadWifiSettings() {
   setVal('gpsLngInput', (typeof w.gps_lng === 'number') ? String(w.gps_lng) : '');
   setVal('gpsRadiusInput', w.gps_radius || GPS_DEFAULT_RADIUS);
   setVal('gpsNoteInput', w.gps_note || '');
+  // ===== v5.0.0：MAC 認證 ＋ 人臉辨識 =====
+  const macReq = document.getElementById('macRequiredInput'); if (macReq) macReq.checked = w.mac_required !== false;
+  const devReq = document.getElementById('deviceMacRequiredInput'); if (devReq) devReq.checked = !!w.device_mac_required;
+  const faceReq = document.getElementById('faceRequiredInput'); if (faceReq) faceReq.checked = !!w.face_required;
+  const faceFb = document.getElementById('faceFallbackInput'); if (faceFb) faceFb.checked = w.face_fallback !== false;
+  setVal('macListInput', w.mac_list || '');
+  setVal('deviceMacListInput', w.device_mac_list || '');
+  setVal('faceThresholdInput', w.face_threshold || FACE_DEFAULT_THRESHOLD);
+  const lv = document.getElementById('livenessModeSelect');
+  if (lv) lv.value = w.liveness_mode || 'blink_turn';
+  applyToolMAC(); // 重新讀取小工具帶入的 MAC（可能剛從小工具開啟）
   refreshWifiDetectInfo(); // 先立即帶出既有設定（不等 GPS／IP，避免畫面卡在「載入中」）
   try { await refreshNetworkInfo({ force: false }); } catch (e) {}
   refreshWifiDetectInfo(); // 定位／IP 回來後再更新一次
@@ -3073,7 +3743,7 @@ function refreshWifiDetectInfo() {
   }
   // 本機 WiFi 名稱：只有用打卡小工具開啟本頁才讀得到（網頁本身受限讀不到 SSID）
   if (currentSSID) {
-    const g = evalGate();
+    const g = evalGate(currentUser && currentUser.employeeId);
     setTxt('adminSsidName', currentSSID + (g.ssidOK ? ' ✓' : ' ✗'));
     setTxt('adminSsidNameNote', g.ssidOK
       ? '（由打卡小工具帶入，與設定名稱相符）'
@@ -3082,14 +3752,40 @@ function refreshWifiDetectInfo() {
     setTxt('adminSsidName', '（未帶入 — 手機／未用打卡小工具）');
     setTxt('adminSsidNameNote', '電腦請改用桌面「TY_5G 打卡」小工具開啟本頁，即可讀取 WiFi 名稱');
   }
+  // ===== v5.0.0：路由器 MAC / 裝置 MAC / 鏡頭狀態 =====
+  const g0 = evalGate(currentUser && currentUser.employeeId);
+  if (currentMAC) {
+    setTxt('adminMacNow', macDisplay(currentMAC) + (g0.macOK ? ' ✓' : ' ✗'));
+    setTxt('adminMacNote', g0.macOK
+      ? '（由打卡小工具帶入，在白名單內）'
+      : '（不在白名單內 — 按下方「🔍 把本機偵測到的路由器 MAC 加入白名單」後儲存）');
+  } else {
+    setTxt('adminMacNow', '（未帶入 — 請用 v5.0 打卡小工具開啟本頁）');
+    setTxt('adminMacNote', '手機／舊版小工具讀不到 MAC；電腦請重新下載小工具');
+  }
+  setTxt('adminDevMacNow', currentDeviceMAC ? (macDisplay(currentDeviceMAC) + (g0.devMacOK ? ' ✓' : '')) : '（未帶入）');
+  const faceStat = document.getElementById('adminFaceStatus');
+  if (faceStat) {
+    var cam = faceCameraSupported();
+    var faceTxt = cam ? '鏡頭可用' : '此裝置無鏡頭';
+    if (faceAPIFailed) faceTxt += ' · 模型載入失敗（已改用 GPS／MAC）';
+    else if (faceAPIReady) faceTxt += ' · 模型已就緒';
+    else if (w.face_required) faceTxt += ' · 模型尚未載入（打卡時自動載入）';
+    if (typeof lastFaceResult !== 'undefined' && lastFaceResult) {
+      faceTxt += ' · 上次比對：' + (lastFaceResult.ok ? '通過 ' + lastFaceResult.score : '未通過（' + (lastFaceResult.reason || '?') + '）');
+    }
+    faceStat.textContent = faceTxt;
+  }
 
   const note = document.getElementById('wifiAutoNote');
   if (note) {
-    const g = evalGate();
+    const g = evalGate(currentUser && currentUser.employeeId);
     if (!g.enabled) {
       setHtml('wifiAutoNote', '⚠️ 打卡驗證已停用（任何地點皆可打卡）');
     } else if (g.ok) {
       const parts = [];
+      if (g.macRequired && g.hasMAC) parts.push('🔐 MAC ' + esc(macDisplay(g.mac)) + ' ✓');
+      if (g.faceRequired && g.faceNeeded) parts.push('🧬 人臉 ✓');
       if (g.hasGPS && g.hasSite) parts.push('📍 距離 ' + g.distance + ' m ✓');
       if (g.hasSSID) parts.push('📶 ' + esc(g.ssid) + ' ✓');
       setHtml('wifiAutoNote', '✅ 驗證通過：' + parts.join(' · ') + '（' + esc(gateCheckTag(g)) + '）');
@@ -3115,6 +3811,41 @@ function refreshWifiDetectInfo() {
       warn.style.display = 'none';
     }
   }
+}
+
+// v5.0.0：把本機（打卡小工具帶入的）路由器 MAC 加入白名單（免手動抄寫）
+function captureCurrentMAC() {
+  if (!requireAdmin()) return;
+  applyToolMAC();
+  if (!currentMAC) {
+    showToast('還沒偵測到路由器 MAC。請先關閉本頁，改用桌面的「TY_5G 打卡」小工具重新開啟本頁（v5.0 版會自動帶入 MAC）', 'error');
+    return;
+  }
+  var input = document.getElementById('macListInput');
+  if (!input) return;
+  var cur = splitMacList(input.value).map(macDisplay);
+  var pretty = macDisplay(currentMAC);
+  if (cur.indexOf(pretty) >= 0 || cur.map(normalizeMAC).indexOf(currentMAC) >= 0) {
+    showToast('這個 MAC 已經在白名單內了：' + pretty, 'info');
+    return;
+  }
+  cur.push(pretty);
+  input.value = cur.join(', ');
+  showToast('已加入白名單：' + pretty + ' ✓ 請按「儲存設定」', 'success');
+}
+// v5.0.0：把本機網卡 MAC 加入裝置白名單
+function captureDeviceMAC() {
+  if (!requireAdmin()) return;
+  applyToolMAC();
+  if (!currentDeviceMAC) { showToast('還沒偵測到裝置網卡 MAC（請用打卡小工具開啟本頁）', 'error'); return; }
+  var input = document.getElementById('deviceMacListInput');
+  if (!input) return;
+  var cur = splitMacList(input.value).map(macDisplay);
+  var pretty = macDisplay(currentDeviceMAC);
+  if (cur.map(normalizeMAC).indexOf(currentDeviceMAC) >= 0) { showToast('已存在：' + pretty, 'info'); return; }
+  cur.push(pretty);
+  input.value = cur.join(', ');
+  showToast('已加入裝置白名單：' + pretty + ' ✓ 請按「儲存設定」', 'success');
 }
 
 // 管理員：以「目前位置」設定公司地址座標（自動抓取，免手動輸入）
@@ -3153,10 +3884,27 @@ function saveWifiSettings() {
   const r = parseInt(val('gpsRadiusInput'), 10);
   const hasLat = isFinite(lat), hasLng = isFinite(lng);
   const changed = hasLat && hasLng && (lat !== prev.gps_lat || lng !== prev.gps_lng);
+  // v5.0.0：MAC 白名單（正規化後儲存，寫法不拘）
+  const macRaw = val('macListInput');
+  const devMacRaw = val('deviceMacListInput');
+  const ft = parseFloat(val('faceThresholdInput'));
   db.wifiSettings = {
-    mode: 'gps',
+    mode: 'mac',
     wifi_name: name,
     ssid_list: val('wifiNameInput') || name,   // 允許多組名稱（逗號分隔）
+    // ===== v5.0.0：MAC 認證 =====
+    mac_list: splitMacList(macRaw).map(macDisplay).join(', '),
+    mac_required: chk('macRequiredInput'),
+    device_mac_list: splitMacList(devMacRaw).map(macDisplay).join(', '),
+    device_mac_required: chk('deviceMacRequiredInput'),
+    // ===== v5.0.0：人臉辨識 =====
+    face_required: chk('faceRequiredInput'),
+    face_threshold: (isFinite(ft) && ft > 0.1 && ft < 1.2) ? ft : FACE_DEFAULT_THRESHOLD,
+    liveness_mode: val('livenessModeSelect') || 'blink_turn',
+    face_fallback: chk('faceFallbackInput'),
+    last_mac: currentMAC || prev.last_mac || '',
+    last_mac_at: (currentMAC && currentMAC !== prev.last_mac) ? new Date().toISOString() : (prev.last_mac_at || ''),
+    last_device_mac: currentDeviceMAC || prev.last_device_mac || '',
     gps_lat: hasLat ? lat : null,
     gps_lng: hasLng ? lng : null,
     gps_radius: (isFinite(r) && r >= 10) ? Math.min(r, 5000) : GPS_DEFAULT_RADIUS,
@@ -3171,10 +3919,16 @@ function saveWifiSettings() {
     updated_at: new Date().toISOString()
   };
   saveDB();
-  showToast('打卡設定已儲存！（GPS 半徑 ' + db.wifiSettings.gps_radius + ' 公尺 · 公司座標：' +
-    (hasLat && hasLng ? lat.toFixed(5) + ', ' + lng.toFixed(5) : '尚未設定') +
-    ' · WiFi：' + name + (db.wifiSettings.strict_both ? ' · 嚴格模式' : '') + '）', 'success');
+  var msg = '打卡設定已儲存！（';
+  var bits = [];
+  if (db.wifiSettings.mac_required) bits.push('MAC ' + (splitMacList(db.wifiSettings.mac_list).length ? splitMacList(db.wifiSettings.mac_list).length + ' 組' : '未設定'));
+  if (db.wifiSettings.face_required) bits.push('人臉 ' + db.wifiSettings.liveness_mode + ' 門檻' + db.wifiSettings.face_threshold);
+  if (db.wifiSettings.gps_required) bits.push('GPS ' + db.wifiSettings.gps_radius + 'm');
+  if (db.wifiSettings.ssid_required) bits.push('SSID ' + name);
+  msg += (bits.length ? bits.join(' ＋ ') : '未啟用任何驗證') + (db.wifiSettings.strict_both ? ' · 嚴格模式' : ' · 一般模式') + '）';
+  showToast(msg, 'success');
   loadClockStatus();
+  refreshWifiDetectInfo();
 }
 
 // ===== Schedule Settings =====
@@ -3684,7 +4438,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '4.2.0.20260923';
+const BUILD_ID = '5.0.0.20261004';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
@@ -4493,7 +5247,17 @@ async function pullFromCloud(silent, opts) {
       addSyncLog('GET', 'warn', '免憑證通道無回應（' + (eFree.message || eFree.name || '') + '），改用 GitHub 備援', 0);
       cloudDb = null;
     }
-    if (!cloudDb) {
+    // v5.0.0：免憑證通道「連得到、但雲端還沒有資料」（全新通道／尚未推播過）
+    // → 直接視為拉取成功（雲端為空），不再走 GitHub 備援。
+    //   否則一旦內建憑證失效（401），GitHub 備援會把主通道也拖成失敗，
+    //   firstCloudPullDone 永遠是 false，後續推播被 pending 卡住 → 跨裝置同步看似壞掉。
+    if (!cloudDb && freePullAllEmpty) {
+      firstCloudPullDone = true;
+      success = true;
+      errStatus = 200;
+      addSyncLog('GET', 'ok', '免憑證通道連線正常｜雲端尚無資料（等待首次推播）', 200);
+    }
+    if (!cloudDb && !freePullAllEmpty) {
     var ctrl = new AbortController();
     var t = setTimeout(function() { ctrl.abort(); }, 45000);
     // v3.0：GitHub API GET — 無 CDN 快取問題，即時取得最新資料
@@ -5233,8 +5997,11 @@ document.querySelectorAll('[data-page]').forEach(function(el) {
 (function init() {
   // ===== v4.0.22：WiFi 名稱（SSID）通道 =====
   // 瀏覽器本身讀不到 SSID（安全限制），由 Windows「TY_5G 打卡」小工具以 netsh 讀取後用 ?ssid=XXX&t=記號 帶入
-  const ssidRes = resolveSSIDFromURL();
-  if (ssidRes.ssid) { currentSSID = ssidRes.ssid; currentSSIDFrom = ssidRes.from; }
+  // v5.0.0：小工具帶入 WiFi 名稱 ＋ 路由器 MAC(BSSID) ＋ 裝置網卡 MAC
+  const toolRes = resolveToolPayload();
+  currentSSID = toolRes.ssid || null;
+  currentSSIDFrom = toolRes.ssid ? toolRes.from : '';
+  applyToolMAC(toolRes);
   // Cloud sync: auto-connect when opened via a shared ?sync=XXXX link (cross-device)
   let syncFlowPending = false; // true = 等待使用者確認是否切換同步碼
   const urlSync = new URLSearchParams(location.search).get('sync');
