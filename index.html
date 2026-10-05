@@ -254,7 +254,7 @@
         <summary>📖 使用辦法</summary>
         <div class="guide-body">
           <strong>🕘 打卡規則</strong><br>
-          · 打卡時系統會<strong>自動驗證 WiFi 名稱（SSID）</strong>：請用電腦桌面的「<strong>TY_5G 打卡</strong>」小工具開啟本頁，小工具會以系統指令<strong>自動讀取目前連上的 WiFi 名稱</strong>，<b>必須是 TY_5G 才放行</b>，不是就擋下（GPS 定位驗證已於 v5.2.0 移除）。為避免重複打卡，按鈕每次按下後有 3 秒冷卻時間。<br>
+          · 打卡時系統會<strong>自動驗證你在不在公司網路</strong>（兩條通道，任一通過即放行）：<b>① WiFi 名稱</b> — 電腦請用桌面的「<strong>TY_5G 打卡</strong>」小工具開啟本頁，小工具會自動讀取目前連上的 WiFi 名稱；<b>② 網路出口 IP</b> — 手機只要<strong>關掉行動數據、連上公司 WiFi</strong> 就能通過，不必用小工具。兩條都不符就擋下（GPS 定位驗證已於 v5.2.0 移除；出口 IP 通道為 v5.3.0 新增）。打卡失敗時請先連上公司 WiFi，再按「🔄 重新偵測」。為避免重複打卡，按鈕每次按下後有 3 秒冷卻時間。<br>
           · 同一天可<strong>多次打卡</strong>：按下班卡後可再按上班卡開始下一段（例如午休外出、外出洽公返回），當日工時會自動加總；<strong>每一次打卡都會在考勤紀錄中各自成一列</strong>。<br>
           · 系統依排班時間自動判定遲到／早退；工作時數自動計算，當日合計超過標準每日工時的部分計為加班。<br>
           · 補班日（國定假日）打卡時，勾選「補班」並選擇要抵扣的平日請假，即可自動抵扣、不重複扣薪；忘記勾選可於當日下班後使用「📝 補登記」補登記。<br>
@@ -588,23 +588,27 @@
 
     <!-- Admin WiFi Settings -->
     <div id="page-admin-wifi" class="page">
-      <div class="section-title">打卡驗證設定（WiFi 名稱 TY_5G 自動抓取）</div>
+      <div class="section-title">打卡驗證設定（WiFi 名稱 ＋ 公司網路出口 IP）</div>
       <div class="card">
         <div class="info-banner" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0;">
           <span>📶</span>
-          <span><strong>WiFi 名稱（SSID）自動抓取（v5.2.0 起為唯一驗證方式）：</strong>瀏覽器基於安全限制讀不到 WiFi 名稱，請用電腦桌面的「<strong>TY_5G 打卡</strong>」小工具開啟本頁，小工具會以系統指令<strong>自動讀取目前連上的 WiFi 名稱並帶入</strong>，<strong>必須是 TY_5G 才放行</strong>，不是就擋下。</span>
+          <span><strong>通道 ① WiFi 名稱（SSID）自動抓取：</strong>瀏覽器基於安全限制讀不到 WiFi 名稱，請用電腦桌面的「<strong>TY_5G 打卡</strong>」小工具開啟本頁，小工具會以系統指令<strong>自動讀取目前連上的 WiFi 名稱並帶入</strong>，符合清單即放行。</span>
         </div>
-        <div class="info-banner" style="background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;">
-          <span>⚠️</span>
-          <span><strong>手機無法打卡：</strong>GPS 定位已於 v5.2.0 移除，且瀏覽器讀不到 WiFi 名稱，因此<strong>只有用 Windows 打卡小工具的電腦能打卡</strong>。若需讓手機也能打卡，請管理員在此頁<strong>取消勾選「啟用打卡驗證」</strong>（即不做任何驗證）。</span>
+        <div class="info-banner" style="background:#f0fdf4; color:#166534; border:1px solid #bbf7d0;">
+          <span>📱</span>
+          <span><strong>手機也能打卡（v5.3.0 起）：</strong>瀏覽器讀不到 WiFi 名稱，但抓得到「網路出口 IP」。只要手機<strong>連上公司 WiFi</strong>（記得關掉行動數據），系統就會比對<strong>公司網路出口 IP</strong>，符合即放行 — 不必用小工具，也不必停用驗證。</span>
+        </div>
+        <div class="info-banner blue">
+          <span>💻</span>
+          <span><strong>兩條放行通道，任一通過即可打卡：</strong>① <strong>WiFi 名稱</strong>（電腦用打卡小工具自動帶入）② <strong>公司網路出口 IP</strong>（手機／電腦直接開網頁都行）。<strong>管理員在公司 WiFi 上打卡時會自動登錄／更新出口 IP</strong>，公司寬頻 IP 浮動也不用手動改。</span>
         </div>
         <div class="info-banner" style="background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;">
           <span>👑</span>
-          <span>管理員不受此限制 — 隨時隨地（含手機、出差在外）都可查看員工出勤與打卡。</span>
+          <span>管理員不受任何限制 — 隨時隨地（含手機、出差在外）都可查看員工出勤與打卡。</span>
         </div>
         <div class="info-banner" style="background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe;">
           <span>🛠️</span>
-          <span>Windows 打卡小工具：<a href="tools/TY_5G-clockin.bat" download style="font-weight:600;">點此下載 TY_5G-clockin.bat</a> → 放到員工電腦桌面，<strong>每天打卡就雙擊它</strong>（會自動讀取 WiFi 名稱並開啟打卡頁，不需手動輸入任何東西）。</span>
+          <span>Windows 打卡小工具（電腦員工建議）：<a href="tools/TY_5G-clockin.bat" download style="font-weight:600;">點此下載 TY_5G-clockin.bat</a> → 放到員工電腦桌面，<strong>每天打卡就雙擊它</strong>（會自動讀取 WiFi 名稱並開啟打卡頁，不需手動輸入任何東西）。</span>
         </div>
         <div id="currentIPDisplay" style="margin-bottom: 20px; padding: 16px; background: var(--bg); border-radius: 10px; font-size: 13.5px;">
           <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;">
@@ -618,6 +622,11 @@
             <span id="adminSsidName" style="font-family:monospace;color:var(--primary);">（未帶入 — 手機／未用打卡小工具）</span>
             <span id="adminSsidNameNote" style="font-size:12px;color:var(--text-secondary);"></span>
           </div>
+          <div style="margin-top:6px;">
+            <strong>網路出口 IP（公網）：</strong>
+            <span id="adminWanIp" style="font-family:monospace;color:var(--primary);">偵測中...</span>
+            <span id="adminWanIpNote" style="font-size:12px;color:var(--text-secondary);"></span>
+          </div>
           <div id="wifiDetectWarn" style="display:none;margin-top:10px;font-size:12.5px;color:#9a3412;"></div>
         </div>
         <div class="form-group">
@@ -626,11 +635,33 @@
           <div class="hint-text">公司打卡用的 WiFi 名稱（不分大小寫）；有多台分享器時可用逗號分隔，例如「TY_5G, TY_5G_2F」。電腦用打卡小工具時會自動比對，不是就擋下。</div>
         </div>
         <div class="form-group">
-          <label class="checkbox-label"><input type="checkbox" id="wifiEnabledInput"> 啟用打卡驗證（連上 WiFi 名稱 TY_5G 才放行）</label>
-          <div class="hint-text">✅ 預設<strong>勾選</strong>：只有用 Windows 打卡小工具、且連上公司 WiFi 的電腦能打卡。⚠️ 手機讀不到 WiFi 名稱，勾選時<strong>手機無法打卡</strong> — 若要讓手機也能打卡，請取消勾選。</div>
+          <label class="checkbox-label"><input type="checkbox" id="wifiEnabledInput"> 啟用打卡驗證（在公司網路才放行）</label>
+          <div class="hint-text">✅ 預設<strong>勾選</strong>：需通過「WiFi 名稱」或「公司網路出口 IP」其中一項才能打卡。取消勾選 = 完全不管制，任何地點都能打卡（手機出外勤時才這樣設）。</div>
         </div>
         <div class="form-group">
-          <label class="checkbox-label"><input type="checkbox" id="ssidRequiredInput"> 啟用 WiFi 名稱（SSID）驗證</label>
+          <label class="checkbox-label"><input type="checkbox" id="ssidRequiredInput"> 啟用 WiFi 名稱（SSID）驗證（電腦打卡小工具）</label>
+          <div class="hint-text">電腦用「TY_5G 打卡」小工具時走這條：WiFi 名稱必須是清單內的名稱才放行。</div>
+        </div>
+        <div style="height:1px;background:var(--border);margin:18px 0;"></div>
+        <div class="form-group">
+          <label>公司網路出口 IP（公網 IP）</label>
+          <input type="text" id="wanIpInput" placeholder="例如：61.220.1.2 或 61.220.*.*">
+          <div class="hint-text">
+            員工<strong>連上公司 WiFi</strong> 後對外的公用 IP 就是這個（手機也因此能打卡）。多台外線／多分公司可用逗號分隔；
+            IP 會浮動請用 <code>*</code> 通配，例如 <code>61.220.*.*</code>。不知道就按下方按鈕自動帶入。
+          </div>
+        </div>
+        <div style="margin-bottom:18px;">
+          <button class="btn btn-outline btn-sm" id="captureWanBtn" onclick="captureCompanyWAN()">🌐 抓取這台電腦目前的網路出口 IP</button>
+          <div class="hint-text" style="margin-top:6px;">⚠️ 必須<strong>在公司 WiFi 連線狀態下</strong>按，抓到的才會是公司地址（在家按會把家裡 IP 寫進去，會讓打卡管制失效）。</div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label"><input type="checkbox" id="wanRequiredInput"> 啟用公司網路出口 IP 驗證（手機也能打卡）</label>
+          <div class="hint-text">✅ 預設<strong>勾選</strong>：公用 IP 命中上方清單即放行，手機連公司 WiFi 就能打卡。取消勾選則只剩 WiFi 名稱通道（手機會打不了卡）。</div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label"><input type="checkbox" id="wanAutoInput"> 自動登錄公司網路出口 IP</label>
+          <div class="hint-text">管理員用打卡小工具在公司 WiFi 上打卡／開設定頁時，若發現新的公司出口 IP 會<strong>自動加進清單</strong>（最多 8 組），公司寬頻 IP 浮動也不用手動改。</div>
         </div>
         <button class="btn btn-primary" onclick="saveWifiSettings()">儲存設定</button>
       </div>
@@ -750,7 +781,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v5.2.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-10-05 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證改為 WiFi 名稱 TY_5G 自動抓取（Windows 打卡小工具），已移除 IP／外網 IP／網段判定、MAC 位址認證、人臉辨識／活體偵測與 GPS 定位)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v5.3.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-10-05 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證雙軌：WiFi 名稱 TY_5G（Windows 打卡小工具）＋ 公司網路出口 IP（手機連公司 WiFi 即可打卡，管理員自動登錄、IP 浮動自動跟上），已移除 IP 網段判定、MAC 位址認證、人臉辨識／活體偵測與 GPS 定位)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受打卡管制，隨時隨地使用</td></tr>
@@ -855,22 +886,30 @@ let currentSSIDFrom = '';    // SSID 來源（tool = 小工具帶入 / empty = �
 let loginAttempts = {};
 let confirmCallback = null;
 
-// ===== v5.2.0 打卡驗證：僅 WiFi 名稱(SSID) 自動抓取 =====
-// （IP／外網 IP／網段判定於 v4.1.0 移除；MAC 認證與人臉辨識於 v5.1.0 移除；GPS 定位於 v5.2.0 移除）
+// ===== v5.3.0 打卡驗證：WiFi 名稱(SSID) ＋ 公司網路出口 IP（雙軌，任一通過即放行） =====
+// （IP 網段／MAC／人臉／GPS 判定皆已移除）
 //   wifi_name     = 公司打卡 WiFi 名稱（TY_5G）
 //   ssid_list     = 允許的 WiFi 名稱清單（逗號分隔；預設只有 TY_5G）
-//   ssid_required = 啟用 WiFi 名稱驗證
-// 判定順序：
-//   ① 停用打卡驗證 → 全放行（僅供臨時狀況使用）
-//   ② 啟用 → 必須連上清單中的 WiFi 名稱才放行（瀏覽器讀不到 SSID，需用 Windows 打卡小工具帶入）
-// ⚠️ 手機讀不到 WiFi 名稱 → 啟用驗證時手機無法打卡（需管理員停用驗證，或改用電腦小工具）
+//   ssid_required = 啟用 WiFi 名稱驗證（電腦用打卡小工具）
+//   wan_ip        = 公司網路出口（公用）IP 清單（逗號分隔，支援 * 通配，例如 61.220.*.*）
+//   wan_required  = 啟用出口 IP 驗證 ← 手機的救命通道
+//   wan_auto      = 管理員在公司 WiFi 上自動補登錄新的出口 IP（公司 IP 浮動時自動跟上）
+// 判定順序（任一通過就放行）：
+//   ① 停用打卡驗證 → 全放行
+//   ② WiFi 名稱符合（需 Windows 打卡小工具帶入）→ 放行
+//   ③ 公用 IP 命中公司出口 IP 清單 → 放行（手機連公司 WiFi 即可，不必用小工具）
+// ⚠️ 兩條都沒過 → 擋下。手機請關掉行動數據、改連公司 WiFi，按「🔄 重新偵測」即可。
 const WIFI_FACTORY_NAME = 'Office WiFi'; // 舊版從未設定過的原廠值（出現即視為未設定，套用預設）
 function wifiDefaults() {
   return {
-    mode: 'ssid',              // v5.2.0：僅 WiFi 名稱驗證（IP／MAC／人臉／GPS 判定皆已移除）
+    mode: 'ssid',              // v5.2.0：僅 WiFi 名稱驗證（IP 網段／MAC／人臉／GPS 判定皆已移除）
     wifi_name: 'TY_5G',        // 公司打卡 WiFi 名稱
     ssid_list: 'TY_5G',        // 允許的 WiFi 名稱清單（逗號分隔）
-    ssid_required: true,       // 啟用 WiFi 名稱驗證
+    ssid_required: true,       // 啟用 WiFi 名稱驗證（電腦打卡小工具）
+    wan_ip: '',                // v5.3.0：公司網路出口（公用）IP 清單（逗號分隔，支援 *）
+    wan_ip_at: '',             // 最近一次登錄／更新出口 IP 的時間
+    wan_auto: true,            // 管理員在公司 WiFi 上自動補登錄出口 IP
+    wan_required: true,        // 啟用出口 IP 驗證（讓手機不必用小工具也能打卡）
     last_ip: '',               // 最近偵測到的 IP（系統自動記錄，僅供顯示）
     last_ip_at: '',
     enabled: true,
@@ -892,10 +931,11 @@ function normalizeWifiSettings(target) {
   const w = target.wifiSettings;
   const untouched = !w || typeof w !== 'object' || !w.wifi_name || w.wifi_name === WIFI_FACTORY_NAME;
   if (untouched) { target.wifiSettings = wifiDefaults(); return; }
-  // v4.1.0：舊欄位清除（IP 判定全面移除）
+  // v4.1.0：舊欄位清除（IP 網段判定全面移除）
   // v5.1.0：再清除 MAC 認證與人臉辨識／活體偵測欄位（功能已移除，舊資料一併清乾淨）
   // v5.2.0：再清除 GPS 定位欄位（功能已移除）
-  ['require_ssid', 'ssid_ip_range', 'allowed_ips', 'wan_ip', 'wan_ip_at', 'wan_auto',
+  // v5.3.0：出口 IP（wan_*）復活為放行通道 → 舊的 wan_ip 直接沿用（不再是待清除的垃圾）
+  ['require_ssid', 'ssid_ip_range', 'allowed_ips',
    'ssid_ip', 'ssid_ip_at', 'allow_no_ssid',
    'mac_list', 'mac_required', 'device_mac_list', 'device_mac_required',
    'last_mac', 'last_mac_at', 'last_device_mac',
@@ -907,6 +947,11 @@ function normalizeWifiSettings(target) {
   if (w.ssid_required === undefined || typeof w.ssid_required !== 'boolean') w.ssid_required = true;
   if (!w.last_ip || typeof w.last_ip !== 'string') w.last_ip = '';
   if (!w.last_ip_at) w.last_ip_at = '';
+  // v5.3.0：公司出口 IP 通道（手機連公司 WiFi 就用這條放行）
+  if (!w.wan_ip || typeof w.wan_ip !== 'string') w.wan_ip = '';
+  if (!w.wan_ip_at) w.wan_ip_at = '';
+  if (w.wan_auto === undefined || typeof w.wan_auto !== 'boolean') w.wan_auto = true;
+  if (w.wan_required === undefined || typeof w.wan_required !== 'boolean') w.wan_required = true;
   if (w.enabled === undefined) w.enabled = true;
   w.mode = 'ssid';
 }
@@ -1079,20 +1124,72 @@ function requireLogin() {
 }
 
 // ===== IP Detection =====
-async function detectIP() {
+// v5.3.0：公用 IP（＝公司網路出口 IP）多通道並行競速
+//   手機／瀏覽器讀不到 WiFi 名稱，但只要連上公司 WiFi，對外的公用 IP 就是公司的外網 IP，
+//   這是目前唯一「手機也抓得到、又能證明人在公司網路」的可靠依據（v5.3.0 起作為第二條放行通道）。
+//   多家供應商同時打，誰先回傳有效 IPv4 就用誰；單一供應商掛掉／被擋不影響打卡。
+const WAN_IP_PROVIDERS = [
+  'https://api.ipify.org?format=json',
+  'https://api64.ipify.org?format=json',
+  'https://ipv4.icanhazip.com',
+  'https://api.ip.sb/ip',
+  'https://ip.3322.net',
+  'https://cloudflare.com/cdn-cgi/trace'
+];
+const IPV4_EXACT_RE = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+// 從任何回應內容（JSON / 純文字 / key=value）抽出第一個 IPv4
+function extractIPv4(text) {
+  const m = /(?:^|[^0-9.])((?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})(?![0-9.])/
+    .exec(String(text || ''));
+  return m ? m[1] : '';
+}
+function isIPv4(ip) { return IPV4_EXACT_RE.test(String(ip || '').trim()); }
+
+// 公用 IP 抓取：所有供應商並行，第一個有效的結果勝出；全部失敗或逾時回傳 ''
+async function fetchPublicIP(opts) {
+  const timeoutMs = (opts && opts.timeoutMs) || 4000;
+  if (typeof window.fetch !== 'function') return '';
+  return new Promise(function(resolve) {
+    let settled = false;
+    const finish = function(ip) { if (!settled) { settled = true; resolve(ip || ''); } };
+    const timer = setTimeout(function() { finish(''); }, timeoutMs);
+    WAN_IP_PROVIDERS.forEach(function(url) {
+      try {
+        let init = { cache: 'no-store' };
+        if (window.AbortController) {
+          const ac = new AbortController();
+          init.signal = ac.signal;
+          setTimeout(function() { try { ac.abort(); } catch (e) {} }, timeoutMs);
+        }
+        fetch(url, init).then(function(r) {
+          if (!r || !r.ok) throw new Error('bad-status');
+          return r.text();
+        }).then(function(t) {
+          const ip = extractIPv4(t);
+          if (ip) { clearTimeout(timer); finish(ip); }
+        }).catch(function() {});
+      } catch (e) {}
+    });
+  });
+}
+
+// 相容舊呼叫：抓公用 IP（抓不到回 'unknown'）
+async function detectIP(opts) {
   try {
-    const res = await fetch('https://api.ipify.org?format=json');
-    const data = await res.json();
-    return data.ip;
-  } catch(e) {
-    try {
-      const res2 = await fetch('https://httpbin.org/ip');
-      const data2 = await res2.json();
-      return data2.origin;
-    } catch(e2) {
-      return 'unknown';
-    }
+    const ip = await fetchPublicIP(opts);
+    return ip || 'unknown';
+  } catch (e) { return 'unknown'; }
+}
+
+// 打卡前確保已抓到公用 IP（只抓一次，之後沿用同一個工作階段的結果）
+async function ensurePublicIP(opts) {
+  if (isIPv4(currentPublicIP)) return currentPublicIP;
+  const ip = await fetchPublicIP(opts);
+  if (isIPv4(ip)) {
+    currentPublicIP = ip;
+    if (!currentIP || currentIP === 'unknown') currentIP = ip;
   }
+  return currentPublicIP || '';
 }
 
 function isIPAllowed(ip, allowedIPsStr) {
@@ -1181,15 +1278,28 @@ function evalGate() {
   const hasSSID = !!s;
   const ssidOK = hasSSID && list.some(function(n) { return n.toLowerCase() === s.toLowerCase(); });
   const ssidRequired = w.ssid_required !== false;
+  // 公司網路出口 IP（v5.3.0）：公用 IP 抓得到 → 手機連公司 WiFi 也能放行
+  const wanList = (w.wan_ip || '').trim();
+  const wanIP = (currentPublicIP || '').trim();
+  const hasWanIP = isIPv4(wanIP);
+  const wanRequired = w.wan_required !== false;
+  // 取消勾選「啟用出口 IP 驗證」時，該通道視為完全不存在（名稱不符就不該靠 IP 放行）
+  const wanOK = wanRequired && !!wanList && hasWanIP && isIPAllowed(wanIP, wanList);
   const enabled = w.enabled !== false;
+  // 只有「有勾選」且「清單真的有設定」的通道才參與判定
+  // （清單是空的＝這條通道沒設好，不能拿來卡人，否則員工會被莫名的設定鎖死）
+  const ssidActive = ssidRequired && list.length > 0;
+  const wanActive = wanRequired && !!wanList;
   let ok = false, method = '';
   if (!enabled) { ok = true; method = 'off'; }
-  else if (ssidRequired) ok = ssidOK;
-  else ok = true;
-  if (ok && !method) method = hasSSID ? 'ssid' : 'off';
+  else if (ssidOK) { ok = true; method = 'ssid'; }
+  else if (wanOK) { ok = true; method = 'wan'; }
+  else if (!ssidActive && !wanActive) { ok = true; method = 'off'; } // 兩條都沒啟用 → 不設限
   return {
     enabled: enabled, ok: ok, method: method,
-    ssidName: name, ssidList: list, ssid: s, hasSSID: hasSSID, ssidOK: ssidOK, ssidRequired: ssidRequired,
+    ssidName: name, ssidList: list, ssid: s, hasSSID: hasSSID, ssidOK: ssidOK,
+    ssidRequired: ssidRequired, ssidActive: ssidActive,
+    wanIP: wanIP, wanList: wanList, wanOK: wanOK, wanRequired: wanRequired, wanActive: wanActive, hasWanIP: hasWanIP,
     ip: currentIP || 'unknown'
   };
 }
@@ -1198,31 +1308,59 @@ function evalGate() {
 function gateFailReason(g) {
   const name = (g && g.ssidName) || 'TY_5G';
   if (!g) return '打卡驗證失敗，請重新整理頁面後再試。';
+  const wanTxt = g.hasWanIP ? ('目前網路出口 IP：' + g.wanIP) : '抓不到網路出口 IP';
   if (g.hasSSID && !g.ssidOK) {
-    return '您目前連上的 WiFi 是「' + g.ssid + '」，不是公司 WiFi「' + name +
-      '」，無法打卡。請改連 ' + name + ' 後，用桌面的「TY_5G 打卡」小工具重新開啟本頁。';
+    return '您目前連上的 WiFi 是「' + g.ssid + '」，不是公司 WiFi「' + name + '」，' + wanTxt +
+      '（也不在公司網路清單內），無法打卡。請關掉行動數據、改連 ' + name +
+      ' 後，按「🔄 重新偵測」再打卡（電腦也可用桌面的「TY_5G 打卡」小工具）。';
   }
   if (!g.hasSSID) {
-    return '抓不到 WiFi 名稱（瀏覽器讀不到，需用打卡小工具帶入）。請改用電腦桌面的「TY_5G 打卡」小工具開啟本頁（會自動讀取目前連上的 WiFi 名稱）；手機無法打卡，請洽管理員。';
+    const listTxt = g.wanList ? ('公司網路出口 IP 清單：' + g.wanList) : '管理員尚未登錄公司網路出口 IP';
+    return '抓不到 WiFi 名稱（瀏覽器讀不到），且 ' + wanTxt + ' 不在公司網路內（' + listTxt +
+      '），無法打卡。📱 手機：請關掉行動數據、確定連上公司 WiFi「' + name +
+      '」，再按「🔄 重新偵測」；💻 電腦：改用桌面的「TY_5G 打卡」小工具開啟本頁。';
   }
-  return '打卡驗證未通過（WiFi 名稱不符）。請連上 ' + name + ' 後再打卡，或按「🔄 重新偵測」重試。';
+  return '打卡驗證未通過（WiFi 名稱與出口 IP 都不符）。請連上 ' + name + ' 後再打卡，或按「🔄 重新偵測」重試。';
 }
 
 // 打卡紀錄的判定方式標記（稽核用）
-//   ssid = WiFi 名稱符合（v5.2.0 起唯一驗證方式）
+//   ssid = WiFi 名稱符合（電腦打卡小工具帶入）／ wan = 公司網路出口 IP 符合（手機也可）
 function gateCheckTag(g) {
   if (!g || !g.ok) return '';
   if (g.ssidOK) return 'ssid';
+  if (g.wanOK) return 'wan';
   return 'off';
 }
-// 把驗證結果寫入打卡紀錄（稽核用：判定方式、WiFi 名稱）
+// 把驗證結果寫入打卡紀錄（稽核用：判定方式、WiFi 名稱、出口 IP）
 function applyGateFields(rec, gate, verified) {
   if (!rec) return rec;
   rec.wifi_verified = verified ? 1 : 0;
   rec.wifi_ssid = verified ? ((gate && gate.ssid) || '') : '';
   rec.wifi_check = verified ? gateCheckTag(gate) : '';
   rec.check_method = verified ? (gateCheckTag(gate) || ((gate && gate.method) || '')) : '';
+  rec.check_ip = verified ? ((gate && gate.wanIP) || '') : '';
   return rec;
+}
+
+// v5.3.0：管理員在公司網路（WiFi 名稱相符）時，自動把目前的公司出口 IP 補進清單
+// 目的：公司寬頻的公用 IP 會浮動，管理員每天在公司打卡就自動跟上新的 IP，員工手機才不會突然被打回票。
+// 限制：只有管理員 ＋ WiFi 名稱相符時才寫入 → 員工在家打卡不會把家裡 IP 登錄成公司地址。
+function autoRegisterCompanyWAN(gate) {
+  const g = gate || evalGate();
+  if (!db.wifiSettings) return false;
+  const w = db.wifiSettings;
+  if (w.wan_auto === false) return false;
+  if (!(currentUser && currentUser.role === 'admin')) return false;
+  if (!g.ssidOK || !g.hasWanIP) return false;
+  if (g.wanOK) return false; // 已在清單內（含 * 通配命中）→ 不用重複寫
+  const list = splitIpList(w.wan_ip);
+  list.push(g.wanIP);
+  while (list.length > 8) list.shift(); // 最多保留 8 組，超過淘汰最舊
+  w.wan_ip = list.join(',');
+  w.wan_ip_at = new Date().toISOString();
+  w.updated_at = w.wan_ip_at;
+  saveDB();
+  return true;
 }
 
 // SSID 通道的簡易防偽記號（小工具帶入 ?ssid=XXX&t=記號，避免人手在網址列亂打）
@@ -1287,8 +1425,10 @@ function recordDetectedIP(opts) {
 async function refreshNetworkInfo(opts) {
   const det = await detectIPv4();
   currentIP = det.ip; currentLocalIP = det.lan; currentPublicIP = det.public;
-  if (db.wifiSettings) recordDetectedIP(opts);
-  return { ip: currentIP, lan: det.lan, public: det.public };
+  if (!currentPublicIP) { try { currentPublicIP = await ensurePublicIP({ timeoutMs: 3000 }); } catch (e) {} }
+  let added = false;
+  if (db.wifiSettings) { recordDetectedIP(opts); added = autoRegisterCompanyWAN(); }
+  return { ip: currentIP, lan: det.lan, public: currentPublicIP || det.public, wanAdded: added };
 }
 
 // ===== Late / Early Calculation =====
@@ -1872,8 +2012,15 @@ async function loadClockStatus() {
     const det = await detectIPv4();
     currentIP = det.ip; currentLocalIP = det.lan; currentPublicIP = det.public;
   }
+  // v5.3.0：放行可能會靠「公司網路出口 IP」→ 抓不到就在背景補抓，抓到後自動重刷一次畫面
+  // （刻意不 await：打卡頁要立刻顯示，不能讓員工盯著「偵測中」等網路）
+  if (!currentPublicIP) {
+    ensurePublicIP({ timeoutMs: 2500 }).then(function(ip) {
+      if (ip && currentUser) loadClockStatus();
+    }).catch(function() {});
+  }
   if (!currentUser) return; // 防禦：await 期間使用者可能已登出（v4.0.7 修補的 race，v4.0.11 補強）
-  if (db.wifiSettings) recordDetectedIP();
+  if (db.wifiSettings) { recordDetectedIP(); autoRegisterCompanyWAN(); }
 
   if (isAdmin) {
     // Admin is EXEMPT — can clock in/out & manage from anywhere
@@ -1892,7 +2039,9 @@ async function loadClockStatus() {
     } else if (g.ok) {
       wifiEl.className = 'wifi-status verified';
       const parts = [];
-      if (g.hasSSID) parts.push('📶 WiFi ' + esc(g.ssid) + ' ✓');
+      if (g.ssidOK) parts.push('📶 WiFi ' + esc(g.ssid) + ' ✓');
+      if (g.wanOK) parts.push('🌐 公司網路 IP ' + esc(g.wanIP) + ' ✓');
+      if (!parts.length) parts.push('✅ 已放行');
       wifiEl.innerHTML = '<span>✅ ' + parts.join(' · ') + ' — 已確認在公司，可打卡</span>';
     } else {
       wifiEl.className = 'wifi-status unverified';
@@ -1969,8 +2118,12 @@ async function redetectNetwork() {
   currentIP = null; currentLocalIP = null; currentPublicIP = null;
   const det = await detectIPv4();
   currentIP = det.ip; currentLocalIP = det.lan; currentPublicIP = det.public;
+  // v5.3.0：找不到出口 IP 時再補抓一次（員工按「重新偵測」就是要重判定）
+  if (!currentPublicIP) { try { currentPublicIP = await ensurePublicIP({ timeoutMs: 3000 }); } catch (e) {} }
   if (btn) { btn.disabled = false; btn.textContent = '🔄 重新偵測'; }
+  if (typeof autoRegisterCompanyWAN === 'function') autoRegisterCompanyWAN();
   showToast('已重新偵測 — IP：' + (currentIP || 'unknown') +
+    (currentPublicIP ? ' · 網路出口 IP：' + currentPublicIP : ' · 網路出口 IP：抓不到') +
     (currentSSID ? ' · WiFi：' + currentSSID : ' · WiFi：抓不到（請用打卡小工具開啟本頁）'), 'info');
   loadClockStatus();
   if (currentUser && currentUser.role === 'admin' && typeof refreshWifiDetectInfo === 'function') refreshWifiDetectInfo();
@@ -2168,7 +2321,13 @@ async function clockIn() {
   const today = new Date().toLocaleDateString('en-CA');
   const now = new Date().toLocaleTimeString('en-GB');
   const isAdmin = currentUser.role === 'admin';
-  // v5.2.0：僅 WiFi 名稱驗證（管理員豁免）
+  // v5.3.0：抓不到公用 IP 時，手機可能只差這一步就能放行 → 先顯示偵測中並補抓（最多 2.5 秒）
+  if (!isAdmin && (db.wifiSettings || {}).enabled !== false && !isIPv4(currentPublicIP)) {
+    const el0 = document.getElementById('wifiStatus');
+    if (el0) { el0.className = 'wifi-status checking'; el0.innerHTML = '<span>🔄 正在偵測網路環境（公司網路）...</span>'; }
+    try { await ensurePublicIP({ timeoutMs: 2500 }); } catch (e) {}
+  }
+  // v5.3.0：WiFi 名稱 ＋ 公司網路出口 IP 雙軌驗證（管理員豁免）
   const gate = evalGate();
   const wifiVerified = isAdmin ? true : gate.ok;
 
@@ -2242,8 +2401,14 @@ async function clockOut() {
   const today = new Date().toLocaleDateString('en-CA');
   const now = new Date().toLocaleTimeString('en-GB');
   const isAdmin = currentUser.role === 'admin';
+  // v5.3.0：下班同樣補抓公用 IP（手機可能只差這一步就能放行）
+  if (!isAdmin && (db.wifiSettings || {}).enabled !== false && !isIPv4(currentPublicIP)) {
+    const el0 = document.getElementById('wifiStatus');
+    if (el0) { el0.className = 'wifi-status checking'; el0.innerHTML = '<span>🔄 正在偵測網路環境（公司網路）...</span>'; }
+    try { await ensurePublicIP({ timeoutMs: 2500 }); } catch (e) {}
+  }
 
-  // v5.2.0：下班打卡驗證（僅 WiFi 名稱）— admin exempt
+  // v5.3.0：下班打卡驗證（WiFi 名稱 ＋ 公司網路出口 IP）— admin exempt
   const gate = evalGate();
   const wifiVerified = isAdmin ? true : gate.ok;
   if (!isAdmin && gate.enabled && !gate.ok) {
@@ -2835,25 +3000,67 @@ function exportCSV() {
   showToast('CSV已匯出（共 ' + records.length + ' 筆記錄，含請假）', 'success');
 }
 
-// ===== 打卡驗證設定（v5.2.0：僅 WiFi 名稱 TY_5G 自動抓取） =====
+// ===== 打卡驗證設定（v5.3.0：WiFi 名稱 ＋ 公司網路出口 IP 雙軌） =====
 async function loadWifiSettings() {
   if (!requireAdmin()) return;
   const w = db.wifiSettings || {};
   const setVal = function(id, v) { const el = document.getElementById(id); if (el) el.value = v; };
+  const setChk = function(id, v) { const el = document.getElementById(id); if (el) el.checked = !!v; };
   setVal('wifiNameInput', w.wifi_name || 'TY_5G');
-  const enabled = document.getElementById('wifiEnabledInput'); if (enabled) enabled.checked = w.enabled !== false;
-  const ssidReq = document.getElementById('ssidRequiredInput'); if (ssidReq) ssidReq.checked = w.ssid_required !== false;
+  setVal('wanIpInput', w.wan_ip || '');
+  setChk('wifiEnabledInput', w.enabled !== false);
+  setChk('ssidRequiredInput', w.ssid_required !== false);
+  setChk('wanRequiredInput', w.wan_required !== false);
+  setChk('wanAutoInput', w.wan_auto !== false);
   refreshWifiDetectInfo(); // 先立即帶出既有設定（不等 IP，避免畫面卡在「載入中」）
   try { await refreshNetworkInfo({ force: false }); } catch (e) {}
   refreshWifiDetectInfo(); // IP 回來後再更新一次
 }
 
-// 顯示偵測結果：IP / WiFi 名稱 / 放行狀態
+// 管理員手動登錄公司網路出口 IP（必須在公司 WiFi 連線狀態下按）
+async function captureCompanyWAN() {
+  if (!requireAdmin()) return;
+  const btn = document.getElementById('captureWanBtn');
+  const label = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '🌐 抓取中...'; }
+  let ip = '';
+  try { ip = await fetchPublicIP({ timeoutMs: 6000 }); } catch (e) { ip = ''; }
+  if (btn) { btn.disabled = false; btn.textContent = label; }
+  if (!ip) {
+    showToast('抓不到網路出口 IP，請確認網路連線後再試一次。', 'error');
+    return;
+  }
+  currentPublicIP = ip;
+  if (!currentIP || currentIP === 'unknown') currentIP = ip;
+  const input = document.getElementById('wanIpInput');
+  if (input) {
+    const list = splitIpList(input.value);
+    if (list.indexOf(ip) === -1) list.push(ip);
+    input.value = list.join(', ');
+  }
+  const g = evalGate();
+  refreshWifiDetectInfo();
+  showToast('已抓到這台電腦的網路出口 IP：' + ip + '（請確認是在公司 WiFi 下抓取，並記得按「儲存設定」）' +
+    (g.ssidOK ? '' : ' ⚠️ 目前 WiFi 名稱不是 ' + (g.ssidName || 'TY_5G') + '，請確認連的是公司 WiFi。'), 'success');
+}
+
+// 顯示偵測結果：IP / WiFi 名稱 / 出口 IP / 放行狀態
 function refreshWifiDetectInfo() {
   const setTxt = function(id, txt) { const el = document.getElementById(id); if (el) el.textContent = txt; };
   const setHtml = function(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; };
   const w = db.wifiSettings || {};
   setTxt('adminCurrentIP', currentIP || '（無法取得）');
+  // 網路出口 IP（公網）：手機連公司 WiFi 就是靠這個放行
+  if (isIPv4(currentPublicIP)) {
+    const hit = !!(w.wan_ip && isIPAllowed(currentPublicIP, w.wan_ip));
+    setTxt('adminWanIp', currentPublicIP + (hit ? ' ✓' : ' ✗'));
+    setTxt('adminWanIpNote', hit
+      ? '（在公司網路出口 IP 清單內，員工手機連公司 WiFi 可打卡）'
+      : (w.wan_ip ? '（不在清單「' + w.wan_ip + '」內，手機打卡會被擋下）' : '（尚未設定公司網路出口 IP，請按下方按鈕抓取）'));
+  } else {
+    setTxt('adminWanIp', '（抓不到 — 網路被擋／離線）');
+    setTxt('adminWanIpNote', '抓不到出口 IP 時，員工只能靠電腦打卡小工具放行');
+  }
   // 本機 WiFi 名稱：只有用打卡小工具開啟本頁才讀得到（網頁本身受限讀不到 SSID）
   if (currentSSID) {
     const g = evalGate();
@@ -2872,7 +3079,8 @@ function refreshWifiDetectInfo() {
     if (!g.enabled) {
       setHtml('wifiAutoNote', '⚠️ 打卡驗證已停用（任何地點皆可打卡）');
     } else if (g.ok) {
-      setHtml('wifiAutoNote', '✅ 驗證通過：📶 ' + esc(g.ssid) + ' ✓（' + esc(gateCheckTag(g)) + '）');
+      const via = g.ssidOK ? ('📶 WiFi ' + esc(g.ssid) + ' ✓') : ('🌐 出口 IP ' + esc(g.wanIP) + ' ✓');
+      setHtml('wifiAutoNote', '✅ 驗證通過：' + via + '（' + esc(gateCheckTag(g)) + '）');
     } else {
       setHtml('wifiAutoNote', '❌ ' + esc(gateFailReason(g)));
     }
@@ -2880,9 +3088,14 @@ function refreshWifiDetectInfo() {
 
   const warn = document.getElementById('wifiDetectWarn');
   if (warn) {
-    if (!currentSSID) {
+    const g = evalGate();
+    if (g.enabled && !g.ok && !currentSSID && !g.wanActive) {
       warn.style.display = '';
-      warn.innerHTML = '⚠️ 本頁讀不到 WiFi 名稱（瀏覽器安全限制）。請改用電腦桌面的「TY_5G 打卡」小工具開啟本頁（自動帶入 WiFi 名稱）；手機讀不到 WiFi 名稱，啟用驗證時手機無法打卡。';
+      warn.innerHTML = '⚠️ 尚未設定「公司網路出口 IP」且讀不到 WiFi 名稱 → 員工手機現在<strong>無法打卡</strong>。' +
+        '請在下方「公司網路出口 IP」按「🌐 抓取這台電腦目前的網路出口 IP」（在公司 WiFi 下抓取）並儲存設定，手機連公司 WiFi 即可打卡。';
+    } else if (g.enabled && !g.ok && !isIPv4(currentPublicIP)) {
+      warn.style.display = '';
+      warn.innerHTML = '⚠️ 抓不到網路出口 IP（網路被擋或離線）→ 目前只能靠電腦打卡小工具放行，員工請改用「TY_5G 打卡」小工具。';
     } else {
       warn.style.display = 'none';
     }
@@ -2896,11 +3109,16 @@ function saveWifiSettings() {
   const chk = function(id) { const el = document.getElementById(id); return !!(el && el.checked); };
   const rawList = trim(val('wifiNameInput')) || 'TY_5G';
   const name = splitSsidList(rawList)[0] || 'TY_5G'; // 顯示用：取清單第一個名稱
+  const rawWan = trim(val('wanIpInput'));
   db.wifiSettings = {
     mode: 'ssid',
     wifi_name: name,
     ssid_list: rawList,   // 允許多組名稱（逗號分隔）
     ssid_required: chk('ssidRequiredInput'),
+    wan_ip: rawWan,       // v5.3.0：公司網路出口 IP 清單（支援 * 通配）
+    wan_ip_at: prev.wan_ip_at || '',
+    wan_auto: chk('wanAutoInput'),
+    wan_required: chk('wanRequiredInput'),
     last_ip: prev.last_ip || '',
     last_ip_at: prev.last_ip_at || '',
     enabled: chk('wifiEnabledInput'),
@@ -2908,7 +3126,9 @@ function saveWifiSettings() {
   };
   saveDB();
   showToast('打卡設定已儲存！（WiFi 名稱：' + name +
+    ' · 出口 IP：' + (rawWan || '未設定') +
     (db.wifiSettings.enabled ? ' · 驗證啟用' : ' · 驗證停用') + '）', 'success');
+  refreshWifiDetectInfo();
   loadClockStatus();
 }
 
@@ -3419,7 +3639,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '5.2.0.20261005';
+const BUILD_ID = '5.3.0.20261005';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
