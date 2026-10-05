@@ -596,7 +596,8 @@
         </div>
         <div class="info-banner" style="background:#f0fdf4; color:#166534; border:1px solid #bbf7d0;">
           <span>📱</span>
-          <span><strong>手機也能打卡（v5.3.0 起）：</strong>瀏覽器讀不到 WiFi 名稱，但抓得到「網路出口 IP」。只要手機<strong>連上公司 WiFi</strong>（記得關掉行動數據），系統就會比對<strong>公司網路出口 IP</strong>，符合即放行 — 不必用小工具，也不必停用驗證。</span>
+          <span><strong>手機也能打卡（v5.3.0 起）：</strong>瀏覽器讀不到 WiFi 名稱，但抓得到「網路出口 IP」。只要手機<strong>連上公司 WiFi</strong>（記得關掉行動數據），系統就會比對<strong>公司網路出口 IP</strong>，符合即放行 — 不必用小工具，也不必停用驗證。<br>
+          <strong>v5.3.1：管理員不在公司也沒問題</strong> — ① 員工用打卡小工具在公司打卡時，公司 IP 若浮動會自動補更新；② 管理員可在任何地方產生「一次性遠端登記連結」，傳給在公司的同事按一下就完成登錄。</span>
         </div>
         <div class="info-banner blue">
           <span>💻</span>
@@ -661,7 +662,26 @@
         </div>
         <div class="form-group">
           <label class="checkbox-label"><input type="checkbox" id="wanAutoInput"> 自動登錄公司網路出口 IP</label>
-          <div class="hint-text">管理員用打卡小工具在公司 WiFi 上打卡／開設定頁時，若發現新的公司出口 IP 會<strong>自動加進清單</strong>（最多 8 組），公司寬頻 IP 浮動也不用手動改。</div>
+          <div class="hint-text">在公司 WiFi 上（WiFi 名稱相符）打卡／開設定頁時，若發現新的公司出口 IP 會<strong>自動加進清單</strong>（最多 8 組），公司寬頻 IP 浮動也不用手動改。</div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label"><input type="checkbox" id="wanSelfEnrollInput"> 允許員工（非管理員）在公司內自動更新出口 IP</label>
+          <div class="hint-text">✅ 預設<strong>勾選</strong>：<strong>管理員不在公司也沒關係</strong> — 員工用打卡小工具在公司 WiFi 上打卡時，若公司 IP 剛好浮動，會自動把新的公司 IP 補進清單（僅限 WiFi 名稱真的相符時，在家／連別的網路一律不會寫入）。取消勾選則只保留管理員能更新。</div>
+        </div>
+        <div style="height:1px;background:var(--border);margin:18px 0;"></div>
+        <div class="form-group">
+          <label>🔗 遠端登記連結（管理員不在公司時用）</label>
+          <div class="hint-text">
+            <strong>管理員出差、請假、或根本還沒去過公司？</strong>按下方產生一個「一次性登記連結」，用 LINE 傳給<strong>此刻人在公司的同事</strong>；
+            同事在公司 WiFi 下用手機打開連結、按一下確認，公司網路出口 IP 就登錄完成，全公司手機立刻能打卡。
+            連結 <strong>60 分鐘內有效、只能用一次</strong>，完成後會記錄是誰協助登記的。
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+            <button class="btn btn-outline btn-sm" id="genEnrollLinkBtn" onclick="generateEnrollLink()">🔗 產生登記連結</button>
+            <button class="btn btn-outline btn-sm" id="copyEnrollLinkBtn" onclick="copyEnrollLink()">📋 複製連結</button>
+          </div>
+          <input type="text" id="enrollLinkInput" readonly placeholder="按「產生登記連結」後會出現在這裡" style="margin-top:8px;font-family:monospace;font-size:12.5px;">
+          <div id="enrollLinkStatus" style="margin-top:6px;font-size:12.5px;color:var(--text-secondary);"></div>
         </div>
         <button class="btn btn-primary" onclick="saveWifiSettings()">儲存設定</button>
       </div>
@@ -781,7 +801,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v5.3.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-10-05 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證雙軌：WiFi 名稱 TY_5G（Windows 打卡小工具）＋ 公司網路出口 IP（手機連公司 WiFi 即可打卡，管理員自動登錄、IP 浮動自動跟上），已移除 IP 網段判定、MAC 位址認證、人臉辨識／活體偵測與 GPS 定位)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v5.3.1 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-10-05 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證雙軌：WiFi 名稱 TY_5G（Windows 打卡小工具）＋ 公司網路出口 IP（手機連公司 WiFi 即可打卡，管理員自動登錄、IP 浮動自動跟上），已移除 IP 網段判定、MAC 位址認證、人臉辨識／活體偵測與 GPS 定位)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受打卡管制，隨時隨地使用</td></tr>
@@ -867,6 +887,25 @@
   </div>
 </div>
 
+<!-- v5.3.1 一次性遠端登記公司網路出口 IP（管理員產生的連結） -->
+<div class="modal-overlay" id="enrollModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📍 協助登記公司網路出口 IP</div>
+      <button class="modal-close" onclick="closeEnrollModal()">&times;</button>
+    </div>
+    <div id="enrollInfo"></div>
+    <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+      <button class="btn btn-outline" onclick="closeEnrollModal()">稍後再說</button>
+      <button class="btn btn-primary" id="enrollConfirmBtn" onclick="doEnrollWAN()">📌 確認登記這個 IP</button>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--text-secondary);line-height:1.6;">
+      這個連結是管理員專程傳給您的，60 分鐘內有效、<strong>只能用一次</strong>；登記完成後系統會記下是由您完成的。
+      若您現在不在公司，請先不要按，交給在公司的同事處理即可。
+    </div>
+  </div>
+</div>
+
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
@@ -893,7 +932,9 @@ let confirmCallback = null;
 //   ssid_required = 啟用 WiFi 名稱驗證（電腦用打卡小工具）
 //   wan_ip        = 公司網路出口（公用）IP 清單（逗號分隔，支援 * 通配，例如 61.220.*.*）
 //   wan_required  = 啟用出口 IP 驗證 ← 手機的救命通道
-//   wan_auto      = 管理員在公司 WiFi 上自動補登錄新的出口 IP（公司 IP 浮動時自動跟上）
+//   wan_auto      = 在公司 WiFi 上自動補登錄新的出口 IP（公司 IP 浮動時自動跟上）
+//   wan_self_enroll = v5.3.1：允許「員工」在公司 WiFi 內補登錄（管理員不在公司也能自動跟上 IP）
+//   enroll_token  = v5.3.1：一次性遠端登記連結的記號（管理員在 anywhere 產生，傳給在公司的同事）
 // 判定順序（任一通過就放行）：
 //   ① 停用打卡驗證 → 全放行
 //   ② WiFi 名稱符合（需 Windows 打卡小工具帶入）→ 放行
@@ -908,8 +949,15 @@ function wifiDefaults() {
     ssid_required: true,       // 啟用 WiFi 名稱驗證（電腦打卡小工具）
     wan_ip: '',                // v5.3.0：公司網路出口（公用）IP 清單（逗號分隔，支援 *）
     wan_ip_at: '',             // 最近一次登錄／更新出口 IP 的時間
-    wan_auto: true,            // 管理員在公司 WiFi 上自動補登錄出口 IP
+    wan_ip_by: '',             // v5.3.1：最近一次是誰登錄的（稽核）
+    wan_auto: true,            // 在公司 WiFi 上自動補登錄出口 IP
     wan_required: true,        // 啟用出口 IP 驗證（讓手機不必用小工具也能打卡）
+    wan_self_enroll: true,     // v5.3.1：允許員工（非管理員）在公司 WiFi 內補登錄
+    enroll_token: '',          // v5.3.1：一次性遠端登記連結記號
+    enroll_exp: 0,             // 記號到期時間（Date.now() 毫秒）
+    enroll_used: false,        // 記號是否已使用（用過即失效）
+    enroll_by: '',             // 用這個記號完成登記的人
+    enroll_used_at: '',        // 完成登記時間
     last_ip: '',               // 最近偵測到的 IP（系統自動記錄，僅供顯示）
     last_ip_at: '',
     enabled: true,
@@ -952,6 +1000,14 @@ function normalizeWifiSettings(target) {
   if (!w.wan_ip_at) w.wan_ip_at = '';
   if (w.wan_auto === undefined || typeof w.wan_auto !== 'boolean') w.wan_auto = true;
   if (w.wan_required === undefined || typeof w.wan_required !== 'boolean') w.wan_required = true;
+  // v5.3.1：管理員不在公司也能維持通道（員工自助補登 ＋ 一次性遠端登記連結）
+  if (!w.wan_ip_by || typeof w.wan_ip_by !== 'string') w.wan_ip_by = '';
+  if (w.wan_self_enroll === undefined || typeof w.wan_self_enroll !== 'boolean') w.wan_self_enroll = true;
+  if (!w.enroll_token || typeof w.enroll_token !== 'string') w.enroll_token = '';
+  if (!w.enroll_exp || typeof w.enroll_exp !== 'number') w.enroll_exp = 0;
+  if (w.enroll_used === undefined || typeof w.enroll_used !== 'boolean') w.enroll_used = false;
+  if (!w.enroll_by || typeof w.enroll_by !== 'string') w.enroll_by = '';
+  if (!w.enroll_used_at) w.enroll_used_at = '';
   if (w.enabled === undefined) w.enabled = true;
   w.mode = 'ssid';
 }
@@ -1219,6 +1275,19 @@ function isPrivateIPv4(ip) {
   return false;
 }
 
+// v5.3.1：可當「公司網路出口」的 IP（必須是真正的公網 IP）
+// 避免有人在家把 192.168.1.1 / 10.0.0.1 這類區網 IP 登錄成公司地址（那會讓打卡管制整個失效）
+function isPublicIPv4(ip) {
+  if (!isIPv4(ip)) return false;
+  if (isPrivateIPv4(ip)) return false;      // 10./192.168./172.16-31./169.254.
+  if (/^127\./.test(ip)) return false;      // loopback
+  if (/^0\./.test(ip)) return false;        // 0.0.0.0/8
+  if (/^100\.6[4-9]\./.test(ip) || /^100\.(1[0-1]\d|12[0-7])\./.test(ip)) return false; // CGNAT
+  const oct = parseInt(/^(\d{1,3})\./.exec(ip)[1], 10);
+  if (oct >= 224) return false;             // multicast / reserved / 廣播
+  return true;
+}
+
 function detectLocalIPv4() {
   return new Promise(function(resolve) {
     var finished = false;
@@ -1342,25 +1411,235 @@ function applyGateFields(rec, gate, verified) {
   return rec;
 }
 
-// v5.3.0：管理員在公司網路（WiFi 名稱相符）時，自動把目前的公司出口 IP 補進清單
-// 目的：公司寬頻的公用 IP 會浮動，管理員每天在公司打卡就自動跟上新的 IP，員工手機才不會突然被打回票。
-// 限制：只有管理員 ＋ WiFi 名稱相符時才寫入 → 員工在家打卡不會把家裡 IP 登錄成公司地址。
+// ===== v5.3.1：公司網路出口 IP 的「唯一寫入口」 =====
+// 所有來源（自動登錄、一次性遠端登記連結、管理員手動）都走這裡，確保條件一致：
+//   ① 必須是真正的公網 IPv4（擋掉 192.168.* / 10.* / 127.* 這種區網 IP）
+//   ② 不在既有清單內（含 * 通配命中）→ 不重複寫
+//   ③ 最多保留 8 組，超過淘汰最舊
+function addCompanyWAN(ip, who) {
+  if (!db.wifiSettings) db.wifiSettings = wifiDefaults();
+  const w = db.wifiSettings;
+  const target = String(ip || '').trim();
+  if (!isPublicIPv4(target)) return { ok: false, reason: 'invalid-ip' };
+  if (w.wan_ip && isIPAllowed(target, w.wan_ip)) return { ok: false, reason: 'already-in-list' };
+  const list = splitIpList(w.wan_ip);
+  list.push(target);
+  while (list.length > 8) list.shift();
+  w.wan_ip = list.join(', ');
+  w.wan_ip_at = new Date().toISOString();
+  w.wan_ip_by = String(who || '').trim();
+  w.updated_at = w.wan_ip_at;
+  saveDB();
+  return { ok: true, ip: target, list: list.slice() };
+}
+
+// v5.3.0：在公司網路（WiFi 名稱相符）時，自動把目前的公司出口 IP 補進清單
+// 目的：公司寬頻的公用 IP 會浮動，有人在公司打卡就自動跟上新的 IP，員工手機才不會突然被打回票。
+// v5.3.1 放寬：不必是管理員 — 只要「WiFi 名稱真的相符」（人確實在公司）就能補登，
+//               解決「管理員出差／請假，公司 IP 卻剛好浮動」時員工手機集體被打回票的問題。
+// 安全條件維持：① WiFi 名稱必須相符（在家／連別的網路一律不寫入）
+//               ② 必須是公網 IP（擋掉區網假 IP）
+//               ③ 管理員可在設定頁用「員工自助登錄」開關關掉
+function canSelfEnrollWAN(w) {
+  if (!w) return false;
+  if (currentUser && currentUser.role === 'admin') return true; // 管理員永遠可以
+  return w.wan_self_enroll !== false; // 員工：看開關（預設開）
+}
 function autoRegisterCompanyWAN(gate) {
   const g = gate || evalGate();
   if (!db.wifiSettings) return false;
   const w = db.wifiSettings;
   if (w.wan_auto === false) return false;
-  if (!(currentUser && currentUser.role === 'admin')) return false;
-  if (!g.ssidOK || !g.hasWanIP) return false;
-  if (g.wanOK) return false; // 已在清單內（含 * 通配命中）→ 不用重複寫
-  const list = splitIpList(w.wan_ip);
-  list.push(g.wanIP);
-  while (list.length > 8) list.shift(); // 最多保留 8 組，超過淘汰最舊
-  w.wan_ip = list.join(',');
-  w.wan_ip_at = new Date().toISOString();
-  w.updated_at = w.wan_ip_at;
+  if (!currentUser) return false;
+  if (!canSelfEnrollWAN(w)) return false;
+  if (!g.ssidOK || !g.hasWanIP) return false; // 必須人在公司 WiFi ＋ 有抓到出口 IP
+  if (g.wanOK) return false;                  // 已在清單內（含 * 通配命中）→ 不用重複寫
+  return addCompanyWAN(g.wanIP, currentUser.name).ok;
+}
+// v5.3.1：自動補登成功時的提示（每天最多一次，避免每次載入打卡頁都彈）
+let _wanUpdatedNoticeDay = '';
+function notifyWANUpdated() {
+  const day = new Date().toLocaleDateString('en-CA');
+  if (_wanUpdatedNoticeDay === day) return;
+  _wanUpdatedNoticeDay = day;
+  const w = db.wifiSettings || {};
+  showToast('公司網路出口 IP 有變動，已自動更新為 ' + (w.wan_ip || '') + '（員工手機打卡不受影響）', 'info');
+}
+
+// ===== v5.3.1：一次性「遠端登記連結」（管理員不必在公司也能開通手機打卡） =====
+// 情境：管理員人在外地／還沒去過公司，公司從來沒登錄過出口 IP → 員工手機永遠打不了卡。
+// 解法：管理員在任何地方按一下產生專屬連結，用 LINE 傳給「此刻人在公司的同事」，
+//       同事在公司 WiFi 下用手機打開連結 → 按一下確認 → 公司出口 IP 就登錄完成，全公司手機立即生效。
+// 安全設計：記號隨機 24 位 16 進位、60 分鐘內有效、用過一次即失效，並記錄是誰完成的（稽核）。
+const ENROLL_SESSION_KEY = 'attendance_enroll_token';
+const ENROLL_TTL_MS = 60 * 60 * 1000; // 連結有效期（60 分鐘）
+function enrollRandomToken() {
+  const arr = new Uint8Array(12);
+  try {
+    if (window.crypto && typeof window.crypto.getRandomValues === 'function') window.crypto.getRandomValues(arr);
+    else for (let i = 0; i < arr.length; i++) arr[i] = Math.floor(Math.random() * 256);
+  } catch (e) { for (let i = 0; i < arr.length; i++) arr[i] = Math.floor(Math.random() * 256); }
+  let s = '';
+  for (let i = 0; i < arr.length; i++) s += ('0' + arr[i].toString(16)).slice(-2);
+  return s;
+}
+// 連結要帶上同步碼，否則同事的手機若還沒綁定同一個同步空間，會驗證不到這組記號
+function buildEnrollLink(token) {
+  let url = location.origin && location.origin !== 'null'
+    ? location.origin + location.pathname
+    : String(location.href).split('?')[0];
+  url += '?enroll=' + encodeURIComponent(token);
+  const k = (typeof getSyncKey === 'function') ? getSyncKey() : '';
+  if (k) url += '&sync=' + encodeURIComponent(k);
+  return url;
+}
+// 管理員按下「產生連結」
+function generateEnrollLink() {
+  if (!requireAdmin()) return '';
+  if (!db.wifiSettings) db.wifiSettings = wifiDefaults();
+  const w = db.wifiSettings;
+  const token = enrollRandomToken();
+  w.enroll_token = token;
+  w.enroll_exp = Date.now() + ENROLL_TTL_MS;
+  w.enroll_used = false;
+  w.enroll_by = '';
+  w.enroll_used_at = '';
+  w.updated_at = new Date().toISOString();
   saveDB();
-  return true;
+  if (typeof refreshEnrollLinkInfo === 'function') refreshEnrollLinkInfo();
+  showToast('已產生登記連結（60 分鐘內有效、只能用一次）→ 複製起來傳給在公司的同事', 'success');
+  return token;
+}
+function copyEnrollLink() {
+  const inp = document.getElementById('enrollLinkInput');
+  if (!inp || !inp.value) { showToast('請先按「產生登記連結」', 'error'); return; }
+  const done = function() { showToast('連結已複製！請用 LINE 傳給此刻在公司的同事', 'success'); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(inp.value).then(done).catch(function() { inp.select(); document.execCommand && document.execCommand('copy'); done(); });
+  } else {
+    inp.select();
+    try { document.execCommand && document.execCommand('copy'); } catch (e) {}
+    done();
+  }
+}
+// 驗證網址帶來的記號：valid / reason（none 未設定、mismatch 不符、used 已用過、expired 過期）
+function validateEnrollToken(token) {
+  const w = (db && db.wifiSettings) ? db.wifiSettings : null;
+  if (!token || !w || !w.enroll_token) return { valid: false, reason: 'none' };
+  if (w.enroll_token !== token) return { valid: false, reason: 'mismatch' };
+  if (w.enroll_used) return { valid: false, reason: 'used' };
+  if (!w.enroll_exp || Date.now() > Number(w.enroll_exp)) return { valid: false, reason: 'expired' };
+  return { valid: true, reason: '' };
+}
+function pendingEnrollToken() {
+  try {
+    const p = new URLSearchParams(location.search);
+    const t = p.get('enroll');
+    if (t) { sessionStorage.setItem(ENROLL_SESSION_KEY, t); return t; }
+    return sessionStorage.getItem(ENROLL_SESSION_KEY) || '';
+  } catch (e) { return ''; }
+}
+function clearPendingEnrollToken() { try { sessionStorage.removeItem(ENROLL_SESSION_KEY); } catch (e) {} }
+function renderEnrollModal(token) {
+  const info = document.getElementById('enrollInfo');
+  const btn = document.getElementById('enrollConfirmBtn');
+  if (btn) { btn.disabled = false; btn.textContent = '📌 確認登記這個 IP'; }
+  if (info) {
+    info.innerHTML = '<div style="font-size:13.5px;line-height:1.7;">' +
+      '管理員請您協助登記<strong>公司網路出口 IP</strong>。<br>' +
+      '請確認您<strong>現在人在公司、手機已連上公司 WiFi（並關掉行動數據）</strong>，再按下方按鈕。<br>' +
+      '<div style="margin-top:10px;padding:10px 12px;background:var(--bg);border-radius:8px;">' +
+      '即將登記的出口 IP：<span id="enrollIpText" style="font-family:monospace;color:var(--primary);">偵測中…</span>' +
+      '</div></div>';
+  }
+  // 先抓出口 IP 讓員工看到要登記的是哪一顆（抓不到就不能按）
+  ensurePublicIP({ timeoutMs: 4000 }).then(function(ip) {
+    const el = document.getElementById('enrollIpText');
+    const ok = isPublicIPv4(ip);
+    if (el) {
+      el.textContent = ip
+        ? (ip + (ok ? ' ✓' : ' ⚠️ 這不是公網 IP'))
+        : '抓不到（請確認已關掉行動數據並連上公司 WiFi）';
+    }
+    if (btn) {
+      btn.disabled = !ok;
+      btn.textContent = ok ? '📌 確認登記這個 IP' : '無法登記（沒抓到公司網路出口 IP）';
+    }
+  }).catch(function() {});
+}
+function openEnrollModal(token) {
+  const m = document.getElementById('enrollModal');
+  renderEnrollModal(token);
+  if (m) m.classList.add('active');
+}
+function closeEnrollModal() {
+  const m = document.getElementById('enrollModal');
+  if (m) m.classList.remove('active');
+  clearPendingEnrollToken();
+}
+// 員工按下「確認登記」
+async function doEnrollWAN() {
+  const token = pendingEnrollToken();
+  const v = validateEnrollToken(token);
+  if (!v.valid) {
+    showToast('這個登記連結已失效（過期或已被使用），請請管理員重新產生一個。', 'error');
+    closeEnrollModal();
+    return;
+  }
+  if (!currentUser) { showToast('請先登入，登入後才能完成登記。', 'error'); return; }
+  const btn = document.getElementById('enrollConfirmBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '登記中…'; }
+  let ip = currentPublicIP;
+  if (!isPublicIPv4(ip)) ip = await ensurePublicIP({ timeoutMs: 5000 });
+  const res = addCompanyWAN(ip, currentUser.name);
+  if (!res.ok) {
+    if (btn) { btn.disabled = false; btn.textContent = '📌 確認登記這個 IP'; }
+    if (res.reason === 'already-in-list') {
+      showToast('這組公司網路出口 IP 已經在清單內了，不用再登記一次 🙂', 'info');
+    } else {
+      showToast('登記失敗：抓到的不是有效的公網 IP（' + (ip || '抓不到') + '）。請確認已關掉行動數據、連上公司 WiFi 再試。', 'error');
+    }
+    return;
+  }
+  const w = db.wifiSettings;
+  w.enroll_used = true;
+  w.enroll_by = currentUser.name;
+  w.enroll_used_at = new Date().toISOString();
+  w.updated_at = w.enroll_used_at;
+  saveDB();
+  if (typeof pushToCloud === 'function') { try { await pushToCloud(true); } catch (e) {} }
+  closeEnrollModal();
+  showToast('已完成登記！公司網路出口 IP ' + ip + ' 已加入清單，現在起全公司手機連公司 WiFi 都能打卡。', 'success');
+  if (typeof loadClockStatus === 'function') loadClockStatus();
+  if (typeof refreshWifiDetectInfo === 'function') refreshWifiDetectInfo();
+  if (typeof switchPage === 'function') switchPage('clock');
+}
+// 進站時若網址帶著 ?enroll= → 驗證後跳出登記視窗（未登入則提示先登入，登入後會自動跳出）
+function maybeShowEnroll() {
+  const token = pendingEnrollToken();
+  if (!token) return;
+  const run = function() {
+    const v = validateEnrollToken(token);
+    if (!v.valid) {
+      if (v.reason === 'used') showToast('這個登記連結已經被用過了，不需要再按一次 🙂', 'info');
+      else if (v.reason === 'expired') showToast('這個登記連結已超過 60 分鐘、自動失效了，請請管理員重新產生。', 'error');
+      else if (v.reason === 'mismatch') showToast('這個登記連結已被管理員作廢，請請他重新產生一個。', 'error');
+      clearPendingEnrollToken();
+      return;
+    }
+    if (!currentUser) {
+      showToast('管理員請您協助登記公司網路 IP — 請先登入，登入後會自動跳出登記視窗。', 'info');
+      return;
+    }
+    openEnrollModal(token);
+  };
+  // 設定可能還在雲端沒拉回來 → 先拉一次再判定（最多等 4 秒，逾時就用本機資料判定）
+  if (typeof getSyncKey === 'function' && getSyncKey() && typeof pullFromCloud === 'function') {
+    Promise.race([
+      Promise.resolve(pullFromCloud(true)).catch(function() {}),
+      new Promise(function(r) { setTimeout(r, 4000); })
+    ]).then(run).catch(run);
+  } else { run(); }
 }
 
 // SSID 通道的簡易防偽記號（小工具帶入 ?ssid=XXX&t=記號，避免人手在網址列亂打）
@@ -1950,6 +2229,8 @@ function showDashboard() {
 
   switchPage('clock');
   startClock();
+  // v5.3.1：網址帶 ?enroll= （管理員傳來的遠端登記連結）→ 跳出公司網路 IP 登記視窗
+  if (typeof maybeShowEnroll === 'function') maybeShowEnroll();
   // v2.7：登入後立刻檢查同步狀態，更新徽章與警告橫幅
   if (getSyncKey()) { updateSyncBadge('synced'); checkSyncWarning(); }
   else { updateSyncBadge('offline'); checkSyncWarning(); }
@@ -2020,7 +2301,7 @@ async function loadClockStatus() {
     }).catch(function() {});
   }
   if (!currentUser) return; // 防禦：await 期間使用者可能已登出（v4.0.7 修補的 race，v4.0.11 補強）
-  if (db.wifiSettings) { recordDetectedIP(); autoRegisterCompanyWAN(); }
+  if (db.wifiSettings) { recordDetectedIP(); if (autoRegisterCompanyWAN()) notifyWANUpdated(); }
 
   if (isAdmin) {
     // Admin is EXEMPT — can clock in/out & manage from anywhere
@@ -3012,9 +3293,32 @@ async function loadWifiSettings() {
   setChk('ssidRequiredInput', w.ssid_required !== false);
   setChk('wanRequiredInput', w.wan_required !== false);
   setChk('wanAutoInput', w.wan_auto !== false);
+  setChk('wanSelfEnrollInput', w.wan_self_enroll !== false); // v5.3.1：員工自助更新（預設開）
+  refreshEnrollLinkInfo();
   refreshWifiDetectInfo(); // 先立即帶出既有設定（不等 IP，避免畫面卡在「載入中」）
   try { await refreshNetworkInfo({ force: false }); } catch (e) {}
   refreshWifiDetectInfo(); // IP 回來後再更新一次
+}
+
+// v5.3.1：遠端登記連結的狀態顯示（有效／已用／已過期）
+function refreshEnrollLinkInfo() {
+  const w = db.wifiSettings || {};
+  const inp = document.getElementById('enrollLinkInput');
+  const st = document.getElementById('enrollLinkStatus');
+  const buildable = !!(w.enroll_token && !w.enroll_used && w.enroll_exp && Date.now() <= Number(w.enroll_exp));
+  if (inp) inp.value = buildable ? buildEnrollLink(w.enroll_token) : ''; // 換裝置／重開頁面也看得到同一組（仍有效時）
+  if (!st) return;
+  if (buildable) {
+    const left = Math.max(1, Math.round((Number(w.enroll_exp) - Date.now()) / 60000));
+    st.innerHTML = '✅ 目前有一組<strong>有效</strong>的登記連結（剩約 ' + left + ' 分鐘，只能用一次）。複製後傳給此刻在公司的同事即可。';
+  } else if (w.enroll_used && w.enroll_by) {
+    st.innerHTML = '✅ 已完成登記：由 <strong>' + esc(w.enroll_by) + '</strong> 於 ' + esc(String(w.enroll_used_at || '').replace('T', ' ').slice(0, 16)) +
+      ' 登錄（連結已失效）。需要再開一組就按「產生登記連結」。';
+  } else if (w.enroll_token) {
+    st.innerHTML = '⌛ 這組連結已<strong>超過 60 分鐘失效</strong>了，需要用的話請再按一次「產生登記連結」。';
+  } else {
+    st.innerHTML = '尚未產生過登記連結。（管理員不在公司、或公司從沒登錄過出口 IP 時，就是用這個功能開通手機打卡）';
+  }
 }
 
 // 管理員手動登錄公司網路出口 IP（必須在公司 WiFi 連線狀態下按）
@@ -3055,7 +3359,7 @@ function refreshWifiDetectInfo() {
     const hit = !!(w.wan_ip && isIPAllowed(currentPublicIP, w.wan_ip));
     setTxt('adminWanIp', currentPublicIP + (hit ? ' ✓' : ' ✗'));
     setTxt('adminWanIpNote', hit
-      ? '（在公司網路出口 IP 清單內，員工手機連公司 WiFi 可打卡）'
+      ? ('（在公司網路出口 IP 清單內，員工手機連公司 WiFi 可打卡' + (w.wan_ip_by ? ' · 最近由 ' + w.wan_ip_by + ' 登錄' : '') + '）')
       : (w.wan_ip ? '（不在清單「' + w.wan_ip + '」內，手機打卡會被擋下）' : '（尚未設定公司網路出口 IP，請按下方按鈕抓取）'));
   } else {
     setTxt('adminWanIp', '（抓不到 — 網路被擋／離線）');
@@ -3091,8 +3395,9 @@ function refreshWifiDetectInfo() {
     const g = evalGate();
     if (g.enabled && !g.ok && !currentSSID && !g.wanActive) {
       warn.style.display = '';
-      warn.innerHTML = '⚠️ 尚未設定「公司網路出口 IP」且讀不到 WiFi 名稱 → 員工手機現在<strong>無法打卡</strong>。' +
-        '請在下方「公司網路出口 IP」按「🌐 抓取這台電腦目前的網路出口 IP」（在公司 WiFi 下抓取）並儲存設定，手機連公司 WiFi 即可打卡。';
+      warn.innerHTML = '⚠️ 尚未設定「公司網路出口 IP」且讀不到 WiFi 名稱 → 員工手機現在<strong>無法打卡</strong>。二選一開通：' +
+        '<br>　<b>① 您現在就在公司</b>：按下方「🌐 抓取這台電腦目前的網路出口 IP」（在公司 WiFi 下抓取）並儲存設定。' +
+        '<br>　<b>② 您<strong>不在公司</strong>（出差／還沒去過）</b>：到下方「🔗 遠端登記連結」產生連結，用 LINE 傳給此刻在公司的同事，請他連公司 WiFi 按一下確認即可。';
     } else if (g.enabled && !g.ok && !isIPv4(currentPublicIP)) {
       warn.style.display = '';
       warn.innerHTML = '⚠️ 抓不到網路出口 IP（網路被擋或離線）→ 目前只能靠電腦打卡小工具放行，員工請改用「TY_5G 打卡」小工具。';
@@ -3117,8 +3422,15 @@ function saveWifiSettings() {
     ssid_required: chk('ssidRequiredInput'),
     wan_ip: rawWan,       // v5.3.0：公司網路出口 IP 清單（支援 * 通配）
     wan_ip_at: prev.wan_ip_at || '',
+    wan_ip_by: prev.wan_ip_by || '',
     wan_auto: chk('wanAutoInput'),
     wan_required: chk('wanRequiredInput'),
+    wan_self_enroll: chk('wanSelfEnrollInput'), // v5.3.1：員工自助更新
+    enroll_token: prev.enroll_token || '',
+    enroll_exp: prev.enroll_exp || 0,
+    enroll_used: prev.enroll_used === true,
+    enroll_by: prev.enroll_by || '',
+    enroll_used_at: prev.enroll_used_at || '',
     last_ip: prev.last_ip || '',
     last_ip_at: prev.last_ip_at || '',
     enabled: chk('wifiEnabledInput'),
@@ -3639,7 +3951,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '5.3.0.20261005';
+const BUILD_ID = '5.3.1.20261005';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
@@ -5252,6 +5564,8 @@ document.querySelectorAll('[data-page]').forEach(function(el) {
   // v2.7：初始同步徽章狀態
   updateSyncBadge(getSyncKey() ? 'synced' : 'offline');
   checkSyncWarning();
+  // v5.3.1：帶著管理員的「遠端登記連結」進來但尚未登入 → 先提示登入（登入後會自動跳出登記視窗）
+  if (!currentUser && typeof maybeShowEnroll === 'function') maybeShowEnroll();
   // ===== v4.0：版本新鮮度守衛 =====
   // 背景問題：GitHub Pages 對 index.html 有 10 分鐘 CDN/瀏覽器快取，使用者按一般重新整理可能仍載到舊版程式，
   // 造成「明明已修好卻還看到舊錯誤」的鬼打牆。此守衛會比對線上建置碼，發現新版立即自動切換過去。
