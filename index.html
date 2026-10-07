@@ -254,7 +254,10 @@
         <summary>📖 使用辦法</summary>
         <div class="guide-body">
           <strong>🕘 打卡規則</strong><br>
-          · 打卡時系統會<strong>自動驗證你在不在公司網路</strong>：只要<strong>連上公司 WiFi</strong>（手機請記得<strong>關掉行動數據</strong>），系統比對你的<strong>網路出口 IP</strong> 命中公司地址就放行，手機／電腦都直接用瀏覽器打卡，不必安裝任何小工具。不在公司網路就擋下（GPS 定位驗證已於 v5.2.0 移除；WiFi 名稱 SSID 通道與 Windows 打卡小工具已於 v5.4.0 移除）。打卡失敗時請先連上公司 WiFi，再按「🔄 重新偵測」。為避免重複打卡，按鈕每次按下後有 3 秒冷卻時間。<br>
+          · 打卡時系統會<strong>自動驗證你在不在公司</strong>，兩條通道任一符合即放行：<br>
+          　<strong>🔧 公司基地台實體位址（MAC）</strong> — 用電腦打卡請改用桌面上的「打卡」小工具開啟本頁（瀏覽器基於安全限制讀不到 MAC，小工具會自動帶入），系統比對目前連上的公司基地台 MAC 命中就放行；換到別的地方就擋下。<br>
+          　<strong>📱 裝置信任</strong> — 手機／平板讀不到 MAC，請把打卡頁顯示的<strong>裝置代碼</strong>（例 <code>D-3F9A-21C7</code>）給管理員核准一次，之後該台裝置即可打卡。<br>
+          　（GPS 定位 v5.2.0 移除；WiFi 名稱 SSID 通道 v5.4.0 移除；公司網路出口 IP 通道 v5.5.0 移除）打卡失敗時請先連上公司 WiFi 再試。為避免重複打卡，按鈕每次按下後有 3 秒冷卻時間。<br>
           · 同一天可<strong>多次打卡</strong>：按下班卡後可再按上班卡開始下一段（例如午休外出、外出洽公返回），當日工時會自動加總；<strong>每一次打卡都會在考勤紀錄中各自成一列</strong>。<br>
           · 系統依排班時間自動判定遲到／早退；工作時數自動計算，當日合計超過標準每日工時的部分計為加班。<br>
           · 補班日（國定假日）打卡時，勾選「補班」並選擇要抵扣的平日請假，即可自動抵扣、不重複扣薪；忘記勾選可於當日下班後使用「📝 補登記」補登記。<br>
@@ -320,7 +323,8 @@
         <div class="clock-card">
           <div class="clock-date" id="clockDate">載入中...</div>
           <div class="clock-time" id="clockTime">00:00:00</div>
-          <div class="wifi-status checking" id="wifiStatus"><span>🔄 正在偵測打卡環境（WiFi 名稱）...</span></div>
+          <div class="wifi-status checking" id="wifiStatus"><span>🔄 正在偵測打卡環境...</span></div>
+          <div id="deviceCodeBox" style="display:none;margin:10px 0;padding:10px 14px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;text-align:center;"></div>
           <div style="margin: 24px 0;">
             <div class="clock-status">
               <div class="status-item">
@@ -360,7 +364,7 @@
         </div>
         <div class="info-banner blue">
           <span>ℹ️</span>
-          <span>系統會自動偵測您的公共IP位址，只有在管理員設定的IP白名單內才能完成打卡。</span>
+          <span>系統會比對您目前連上的<strong>公司基地台實體位址（MAC）</strong>，或您這台裝置是否已被管理員核准；兩者其一符合才能打卡。</span>
         </div>
       </div>
     </div>
@@ -591,12 +595,12 @@
       <div class="section-title">打卡驗證設定（公司網路出口 IP）</div>
       <div class="card">
         <div class="info-banner" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0;">
-          <span>🌐</span>
-          <span><strong>唯一的放行通道：公司網路出口 IP。</strong>員工（手機或電腦）<strong>連上公司 WiFi</strong> 後對外的公用 IP 就是公司的出口 IP，系統比對命中即放行 — 不必安裝任何小工具。</span>
+          <span>🔧</span>
+          <span><strong>主要通道：公司基地台的實體位址（MAC／BSSID）。</strong>基地台的 MAC 是硬體位址，<strong>不像 IP 會浮動、也無法從遠端偽造</strong>，是目前最可靠的「人在公司」憑據。瀏覽器讀不到 MAC，所以由 Windows 打卡小工具自動帶入。</span>
         </div>
         <div class="info-banner blue">
           <span>📱</span>
-          <span><strong>手機／電腦都直接用瀏覽器打卡：</strong>關掉行動數據、連上公司 WiFi，開網頁就能打卡。<strong>v5.4.0 起已移除 WiFi 名稱（SSID）判定與 Windows 打卡小工具</strong> — 瀏覽器基於安全限制讀不到 SSID，那條通道本來就只能靠小工具，現在統一走出口 IP，少一個故障點、也不用再維護小工具。</span>
+          <span><strong>手機／平板改走「裝置信任」：</strong>手機瀏覽器讀不到基地台 MAC，所以改由您核准裝置代碼一次，之後那台就能打卡（換手機、清快取都要重新核准）。<strong>v5.5.0 已移除公司網路出口 IP 判定</strong> — IP 會浮動、也可能被手機熱點／VPN 誤判，改看基地台 MAC 後不再需要對外打任何 IP 服務。</span>
         </div>
         <div class="info-banner" style="background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;">
           <span>👑</span>
@@ -604,9 +608,9 @@
         </div>
         <div class="info-banner" style="background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe;">
           <span>🛠️</span>
-          <span><strong>第一次設定（二選一）：</strong><br>
-          　<b>① 您現在就在公司</b> → 按下方「🌐 抓取這台電腦目前的網路出口 IP」並儲存設定（建議改寫成 <code>61.220.*.*</code> 這種通配格式，公司 IP 浮動才不會失效）。<br>
-          　<b>② 您不在公司（出差／還沒去過）</b> → 到最下方「🔗 遠端登記連結」產生連結，用 LINE 傳給此刻在公司的同事，請他連公司 WiFi 按一下確認。</span>
+          <span><strong>兩條放行通道，可同時使用：</strong><br>
+          　<b>🔧 ① 公司基地台實體位址（MAC）</b> — 員工電腦用<strong>打卡小工具</strong>開啟打卡頁，系統比對目前連上的基地台 MAC。最嚴謹，換到別的地方打卡會被擋。<br>
+          　<b>📱 ② 裝置信任</b> — 手機／平板讀不到 MAC，改由您核准一次「裝置代碼」，之後那台就能打卡（換手機要重新核准）。</span>
         </div>
         <div id="currentIPDisplay" style="margin-bottom: 20px; padding: 16px; background: var(--bg); border-radius: 10px; font-size: 13.5px;">
           <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;">
@@ -616,50 +620,63 @@
             <button class="btn btn-outline btn-sm" id="redetectBtn" onclick="redetectNetwork()">🔄 重新偵測</button>
           </div>
           <div style="margin-top:6px;">
-            <strong>網路出口 IP（公網）：</strong>
-            <span id="adminWanIp" style="font-family:monospace;color:var(--primary);">偵測中...</span>
-            <span id="adminWanIpNote" style="font-size:12px;color:var(--text-secondary);"></span>
+            <strong>這台電腦連上的基地台 MAC：</strong>
+            <span id="adminBssid" style="font-family:monospace;color:var(--primary);">—</span>
+            <span id="adminBssidNote" style="font-size:12px;color:var(--text-secondary);"></span>
           </div>
           <div id="wifiDetectWarn" style="display:none;margin-top:10px;font-size:12.5px;color:#9a3412;"></div>
         </div>
         <div class="form-group">
           <label class="checkbox-label"><input type="checkbox" id="wifiEnabledInput"> 啟用打卡驗證（在公司網路才放行）</label>
-          <div class="hint-text">✅ 預設<strong>勾選</strong>：需通過「公司網路出口 IP」才能打卡。取消勾選 = 完全不管制，任何地點都能打卡（出外勤時才這樣設）。</div>
+          <div class="hint-text">✅ 預設<strong>勾選</strong>：需通過「公司基地台 MAC」或「已核准裝置」才能打卡。取消勾選 = 完全不管制，任何地點都能打卡（出外勤時才這樣設）。</div>
         </div>
         <div class="form-group">
-          <label>公司網路出口 IP（公網 IP）</label>
-          <input type="text" id="wanIpInput" placeholder="例如：61.220.1.2 或 61.220.*.*">
+          <label>🔧 公司基地台的實體位址（AP 的 MAC / BSSID）</label>
+          <input type="text" id="macListInput" placeholder="例如：A4:2B:8C:11:22:33 或 A4:2B:8C:*">
           <div class="hint-text">
-            員工<strong>連上公司 WiFi</strong> 後對外的公用 IP 就是這個（手機也因此能打卡）。多台外線／多分公司可用逗號分隔；
-            IP 會浮動請用 <code>*</code> 通配，例如 <code>61.220.*.*</code>。不知道就按下方按鈕自動帶入。
+            這就是<strong>公司無線基地台（路由器）本身的 MAC 位址</strong>，偽造不了、也不會像 IP 那樣浮動，是最可靠的「人在公司」憑據。<br>
+            多台 AP（多樓層）用逗號分隔；同廠牌同批可用 <code>*</code> 通配，例如 <code>A4:2B:8C:*</code>。
           </div>
         </div>
         <div style="margin-bottom:18px;">
-          <button class="btn btn-outline btn-sm" id="captureWanBtn" onclick="captureCompanyWAN()">🌐 抓取這台電腦目前的網路出口 IP</button>
-          <div class="hint-text" style="margin-top:6px;">⚠️ 必須<strong>在公司 WiFi 連線狀態下</strong>按，抓到的才會是公司地址（在家按會把家裡 IP 寫進去，會讓打卡管制失效）。</div>
+          <button class="btn btn-outline btn-sm" id="captureMacBtn" onclick="captureCompanyMAC()">🔍 帶入這台電腦目前連上的基地台 MAC</button>
+          <div class="hint-text" style="margin-top:6px;">⚠️ 必須先用<strong>打卡小工具</strong>開啟本頁（瀏覽器自己讀不到 MAC），且當下連的是公司 WiFi。</div>
+          <div id="macToolHint"></div>
         </div>
         <div class="form-group">
-          <label class="checkbox-label"><input type="checkbox" id="wanRequiredInput"> 啟用公司網路出口 IP 驗證</label>
-          <div class="hint-text">✅ 預設<strong>勾選</strong>：公用 IP 命中上方清單即放行，手機連公司 WiFi 就能打卡。取消勾選 = 不設限，任何地點都能打卡。</div>
-        </div>
-        <div class="form-group">
-          <label class="checkbox-label"><input type="checkbox" id="wanAutoInput"> 公司 IP 浮動時自動更新（僅管理員）</label>
-          <div class="hint-text">管理員在公司時，若公司寬頻 IP 浮到新的地址（<strong>與既有清單前兩碼相同＝同一家 ISP</strong>）會<strong>自動加進清單</strong>（最多 8 組），不必手動改。<br>
-          ⚠️ 在別的網路（家裡、飯店、4G）不會寫入 — 這是 v5.4.0 移除 SSID 後用來判斷「這是公司 IP 浮動」的依據。員工要更新公司 IP 請用下方的一次性登記連結。</div>
+          <label class="checkbox-label"><input type="checkbox" id="macRequiredInput"> 啟用公司基地台 MAC 驗證</label>
+          <div class="hint-text">✅ 預設<strong>勾選</strong>：抓到的基地台 MAC 命中上方清單即放行。取消勾選 = 這一條通道不設限。</div>
         </div>
         <div style="height:1px;background:var(--border);margin:18px 0;"></div>
         <div class="form-group">
-          <label>🔗 遠端登記連結（管理員不在公司時用）</label>
+          <label class="checkbox-label"><input type="checkbox" id="trustRequiredInput"> 啟用裝置信任（核准過的手機／平板直接放行）</label>
+          <div class="hint-text">✅ 預設<strong>勾選</strong>：手機瀏覽器讀不到基地台 MAC，所以改由您核准裝置代碼。取消勾選 = 只剩 MAC 通道，所有手機都會被擋下。</div>
+        </div>
+        <div class="form-group">
+          <label>📱 核准裝置（把手機／平板的代碼加進來）</label>
           <div class="hint-text">
-            <strong>管理員出差、請假、或根本還沒去過公司？</strong>按下方產生一個「一次性登記連結」，用 LINE 傳給<strong>此刻人在公司的同事</strong>；
-            同事在公司 WiFi 下用手機打開連結、按一下確認，公司網路出口 IP 就登錄完成，全公司手機立刻能打卡。
-            連結 <strong>60 分鐘內有效、只能用一次</strong>，完成後會記錄是誰協助登記的。
+            員工在打卡頁會看到一組<strong>裝置代碼</strong>（例 <code>D-3F9A-21C7</code>）。把代碼貼到下方並按「核准」，
+            那台裝置之後就能打卡。若不方便當面拿手機，也可用下方的<strong>遠端核准連結</strong>。
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;">
+            <input type="text" id="trustCodeInput" placeholder="例如：D-3F9A-21C7" style="flex:1;min-width:180px;font-family:monospace;">
+            <button class="btn btn-outline btn-sm" id="addTrustBtn" onclick="addTrustedDeviceFromInput()">✅ 核准這台裝置</button>
+            <button class="btn btn-outline btn-sm" id="trustSelfBtn" onclick="trustThisDevice()">📌 核准我現在這台</button>
+          </div>
+          <div id="trustListBox" style="margin-top:10px;font-size:12.5px;"></div>
+        </div>
+        <div style="height:1px;background:var(--border);margin:18px 0;"></div>
+        <div class="form-group">
+          <label>🔗 遠端核准連結（不方便當面拿手機時用）</label>
+          <div class="hint-text">
+            按下方產生一個「一次性核准連結」，用 LINE 傳給對方；他用手機打開連結、按一下確認，
+            那台裝置就被核准了（不必把代碼抄給您）。連結 <strong>60 分鐘內有效、只能用一次</strong>，完成後會記錄是誰核准的。
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-            <button class="btn btn-outline btn-sm" id="genEnrollLinkBtn" onclick="generateEnrollLink()">🔗 產生登記連結</button>
+            <button class="btn btn-outline btn-sm" id="genEnrollLinkBtn" onclick="generateEnrollLink()">🔗 產生核准連結</button>
             <button class="btn btn-outline btn-sm" id="copyEnrollLinkBtn" onclick="copyEnrollLink()">📋 複製連結</button>
           </div>
-          <input type="text" id="enrollLinkInput" readonly placeholder="按「產生登記連結」後會出現在這裡" style="margin-top:8px;font-family:monospace;font-size:12.5px;">
+          <input type="text" id="enrollLinkInput" readonly placeholder="按「產生核准連結」後會出現在這裡" style="margin-top:8px;font-family:monospace;font-size:12.5px;">
           <div id="enrollLinkStatus" style="margin-top:6px;font-size:12.5px;color:var(--text-secondary);"></div>
         </div>
         <button class="btn btn-primary" onclick="saveWifiSettings()">儲存設定</button>
@@ -780,7 +797,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v5.4.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-10-07 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證單一通道：公司網路出口 IP（手機／電腦連公司 WiFi 即可打卡，管理員可產生一次性遠端登記連結請在公司的同事協助登錄，IP 浮動自動跟上），已移除 WiFi 名稱 SSID 判定與 Windows 打卡小工具、IP 網段判定、MAC 位址認證、人臉辨識／活體偵測與 GPS 定位)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v5.5.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-10-07 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證雙通道：① 公司基地台實體位址 MAC／BSSID（電腦用 Windows 打卡小工具帶入，偽造不了、不像 IP 會浮動）② 裝置信任（手機讀不到 MAC，由管理員核准裝置代碼一次，或用一次性遠端核准連結），已移除公司網路出口 IP 判定、WiFi 名稱 SSID 判定、IP 網段判定、舊的裝置 MAC 認證、人臉辨識／活體偵測與 GPS 定位)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受打卡管制，隨時隨地使用</td></tr>
@@ -876,7 +893,7 @@
     <div id="enrollInfo"></div>
     <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
       <button class="btn btn-outline" onclick="closeEnrollModal()">稍後再說</button>
-      <button class="btn btn-primary" id="enrollConfirmBtn" onclick="doEnrollWAN()">📌 確認登記這個 IP</button>
+      <button class="btn btn-primary" id="enrollConfirmBtn" onclick="doEnrollDevice()">📱 核准這台裝置</button>
     </div>
     <div style="margin-top:12px;font-size:12px;color:var(--text-secondary);line-height:1.6;">
       這個連結是管理員專程傳給您的，60 分鐘內有效、<strong>只能用一次</strong>；登記完成後系統會記下是由您完成的。
@@ -898,67 +915,97 @@ const LOGIN_LOCKOUT_MS = 5 * 60 * 1000; // 5 minutes
 let currentUser = null;
 let currentIP = null;
 let currentLocalIP = null;   // v4.0.13：裝置內網 IPv4（例：192.168.31.83）
-let currentPublicIP = null;  // v4.0.13：公用 IP（內網 IP 抓不到時的備援比對）
-// v5.4.0：已移除 currentSSID（WiFi 名稱）— 瀏覽器讀不到 SSID，原本只能靠 Windows 小工具帶入，
-//         現在統一用「公司網路出口 IP」單一通道判定。
+// v5.5.0：公用（出口）IP 抓取已移除 — 打卡判定不再看 IP，不必再對外打任何 IP 服務（也少了外部服務掛掉的風險）
+let currentBSSID = '';       // v5.5.0：目前連上的 AP／路由器實體位址（BSSID），由 Windows 打卡小工具帶入
+let currentBSSIDFrom = '';   // 'tool' = 小工具帶入 ／ '' = 沒有（瀏覽器自己讀不到 MAC）
+// 背景抓 IP 只用一次：抓不到（WebRTC 被停用／mDNS 遮蔽）就認了，絕不重試 ——
+// 否則 loadClockStatus 會自己叫自己形成無窮迴圈，saveDB 的防抖一直被重置，雲端推播永遠不會觸發。
+let _ipDetectStarted = false;
 let loginAttempts = {};
 let confirmCallback = null;
 
-// ===== v5.4.0 打卡驗證：公司網路出口 IP（單一通道） =====
-// （IP 網段／MAC／人臉／GPS／WiFi 名稱 SSID 判定皆已移除）
-//   wan_ip        = 公司網路出口（公用）IP 清單（逗號分隔，支援 * 通配，例如 61.220.*.*）
-//   wan_required  = 啟用出口 IP 驗證
-//   wan_auto      = 公司 IP 浮動時，管理員自動補登錄新的出口 IP（同一 ISP 網段才認）
-//   enroll_token  = v5.3.1：一次性遠端登記連結的記號（管理員 anywhere 產生，傳給在公司的同事）
+// ===== v5.5.0 打卡驗證：公司 AP 實體位址（MAC／BSSID）＋ 裝置信任 =====
+// （公司網路出口 IP／IP 網段／WiFi 名稱 SSID／GPS／人臉 判定皆已移除）
+//   mac_list        = 公司 AP（基地台）的實體位址清單（逗號分隔，支援 * 通配，例 A4:2B:8C:*）
+//   mac_required    = 啟用公司 AP MAC 驗證
+//   trusted_devices = 管理員核准過的裝置（手機瀏覽器讀不到 MAC → 改走這條）
+//   trust_required  = 啟用裝置信任
+//   enroll_token    = 一次性「核准裝置」連結的記號（管理員在任何地方產生，傳給要核准的人）
+// ⚠️ 瀏覽器讀不到 MAC 位址 → 電腦必須用 Windows 打卡小工具（tools/）帶入 ?bssid=<MAC>&t=<記號>
+//    手機／平板沒法裝小工具 → 走「裝置信任」：管理員核准一次，之後那支手機就能打卡
 // 判定順序：
 //   ① 停用打卡驗證 → 全放行
-//   ② 公用 IP 命中公司出口 IP 清單 → 放行（手機／電腦連公司 WiFi 即可，不必裝任何東西）
-//   ③ 清單是空的（還沒設定）→ 不設限放行（不能因為沒設定就把全公司鎖死）
-// ⚠️ 沒過 → 擋下。請關掉行動數據、改連公司 WiFi，按「🔄 重新偵測」即可。
+//   ② 連到的 AP 實體位址命中公司清單 → 放行（mac）
+//   ③ 這台裝置已被管理員核准 → 放行（device）
+//   ④ 清單都還沒設定 → 不設限放行（不能因為沒設定就把全公司鎖死）
+// ⚠️ 沒過 → 擋下；畫面會顯示「裝置代碼」，請管理員在設定頁核准後即可打卡。
 const WIFI_FACTORY_NAME = 'Office WiFi'; // 舊版（v5.3.x 以前）從未設定過的原廠值（出現即視為未設定，套用預設）
 function wifiDefaults() {
   return {
-    mode: 'wan',               // v5.4.0：僅公司網路出口 IP 驗證（SSID／IP 網段／MAC／人臉／GPS 判定皆已移除）
-    wan_ip: '',                // 公司網路出口（公用）IP 清單（逗號分隔，支援 *）
-    wan_ip_at: '',             // 最近一次登錄／更新出口 IP 的時間
-    wan_ip_by: '',             // v5.3.1：最近一次是誰登錄的（稽核）
-    wan_auto: true,            // 公司 IP 浮動時自動補登錄出口 IP（僅管理員）
-    wan_required: true,        // 啟用出口 IP 驗證
-    enroll_token: '',          // v5.3.1：一次性遠端登記連結記號
+    mode: 'mac',               // v5.5.0：公司 AP 實體位址（BSSID）＋ 裝置信任（出口 IP／SSID／GPS／人臉皆已移除）
+    bssid_list: '',            // 公司 AP／路由器的實體位址（BSSID）清單（逗號分隔，支援 * 通配）
+    bssid_at: '',              // 最近一次登錄／更新公司 AP MAC 的時間
+    bssid_by: '',              // 最近一次是誰登錄的（稽核）
+    bssid_required: true,      // 啟用公司 AP MAC 驗證
+    trusted_devices: [],       // v5.5.0：管理員核准過的裝置 [{uid, label, by, at}]
+    trust_required: true,      // 啟用裝置信任（核准過的手機／平板直接放行）
+    enroll_token: '',          // 一次性「核准裝置」連結記號
     enroll_exp: 0,             // 記號到期時間（Date.now() 毫秒）
     enroll_used: false,        // 記號是否已使用（用過即失效）
-    enroll_by: '',             // 用這個記號完成登記的人
-    enroll_used_at: '',        // 完成登記時間
+    enroll_by: '',             // 用這個記號完成核准的人
+    enroll_used_at: '',        // 完成核准時間
     last_ip: '',               // 最近偵測到的 IP（系統自動記錄，僅供顯示）
     last_ip_at: '',
     enabled: true,
     updated_at: new Date().toISOString()
   };
 }
-// 由 IP 推導 /24 網段（192.168.31.83 → 192.168.31.*）
-function ipSegment(ip) {
-  const m = /^(\d{1,3}\.\d{1,3}\.\d{1,3})\.(\d{1,3}|\*)$/.exec((ip || '').trim());
-  return m ? m[1] + '.*' : '';
-}
-// IP 清單字串 → 陣列
+// IP 清單字串 → 陣列（v5.5.0：IP 僅供顯示／稽核，不再是放行依據）
 function splitIpList(str) {
   return (str || '').split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
 }
-// 補齊新版欄位（v5.4.0：只剩公司網路出口 IP；SSID／IP 網段／MAC／人臉／GPS 欄位一律清除）
+// ===== v5.5.0 MAC 位址（公司 AP 的實體位址 BSSID）=====
+// 統一成「大寫、冒號分隔」：A4:2B:8C:11:22:33（與 Windows 小工具的 Get-HexMAC 對齊）
+function normalizeMAC(v) {
+  const hex = String(v || '').replace(/[^0-9A-Fa-f]/g, '').toUpperCase();
+  if (hex.length !== 12) return '';
+  if (/^0{12}$/.test(hex)) return '';   // 全 0 = 沒抓到
+  return hex.replace(/(.{2})/g, '$1:').replace(/:$/, '');
+}
+// MAC 白名單字串 → 陣列（含 * 通配者原樣保留大寫）
+function splitMacList(str) {
+  return (str || '').split(',').map(function(s) {
+    return normalizeMAC(s) || String(s).trim().toUpperCase();
+  }).filter(function(s) { return s; });
+}
+// 抓到的 BSSID 是否命中公司白名單（支援 * 通配，例 A4:2B:8C:* = 同廠牌同批 AP）
+function isMACAllowed(mac, macListStr) {
+  const target = normalizeMAC(mac);
+  if (!target) return false;
+  return splitMacList(macListStr).some(function(a) {
+    if (a === target) return true;
+    if (a.indexOf('*') === -1) return false;
+    const p = a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\*/g, '.*');
+    try { return new RegExp('^' + p + '$').test(target); } catch (e) { return false; }
+  });
+}
+// 補齊新版欄位（v5.5.0：公司 AP MAC ＋ 裝置信任；出口 IP／SSID／IP 網段／GPS／人臉欄位一律清除）
 function normalizeWifiSettings(target) {
   if (!target) return;
   const w = target.wifiSettings;
-  // 「從未設定過」的判定：v5.4.0 起沒有 wifi_name 可用 → 看有沒有任何新版（wan_*/enroll_*）欄位；
+  // 「從未設定過」的判定：v5.5.0 起沒有 wifi_name 可用 → 看有沒有任何新版（bssid_*／trust_*／enroll_*）欄位；
   // 完全沒有且 wifi_name 是原廠值或不存在 → 視為未設定，直接套預設值
-  const hasWanKeys = !!w && typeof w === 'object' &&
-    ('wan_ip' in w || 'wan_required' in w || 'wan_auto' in w || 'enroll_token' in w);
+  const hasMacKeys = !!w && typeof w === 'object' &&
+    ('bssid_list' in w || 'bssid_required' in w || 'trust_required' in w ||
+     'trusted_devices' in w || 'enroll_token' in w);
   const untouched = !w || typeof w !== 'object' ||
-    (!hasWanKeys && (!w.wifi_name || w.wifi_name === WIFI_FACTORY_NAME));
+    (!hasMacKeys && (!w.wifi_name || w.wifi_name === WIFI_FACTORY_NAME));
   if (untouched) { target.wifiSettings = wifiDefaults(); return; }
   // v4.1.0：舊欄位清除（IP 網段判定全面移除）
-  // v5.1.0：再清除 MAC 認證與人臉辨識／活體偵測欄位（功能已移除，舊資料一併清乾淨）
+  // v5.1.0：再清除舊的裝置 MAC 認證與人臉辨識／活體偵測欄位（那些功能早已移除）
   // v5.2.0：再清除 GPS 定位欄位（功能已移除）
-  // v5.4.0：再清除 WiFi 名稱（SSID）欄位（功能已移除，連同 Windows 打卡小工具一起下架）
+  // v5.4.0：再清除 WiFi 名稱（SSID）欄位（功能已移除）
+  // v5.5.0：再清除公司網路出口 IP 欄位（功能已移除，改看公司 AP 的實體位址）
   ['require_ssid', 'ssid_ip_range', 'allowed_ips',
    'ssid_ip', 'ssid_ip_at', 'allow_no_ssid',
    'mac_list', 'mac_required', 'device_mac_list', 'device_mac_required',
@@ -966,23 +1013,26 @@ function normalizeWifiSettings(target) {
    'face_required', 'face_threshold', 'liveness_mode', 'face_fallback',
    'gps_lat', 'gps_lng', 'gps_radius', 'gps_at', 'gps_note', 'gps_required',
    'strict_both',
-   'wifi_name', 'ssid_list', 'ssid_required', 'wan_self_enroll'].forEach(function(k) { delete w[k]; });
+   'wifi_name', 'ssid_list', 'ssid_required', 'wan_self_enroll',
+   'wan_ip', 'wan_ip_at', 'wan_ip_by', 'wan_auto', 'wan_required'].forEach(function(k) { delete w[k]; });
   if (!w.last_ip || typeof w.last_ip !== 'string') w.last_ip = '';
   if (!w.last_ip_at) w.last_ip_at = '';
-  // v5.3.0：公司出口 IP 通道（手機連公司 WiFi 就用這條放行）— v5.4.0 起是唯一通道
-  if (!w.wan_ip || typeof w.wan_ip !== 'string') w.wan_ip = '';
-  if (!w.wan_ip_at) w.wan_ip_at = '';
-  if (w.wan_auto === undefined || typeof w.wan_auto !== 'boolean') w.wan_auto = true;
-  if (w.wan_required === undefined || typeof w.wan_required !== 'boolean') w.wan_required = true;
-  // v5.3.1：管理員不在公司也能維持通道（一次性遠端登記連結）
-  if (!w.wan_ip_by || typeof w.wan_ip_by !== 'string') w.wan_ip_by = '';
+  // v5.5.0：公司 AP 實體位址（BSSID）白名單
+  if (!w.bssid_list || typeof w.bssid_list !== 'string') w.bssid_list = '';
+  if (!w.bssid_at) w.bssid_at = '';
+  if (!w.bssid_by || typeof w.bssid_by !== 'string') w.bssid_by = '';
+  if (w.bssid_required === undefined || typeof w.bssid_required !== 'boolean') w.bssid_required = true;
+  // v5.5.0：裝置信任（手機讀不到 MAC，改由管理員核准）
+  if (!Array.isArray(w.trusted_devices)) w.trusted_devices = [];
+  if (w.trust_required === undefined || typeof w.trust_required !== 'boolean') w.trust_required = true;
+  // v5.3.1：一次性遠端連結（v5.5.0 起用途改為「核准裝置」）
   if (!w.enroll_token || typeof w.enroll_token !== 'string') w.enroll_token = '';
   if (!w.enroll_exp || typeof w.enroll_exp !== 'number') w.enroll_exp = 0;
   if (w.enroll_used === undefined || typeof w.enroll_used !== 'boolean') w.enroll_used = false;
   if (!w.enroll_by || typeof w.enroll_by !== 'string') w.enroll_by = '';
   if (!w.enroll_used_at) w.enroll_used_at = '';
   if (w.enabled === undefined) w.enabled = true;
-  w.mode = 'wan'; // v5.4.0：僅公司網路出口 IP
+  w.mode = 'mac'; // v5.5.0：公司 AP 實體位址（BSSID）＋ 裝置信任
 }
 
 let db = loadDB(); // 必須在 WiFi 預設值/正規化函式之後（loadDB 內部會用到，避免 TDZ）
@@ -1021,11 +1071,12 @@ function loadDB() {
       // v5.1.0：打卡紀錄中的 MAC／人臉欄位一併清除（功能已移除）
       // v5.2.0：GPS 欄位一併清除（功能已移除）
       // v5.4.0：WiFi 名稱（wifi_ssid）一併清除（SSID 通道已移除）
+      // v5.5.0：出口 IP 欄位（check_ip）一併清除（出口 IP 通道已移除，改記 check_mac / check_device）
       (parsed.attendance || []).forEach(function(a) {
         ['mac_address', 'device_mac', 'mac_verified', 'face_verified', 'face_score',
          'liveness_blink', 'liveness_turn', 'liveness_mouth',
          'gps_lat', 'gps_lng', 'gps_accuracy', 'gps_distance',
-         'wifi_ssid'].forEach(function(k) { if (a[k] !== undefined) delete a[k]; });
+         'wifi_ssid', 'check_ip'].forEach(function(k) { if (a[k] !== undefined) delete a[k]; });
       });
       (parsed.attendance || []).forEach(function(a) { if (!a.updated_at) a.updated_at = nowISO; });
       (parsed.leave_requests || []).forEach(function(l) { if (!l.updated_at) l.updated_at = nowISO; });
@@ -1043,7 +1094,7 @@ function loadDB() {
     attendance: [],
     leave_requests: [],
     deleted_employees: [],
-    wifiSettings: wifiDefaults(), // v5.4.0：公司網路出口 IP
+    wifiSettings: wifiDefaults(), // v5.5.0：公司基地台 MAC ＋ 裝置信任
     schedule: { start_time: '09:00', end_time: '18:00', enabled: true },
     payrollConfig: { ot_multiplier: 1.34, standard_daily_hours: 8, updated_at: '' },
     salary_settings: {},
@@ -1155,91 +1206,15 @@ function requireLogin() {
 }
 
 // ===== IP Detection =====
-// v5.3.0：公用 IP（＝公司網路出口 IP）多通道並行競速
-//   手機／瀏覽器讀不到 WiFi 名稱，但只要連上公司 WiFi，對外的公用 IP 就是公司的外網 IP，
-//   這是目前唯一「手機也抓得到、又能證明人在公司網路」的可靠依據（v5.3.0 起作為第二條放行通道）。
-//   多家供應商同時打，誰先回傳有效 IPv4 就用誰；單一供應商掛掉／被擋不影響打卡。
-const WAN_IP_PROVIDERS = [
-  'https://api.ipify.org?format=json',
-  'https://api64.ipify.org?format=json',
-  'https://ipv4.icanhazip.com',
-  'https://api.ip.sb/ip',
-  'https://ip.3322.net',
-  'https://cloudflare.com/cdn-cgi/trace'
-];
+// v5.5.0：公用（出口）IP 抓取已全面移除 — 打卡判定改看「公司 AP 的實體位址」，
+//   不再依賴任何外部 IP 服務（少掉「ipify 掛掉就打不了卡」的風險，打卡也不必再等網路）。
+//   只保留內網 IPv4（WebRTC，瞬間取得、不對外打任何請求），純供顯示／稽核。
 const IPV4_EXACT_RE = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
-// 從任何回應內容（JSON / 純文字 / key=value）抽出第一個 IPv4
-function extractIPv4(text) {
-  const m = /(?:^|[^0-9.])((?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})(?![0-9.])/
-    .exec(String(text || ''));
-  return m ? m[1] : '';
-}
 function isIPv4(ip) { return IPV4_EXACT_RE.test(String(ip || '').trim()); }
 
-// 公用 IP 抓取：所有供應商並行，第一個有效的結果勝出；全部失敗或逾時回傳 ''
-async function fetchPublicIP(opts) {
-  const timeoutMs = (opts && opts.timeoutMs) || 4000;
-  if (typeof window.fetch !== 'function') return '';
-  return new Promise(function(resolve) {
-    let settled = false;
-    const finish = function(ip) { if (!settled) { settled = true; resolve(ip || ''); } };
-    const timer = setTimeout(function() { finish(''); }, timeoutMs);
-    WAN_IP_PROVIDERS.forEach(function(url) {
-      try {
-        let init = { cache: 'no-store' };
-        if (window.AbortController) {
-          const ac = new AbortController();
-          init.signal = ac.signal;
-          setTimeout(function() { try { ac.abort(); } catch (e) {} }, timeoutMs);
-        }
-        fetch(url, init).then(function(r) {
-          if (!r || !r.ok) throw new Error('bad-status');
-          return r.text();
-        }).then(function(t) {
-          const ip = extractIPv4(t);
-          if (ip) { clearTimeout(timer); finish(ip); }
-        }).catch(function() {});
-      } catch (e) {}
-    });
-  });
-}
-
-// 相容舊呼叫：抓公用 IP（抓不到回 'unknown'）
-async function detectIP(opts) {
-  try {
-    const ip = await fetchPublicIP(opts);
-    return ip || 'unknown';
-  } catch (e) { return 'unknown'; }
-}
-
-// 打卡前確保已抓到公用 IP（只抓一次，之後沿用同一個工作階段的結果）
-async function ensurePublicIP(opts) {
-  if (isIPv4(currentPublicIP)) return currentPublicIP;
-  const ip = await fetchPublicIP(opts);
-  if (isIPv4(ip)) {
-    currentPublicIP = ip;
-    if (!currentIP || currentIP === 'unknown') currentIP = ip;
-  }
-  return currentPublicIP || '';
-}
-
-function isIPAllowed(ip, allowedIPsStr) {
-  if (!allowedIPsStr || allowedIPsStr.trim() === '') return true;
-  if (!ip || ip === 'unknown') return false;
-  const allowed = allowedIPsStr.split(',').map(s => s.trim()).filter(s => s);
-  return allowed.some(a => {
-    if (a === ip) return true;
-    if (a.includes('*')) {
-      const pattern = a.replace(/\./g, '\\.').replace(/\*/g, '.*');
-      return new RegExp('^' + pattern + '$').test(ip);
-    }
-    return false;
-  });
-}
-
-// ===== v4.0.13 內網 IPv4 自動抓取（v4.0.22 沿用，供連線判定與顯示） =====
+// ===== v4.0.13 內網 IPv4 自動抓取（v5.5.0 起僅供顯示／稽核，不再是放行依據） =====
 // 瀏覽器基於隱私不會直接提供區網 IP，只能透過 WebRTC 的 ICE candidate 取得；
-// Chrome 可能以 mDNS（xxx.local）遮蔽，此時回傳 null，改以公用 IP 備援。
+// Chrome 可能以 mDNS（xxx.local）遮蔽，此時回傳 null。
 function isPrivateIPv4(ip) {
   if (!ip) return false;
   if (/^10\./.test(ip)) return true;
@@ -1248,19 +1223,6 @@ function isPrivateIPv4(ip) {
   if (m) { const n = parseInt(m[1], 10); return n >= 16 && n <= 31; }
   if (/^169\.254\./.test(ip)) return true; // link-local
   return false;
-}
-
-// v5.3.1：可當「公司網路出口」的 IP（必須是真正的公網 IP）
-// 避免有人在家把 192.168.1.1 / 10.0.0.1 這類區網 IP 登錄成公司地址（那會讓打卡管制整個失效）
-function isPublicIPv4(ip) {
-  if (!isIPv4(ip)) return false;
-  if (isPrivateIPv4(ip)) return false;      // 10./192.168./172.16-31./169.254.
-  if (/^127\./.test(ip)) return false;      // loopback
-  if (/^0\./.test(ip)) return false;        // 0.0.0.0/8
-  if (/^100\.6[4-9]\./.test(ip) || /^100\.(1[0-1]\d|12[0-7])\./.test(ip)) return false; // CGNAT
-  const oct = parseInt(/^(\d{1,3})\./.exec(ip)[1], 10);
-  if (oct >= 224) return false;             // multicast / reserved / 廣播
-  return true;
 }
 
 function detectLocalIPv4() {
@@ -1288,44 +1250,178 @@ function detectLocalIPv4() {
   });
 }
 
-// 回傳 { ip, lan, public }：v4.0.22 起「內網與外網同時抓取」
-//   ip     = 顯示用（優先內網，抓不到才顯示外網）
-//   lan    = 內網 IPv4（WebRTC，可能被 Chrome mDNS 遮蔽）
-//   public = 外網（公用）IP，v4.0.22 的外網 IP 判定就是用這個
+// 回傳 { ip, lan, public }：v5.5.0 起只抓內網（public 恆為 null，欄位保留以相容舊呼叫）
 async function detectIPv4() {
-  var lanP, pubP;
-  try { lanP = detectLocalIPv4(); } catch (e) { lanP = Promise.resolve(null); }
-  try { pubP = detectIP(); } catch (e) { pubP = Promise.resolve(null); }
-  var pubTimeout = new Promise(function(r) { setTimeout(function() { r(null); }, 4500); }); // 外網 IP 最多等 4.5 秒
-  var lan = null, pub = null;
-  try { lan = await lanP; } catch (e) { lan = null; }
-  try { pub = await Promise.race([pubP, pubTimeout]); } catch (e) { pub = null; }
-  if (!pub || pub === 'unknown') pub = null;
-  return { ip: lan || pub || 'unknown', lan: lan || null, public: pub || null };
+  var lan = null;
+  try { lan = await detectLocalIPv4(); } catch (e) { lan = null; }
+  return { ip: lan || 'unknown', lan: lan || null, public: null };
 }
 
-// ===== v5.4.0 打卡閘門：僅公司網路出口 IP（單一通道） =====
+// ===== v5.5.0 Windows 打卡小工具：把抓到的 AP 實體位址（BSSID）帶進網頁 =====
+// 瀏覽器讀不到 MAC 位址 → 由小工具（tools/）執行 netsh wlan show interfaces 讀出 BSSID，
+// 再以 ?bssid=<MAC>&t=<記號> 開啟打卡頁。記號 = hash31(MAC|密語|當天日期)，**換天自動失效**，
+// 所以沒辦法靠手打網址偽造（PowerShell 端的 Get-Token 與這裡逐位元對齊）。
+const MAC_TOOL_SECRET = 'TY-Attendance-MAC-v5.5';
+const MAC_SESSION_KEY = 'attendance_tool_bssid';
+const MAC_CACHE_MS = 12 * 60 * 60 * 1000; // 抓到的 BSSID 在這個分頁內 12 小時內沿用（上班→下班不必重跑小工具）
+function hash31(s) {
+  const str = String(s || '');
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 1000000007;
+  return h.toString(16);
+}
+function macDayStamp(d) {
+  const x = d || new Date();
+  const p = function(n) { return (n < 10 ? '0' : '') + n; };
+  return '' + x.getFullYear() + p(x.getMonth() + 1) + p(x.getDate());
+}
+function macToolToken(mac, day) {
+  return hash31(normalizeMAC(mac) + '|' + MAC_TOOL_SECRET + '|' + (day || macDayStamp()));
+}
+// 驗證小工具帶進來的 ?bssid=&t=（reason: none / mismatch / expired）
+function verifyToolMAC(mac, token) {
+  const m = normalizeMAC(mac);
+  if (!m || !token) return { ok: false, reason: 'none' };
+  const t = String(token).toLowerCase();
+  if (t === macToolToken(m)) return { ok: true, mac: m, reason: '' };
+  // 跨日（昨天執行的連結今天才打開）→ 用昨天再算一次，對得上就回報「過期」而不是「偽造」
+  const y = new Date(Date.now() - 86400000);
+  if (t === macToolToken(m, macDayStamp(y))) return { ok: false, reason: 'expired' };
+  return { ok: false, reason: 'mismatch' };
+}
+// 記住小工具抓到的 BSSID（同一個分頁內沿用；換天／超過 12 小時自動作廢）
+function rememberBSSID(mac) {
+  try {
+    sessionStorage.setItem(MAC_SESSION_KEY, JSON.stringify({ mac: mac, at: Date.now() }));
+  } catch (e) {}
+}
+function restoreBSSID() {
+  try {
+    const raw = sessionStorage.getItem(MAC_SESSION_KEY);
+    if (!raw) return '';
+    const o = JSON.parse(raw);
+    if (!o || !o.mac || !o.at) return '';
+    if (Date.now() - Number(o.at) > MAC_CACHE_MS) { sessionStorage.removeItem(MAC_SESSION_KEY); return ''; }
+    return normalizeMAC(o.mac);
+  } catch (e) { return ''; }
+}
+// 讀網址上的 ?bssid=&t=，通過驗證就採用（沒帶則嘗試沿用本分頁先前抓到的）
+function resolveBSSIDFromURL() {
+  let mac = '';
+  try {
+    const p = new URLSearchParams(location.search);
+    const v = verifyToolMAC(p.get('bssid'), p.get('t'));
+    if (v.ok) {
+      mac = v.mac;
+      currentBSSIDFrom = 'tool';
+      rememberBSSID(mac);
+      // 網址上的記號用掉就清掉，避免被轉傳給別人重複使用（其他參數例如 ?sync= 要保留）
+      try {
+        p.delete('bssid'); p.delete('t');
+        const qs = p.toString();
+        history.replaceState(null, '', location.pathname + (qs ? ('?' + qs) : ''));
+      } catch (e) {}
+    } else if (p.get('bssid') && v.reason === 'expired') {
+      showToast('打卡小工具抓到的基地台資料已超過一天，請重新執行一次小工具。', 'warning');
+    } else if (p.get('bssid') && v.reason === 'mismatch') {
+      showToast('這個打卡連結的驗證記號不正確，請改用正式的打卡小工具。', 'error');
+    }
+  } catch (e) {}
+  if (!mac) {
+    mac = restoreBSSID();
+    if (mac) currentBSSIDFrom = 'tool';
+  }
+  if (mac) currentBSSID = mac;
+  return mac;
+}
+
+// ===== v5.5.0 裝置信任（手機／平板讀不到 MAC 時的第二條通道） =====
+// 手機瀏覽器永遠讀不到基地台的 MAC，也沒法裝 Windows 小工具 → 改由管理員「核准這台裝置」一次，
+// 之後那支手機就能打卡。裝置代碼存在瀏覽器 localStorage，換裝置／清快取就要重新核准（合理的保護）。
+const DEVICE_UID_KEY = 'attendance_device_uid';
+function deviceUID() {
+  try {
+    let uid = localStorage.getItem(DEVICE_UID_KEY);
+    if (!uid) {
+      const rnd = (Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4)).toUpperCase();
+      uid = 'D-' + rnd.slice(0, 4) + '-' + rnd.slice(4, 8);
+      localStorage.setItem(DEVICE_UID_KEY, uid);
+    }
+    return uid;
+  } catch (e) { return ''; }
+}
+function trustedDeviceList() {
+  const w = (db && db.wifiSettings) ? db.wifiSettings : null;
+  return (w && Array.isArray(w.trusted_devices)) ? w.trusted_devices : [];
+}
+function isTrustedDevice(uid) {
+  const u = String(uid || '').trim().toUpperCase();
+  if (!u) return false;
+  return trustedDeviceList().some(function(d) { return String((d && d.uid) || '').trim().toUpperCase() === u; });
+}
+// 唯一寫入口：管理員核准一個裝置（回傳 {ok, reason}；reason: dup / bad-uid）
+function addTrustedDevice(uid, label, who) {
+  if (!db.wifiSettings) db.wifiSettings = wifiDefaults();
+  const w = db.wifiSettings;
+  const u = String(uid || '').trim().toUpperCase();
+  if (!/^[A-Z0-9][A-Z0-9-]{3,23}$/.test(u)) return { ok: false, reason: 'bad-uid' };
+  if (!Array.isArray(w.trusted_devices)) w.trusted_devices = [];
+  if (w.trusted_devices.some(function(d) { return String((d && d.uid) || '').toUpperCase() === u; })) {
+    return { ok: false, reason: 'dup' };
+  }
+  w.trusted_devices.push({
+    uid: u,
+    label: String(label || '').trim(),
+    by: String(who || '').trim(),
+    at: new Date().toISOString()
+  });
+  while (w.trusted_devices.length > 50) w.trusted_devices.shift(); // 最多 50 台，避免清單無限長大
+  w.updated_at = new Date().toISOString();
+  saveDB();
+  return { ok: true, uid: u };
+}
+function removeTrustedDevice(uid) {
+  if (!db.wifiSettings) return false;
+  const w = db.wifiSettings;
+  const u = String(uid || '').trim().toUpperCase();
+  if (!Array.isArray(w.trusted_devices)) return false;
+  const before = w.trusted_devices.length;
+  w.trusted_devices = w.trusted_devices.filter(function(d) { return String((d && d.uid) || '').toUpperCase() !== u; });
+  if (w.trusted_devices.length === before) return false;
+  w.updated_at = new Date().toISOString();
+  saveDB();
+  return true;
+}
+
+// ===== v5.5.0 打卡閘門：公司 AP 實體位址（MAC）＋ 裝置信任 =====
 // ① 停用驗證 → 全放行
-// ② 公用 IP 命中公司出口 IP 清單 → 放行（手機／電腦連公司 WiFi 即可）
-// ③ 清單是空的（管理員還沒設定）→ 不設限放行（不能因為沒設定就把全公司鎖死）
+// ② 連到的基地台實體位址（BSSID）命中公司清單 → 放行（mac）
+// ③ 這台裝置已被管理員核准 → 放行（device）
+// ④ 兩個清單都還沒設定 → 不設限放行（不能因為沒設定就把全公司鎖死）
 function evalGate() {
   const w = db.wifiSettings || {};
-  // 公司網路出口 IP：手機連公司 WiFi、電腦連公司網路，對外的公用 IP 都會是公司那一顆
-  const wanList = (w.wan_ip || '').trim();
-  const wanIP = (currentPublicIP || '').trim();
-  const hasWanIP = isIPv4(wanIP);
-  const wanRequired = w.wan_required !== false;
-  // 取消勾選「啟用出口 IP 驗證」時，通道視為完全不存在 → 不設限放行
-  const wanOK = wanRequired && !!wanList && hasWanIP && isIPAllowed(wanIP, wanList);
+  const macList = (w.bssid_list || '').trim();
+  const bssid = normalizeMAC(currentBSSID);
+  const macRequired = w.bssid_required !== false;
+  const trustRequired = w.trust_required !== false;
+  const uid = deviceUID();
+  const macOK = macRequired && !!macList && !!bssid && isMACAllowed(bssid, macList);
+  const trustOK = trustRequired && !!uid && isTrustedDevice(uid);
   const enabled = w.enabled !== false;
-  const wanActive = wanRequired && !!wanList;
+  const macActive = macRequired && !!macList;          // 有勾選 ＋ 清單有內容才算數
+  // 裝置信任：有勾選 ＋ 真的核准過至少一台才算數（清單空 = 還沒核准任何人 = 這條通道等於沒開，
+  // 不能因此把全公司鎖死 —— 全新安裝還沒設定時要維持「不設限」，管理員設定完才開始管制）
+  const trustActive = trustRequired && trustedDeviceList().length > 0;
   let ok = false, method = '';
   if (!enabled) { ok = true; method = 'off'; }
-  else if (wanOK) { ok = true; method = 'wan'; }
-  else if (!wanActive) { ok = true; method = 'off'; } // 沒設定 → 不設限
+  else if (macOK) { ok = true; method = 'mac'; }
+  else if (trustOK) { ok = true; method = 'device'; }
+  else if (!macActive && !trustActive) { ok = true; method = 'off'; } // 沒設定 → 不設限
   return {
     enabled: enabled, ok: ok, method: method,
-    wanIP: wanIP, wanList: wanList, wanOK: wanOK, wanRequired: wanRequired, wanActive: wanActive, hasWanIP: hasWanIP,
+    bssid: bssid, macList: macList, macOK: macOK, macRequired: macRequired, macActive: macActive,
+    hasBSSID: !!bssid, bssidFrom: currentBSSIDFrom,
+    uid: uid, trustOK: trustOK, trustRequired: trustRequired, trustActive: trustActive,
     ip: currentIP || 'unknown'
   };
 }
@@ -1333,95 +1429,72 @@ function evalGate() {
 // 打卡失敗原因（依實際情況給員工明確的處理指引）
 function gateFailReason(g) {
   if (!g) return '打卡驗證失敗，請重新整理頁面後再試。';
-  const wanTxt = g.hasWanIP ? ('目前的網路出口 IP 是 ' + g.wanIP) : '抓不到網路出口 IP（網路被擋或離線）';
-  const listTxt = g.wanList ? ('公司網路出口 IP 清單：' + g.wanList) : '管理員尚未登錄公司網路出口 IP';
-  return wanTxt + '，不在公司網路內（' + listTxt + '），無法打卡。' +
-    '📱 手機：請<strong>關掉行動數據</strong>、確定連上公司 WiFi；💻 電腦：請確定連的是公司網路（別用手機熱點／VPN）。' +
-    '連好後按「🔄 重新偵測」再打卡。';
+  const deviceHint = esc(g.uid || '');
+  // ① 已設定公司基地台清單 → 依「抓不到 MAC」／「MAC 不在清單」分別指引
+  if (g.macActive) {
+    if (!g.hasBSSID) {
+      return '抓不到目前連上的基地台實體位址（MAC）。📱 手機本身讀不到，請改由管理員核准這台裝置；' +
+        '💻 電腦請改用桌面上的「打卡」小工具開啟本頁（瀏覽器自己讀不到 MAC，小工具會自動帶入）。' +
+        '若用手機，請把裝置代碼 <strong>' + deviceHint + '</strong> 給管理員核准一次即可。';
+    }
+    return '目前連上的基地台實體位址是 ' + g.bssid + '，不在公司清單內（' + g.macList + '）。' +
+      '請確定連的是公司 WiFi，然後重新執行一次打卡小工具。' +
+      '若您用手機打卡，請把裝置代碼 <strong>' + deviceHint + '</strong> 給管理員，請他核准一次即可。';
+  }
+  // ② 沒設基地台清單、但有核准過裝置 → 只差「這台沒被核准」
+  if (g.trustActive) {
+    return '這台裝置還沒有被管理員核准。請把裝置代碼 <strong>' + deviceHint +
+      '</strong> 給管理員，核准一次之後就能打卡（電腦請改用打卡小工具，直接比對公司基地台的 MAC）。';
+  }
+  // ③ 兩個清單都還沒設定（理論上會放行，不會走到這裡）
+  return '管理員尚未設定「公司 AP 的實體位址」，也還沒核准任何裝置，無法判定是否在公司。請通知管理員到「打卡驗證設定」完成設定。';
 }
 
 // 打卡紀錄的判定方式標記（稽核用）
 //   wan = 公司網路出口 IP 符合 ／ off = 未設限或停用驗證
 function gateCheckTag(g) {
   if (!g || !g.ok) return '';
-  if (g.wanOK) return 'wan';
+  if (g.macOK) return 'mac';
+  if (g.trustOK) return 'device';
   return 'off';
 }
-// 把驗證結果寫入打卡紀錄（稽核用：判定方式、出口 IP）
+// 把驗證結果寫入打卡紀錄（稽核用：判定方式、基地台 MAC、裝置代碼）
 function applyGateFields(rec, gate, verified) {
   if (!rec) return rec;
   rec.wifi_verified = verified ? 1 : 0;
   rec.wifi_check = verified ? gateCheckTag(gate) : '';
   rec.check_method = verified ? (gateCheckTag(gate) || ((gate && gate.method) || '')) : '';
-  rec.check_ip = verified ? ((gate && gate.wanIP) || '') : '';
+  rec.check_mac = verified ? ((gate && gate.bssid) || '') : '';
+  rec.check_device = verified ? ((gate && gate.uid) || '') : '';
   return rec;
 }
 
-// ===== v5.3.1：公司網路出口 IP 的「唯一寫入口」 =====
-// 所有來源（自動登錄、一次性遠端登記連結、管理員手動）都走這裡，確保條件一致：
-//   ① 必須是真正的公網 IPv4（擋掉 192.168.* / 10.* / 127.* 這種區網 IP）
-//   ② 不在既有清單內（含 * 通配命中）→ 不重複寫
-//   ③ 最多保留 8 組，超過淘汰最舊
-function addCompanyWAN(ip, who) {
-  if (!db.wifiSettings) db.wifiSettings = wifiDefaults();
-  const w = db.wifiSettings;
-  const target = String(ip || '').trim();
-  if (!isPublicIPv4(target)) return { ok: false, reason: 'invalid-ip' };
-  if (w.wan_ip && isIPAllowed(target, w.wan_ip)) return { ok: false, reason: 'already-in-list' };
-  const list = splitIpList(w.wan_ip);
-  list.push(target);
-  while (list.length > 8) list.shift();
-  w.wan_ip = list.join(', ');
-  w.wan_ip_at = new Date().toISOString();
-  w.wan_ip_by = String(who || '').trim();
-  w.updated_at = w.wan_ip_at;
-  saveDB();
-  return { ok: true, ip: target, list: list.slice() };
+// 打卡頁／設定頁共用：「下載打卡小工具」提示（電腦的瀏覽器讀不到基地台 MAC，一定要靠小工具）
+function toolDownloadHint(style) {
+  return '<div style="margin-top:8px;font-size:12.5px;line-height:1.7;' + (style || '') + '">' +
+    '💻 <strong>用電腦打卡</strong>請改用打卡小工具開啟本頁（瀏覽器讀不到基地台的實體位址）：' +
+    '<a href="tools/TY-clockin-mac.bat" download style="color:var(--primary);font-weight:600;">⬇️ 打卡小工具 .bat</a>' +
+    ' ＋ ' +
+    '<a href="tools/TY-clockin-mac.ps1" download style="color:var(--primary);font-weight:600;">.ps1</a>' +
+    '<span style="color:var(--text-secondary);">（<strong>兩個檔要放在同一個資料夾</strong>，連上公司 WiFi 後雙擊 .bat 就會自動帶入並開啟打卡頁）</span>' +
+    '</div>';
+}
+// 顯示這台裝置的代碼（手機／平板被擋時，把代碼給管理員核准一次即可）
+function showDeviceCode(g) {
+  const box = document.getElementById('deviceCodeBox');
+  if (!box) return;
+  const uid = (g && g.uid) || deviceUID();
+  box.style.display = '';
+  box.innerHTML = '<div style="font-size:12.5px;color:var(--text-secondary);margin-bottom:4px;">' +
+    '📱 用手機／平板打卡 → 把這組代碼給管理員，核准一次之後這台就能打卡：</div>' +
+    '<div style="font-family:monospace;font-size:16px;font-weight:700;color:var(--primary);letter-spacing:1px;">' +
+    esc(uid || '（讀不到）') + '</div>';
 }
 
-// v5.4.0：SSID 通道移除後，系統已沒有「人確實在公司」的憑據（瀏覽器讀不到 WiFi 名稱）。
-// 因此自動補登只保留給**管理員**，並加一道網段判別：
-//   新的 IP 必須與清單裡既有的公司 IP「同一家 ISP」（前兩碼相同，或既有項目是 * 通配）才算 IP 浮動。
-//   管理員在家／飯店／用手機熱點時，IP 前兩碼通常完全不同 → 不會誤把家裡 IP 寫成公司地址。
-// 員工一律改用「一次性遠端登記連結」更新公司 IP（管理員在任何地方都能產生）。
-function wanSameISP(ip, list) {
-  const a = String(ip || '').trim().split('.');
-  if (a.length !== 4) return false;
-  return splitIpList(list).some(function(x) {
-    const b = String(x).trim().split('.');
-    if (b.length !== 4) return false;
-    for (let i = 0; i < 2; i++) {
-      if (b[i] === '*') return true;   // 既有項目在這一碼是通配 → 視為同一網段
-      if (b[i] !== a[i]) return false;
-    }
-    return true;
-  });
-}
-function autoRegisterCompanyWAN(gate) {
-  const g = gate || evalGate();
-  if (!db.wifiSettings) return false;
-  const w = db.wifiSettings;
-  if (w.wan_auto === false) return false;
-  if (!(currentUser && currentUser.role === 'admin')) return false; // v5.4.0：只保留管理員
-  if (!g.hasWanIP) return false;                       // 沒抓到出口 IP → 不寫
-  if (g.wanOK) return false;                           // 已在清單內（含 * 通配命中）→ 不用重複寫
-  if (!wanSameISP(g.wanIP, w.wan_ip)) return false;    // 與既有公司 IP 不同網段 → 不是浮動，不寫
-  return addCompanyWAN(g.wanIP, currentUser.name).ok;
-}
-// v5.3.1：自動補登成功時的提示（每天最多一次，避免每次載入打卡頁都彈）
-let _wanUpdatedNoticeDay = '';
-function notifyWANUpdated() {
-  const day = new Date().toLocaleDateString('en-CA');
-  if (_wanUpdatedNoticeDay === day) return;
-  _wanUpdatedNoticeDay = day;
-  const w = db.wifiSettings || {};
-  showToast('公司網路出口 IP 有變動，已自動更新為 ' + (w.wan_ip || '') + '（員工手機打卡不受影響）', 'info');
-}
-
-// ===== v5.3.1：一次性「遠端登記連結」（管理員不必在公司也能開通手機打卡） =====
-// 情境：管理員人在外地／還沒去過公司，公司從來沒登錄過出口 IP → 員工手機永遠打不了卡。
-// 解法：管理員在任何地方按一下產生專屬連結，用 LINE 傳給「此刻人在公司的同事」，
-//       同事在公司 WiFi 下用手機打開連結 → 按一下確認 → 公司出口 IP 就登錄完成，全公司手機立即生效。
+// ===== v5.3.1：一次性「遠端核准連結」（管理員不必在同事身邊也能核准裝置） =====
+// 情境：手機讀不到基地台 MAC → 管理員要核准那支手機才能打卡，但又不想當面拿手機來設定。
+// 解法：管理員在任何地方按一下產生專屬連結，用 LINE 傳給對方；
+//       對方用手機打開連結 → 按一下確認 → 那支手機就被核准，之後都能打卡。
 // 安全設計：記號隨機 24 位 16 進位、60 分鐘內有效、用過一次即失效，並記錄是誰完成的（稽核）。
 const ENROLL_SESSION_KEY = 'attendance_enroll_token';
 const ENROLL_TTL_MS = 60 * 60 * 1000; // 連結有效期（60 分鐘）
@@ -1459,13 +1532,13 @@ function generateEnrollLink() {
   w.updated_at = new Date().toISOString();
   saveDB();
   if (typeof refreshEnrollLinkInfo === 'function') refreshEnrollLinkInfo();
-  showToast('已產生登記連結（60 分鐘內有效、只能用一次）→ 複製起來傳給在公司的同事', 'success');
+  showToast('已產生核准連結（60 分鐘內有效、只能用一次）→ 複製起來傳給要核准的同事', 'success');
   return token;
 }
 function copyEnrollLink() {
   const inp = document.getElementById('enrollLinkInput');
-  if (!inp || !inp.value) { showToast('請先按「產生登記連結」', 'error'); return; }
-  const done = function() { showToast('連結已複製！請用 LINE 傳給此刻在公司的同事', 'success'); };
+  if (!inp || !inp.value) { showToast('請先按「產生核准連結」', 'error'); return; }
+  const done = function() { showToast('連結已複製！請用 LINE 傳給要核准的同事', 'success'); };
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(inp.value).then(done).catch(function() { inp.select(); document.execCommand && document.execCommand('copy'); done(); });
   } else {
@@ -1495,29 +1568,16 @@ function clearPendingEnrollToken() { try { sessionStorage.removeItem(ENROLL_SESS
 function renderEnrollModal(token) {
   const info = document.getElementById('enrollInfo');
   const btn = document.getElementById('enrollConfirmBtn');
-  if (btn) { btn.disabled = false; btn.textContent = '📌 確認登記這個 IP'; }
+  const uid = deviceUID();
+  if (btn) { btn.disabled = false; btn.textContent = '📱 核准這台裝置'; }
   if (info) {
     info.innerHTML = '<div style="font-size:13.5px;line-height:1.7;">' +
-      '管理員請您協助登記<strong>公司網路出口 IP</strong>。<br>' +
-      '請確認您<strong>現在人在公司、手機已連上公司 WiFi（並關掉行動數據）</strong>，再按下方按鈕。<br>' +
+      '管理員要核准「<strong>這台裝置</strong>」打卡（手機讀不到公司基地台的 MAC，所以用這個方式放行）。<br>' +
+      '請確認這是<strong>您本人平常打卡用的手機／電腦</strong>，再按下方按鈕。<br>' +
       '<div style="margin-top:10px;padding:10px 12px;background:var(--bg);border-radius:8px;">' +
-      '即將登記的出口 IP：<span id="enrollIpText" style="font-family:monospace;color:var(--primary);">偵測中…</span>' +
+      '這台裝置的代碼：<span style="font-family:monospace;color:var(--primary);font-weight:600;">' + esc(uid || '（讀不到）') + '</span>' +
       '</div></div>';
   }
-  // 先抓出口 IP 讓員工看到要登記的是哪一顆（抓不到就不能按）
-  ensurePublicIP({ timeoutMs: 4000 }).then(function(ip) {
-    const el = document.getElementById('enrollIpText');
-    const ok = isPublicIPv4(ip);
-    if (el) {
-      el.textContent = ip
-        ? (ip + (ok ? ' ✓' : ' ⚠️ 這不是公網 IP'))
-        : '抓不到（請確認已關掉行動數據並連上公司 WiFi）';
-    }
-    if (btn) {
-      btn.disabled = !ok;
-      btn.textContent = ok ? '📌 確認登記這個 IP' : '無法登記（沒抓到公司網路出口 IP）';
-    }
-  }).catch(function() {});
 }
 function openEnrollModal(token) {
   const m = document.getElementById('enrollModal');
@@ -1529,58 +1589,63 @@ function closeEnrollModal() {
   if (m) m.classList.remove('active');
   clearPendingEnrollToken();
 }
-// 員工按下「確認登記」
-async function doEnrollWAN() {
+// 員工按下「核准這台裝置」
+async function doEnrollDevice() {
   const token = pendingEnrollToken();
   const v = validateEnrollToken(token);
   if (!v.valid) {
-    showToast('這個登記連結已失效（過期或已被使用），請請管理員重新產生一個。', 'error');
+    showToast('這個核准連結已失效（過期或已被使用），請請管理員重新產生一個。', 'error');
     closeEnrollModal();
     return;
   }
-  if (!currentUser) { showToast('請先登入，登入後才能完成登記。', 'error'); return; }
+  if (!currentUser) { showToast('請先登入，登入後才能完成核准。', 'error'); return; }
   const btn = document.getElementById('enrollConfirmBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '登記中…'; }
-  let ip = currentPublicIP;
-  if (!isPublicIPv4(ip)) ip = await ensurePublicIP({ timeoutMs: 5000 });
-  const res = addCompanyWAN(ip, currentUser.name);
+  if (btn) { btn.disabled = true; btn.textContent = '核准中…'; }
+  const res = addTrustedDevice(deviceUID(), currentUser.name, currentUser.name);
   if (!res.ok) {
-    if (btn) { btn.disabled = false; btn.textContent = '📌 確認登記這個 IP'; }
-    if (res.reason === 'already-in-list') {
-      showToast('這組公司網路出口 IP 已經在清單內了，不用再登記一次 🙂', 'info');
+    if (btn) { btn.disabled = false; btn.textContent = '📱 核准這台裝置'; }
+    if (res.reason === 'dup') {
+      showToast('這台裝置已經核准過了，不用再按一次 🙂', 'info');
+      markEnrollUsed(currentUser.name);
     } else {
-      showToast('登記失敗：抓到的不是有效的公網 IP（' + (ip || '抓不到') + '）。請確認已關掉行動數據、連上公司 WiFi 再試。', 'error');
+      showToast('核准失敗：讀不到這台裝置的代碼（可能是瀏覽器停用儲存功能），請換一個瀏覽器再試。', 'error');
     }
     return;
   }
-  const w = db.wifiSettings;
+  markEnrollUsed(currentUser.name);
+  if (typeof pushToCloud === 'function') { try { await pushToCloud(true); } catch (e) {} }
+  closeEnrollModal();
+  showToast('已完成！這台裝置（' + res.uid + '）已被核准，之後用手機也能打卡了。', 'success');
+  if (typeof loadClockStatus === 'function') loadClockStatus();
+  if (typeof refreshWifiDetectInfo === 'function') refreshWifiDetectInfo();
+  if (typeof refreshTrustedDeviceList === 'function') refreshTrustedDeviceList();
+  if (typeof switchPage === 'function') switchPage('clock');
+}
+// 標記這組記號已使用（稽核：誰在哪一天核准的）
+function markEnrollUsed(who) {
+  const w = db.wifiSettings || (db.wifiSettings = wifiDefaults());
   w.enroll_used = true;
-  w.enroll_by = currentUser.name;
+  w.enroll_by = String(who || '').trim();
   w.enroll_used_at = new Date().toISOString();
   w.updated_at = w.enroll_used_at;
   saveDB();
-  if (typeof pushToCloud === 'function') { try { await pushToCloud(true); } catch (e) {} }
-  closeEnrollModal();
-  showToast('已完成登記！公司網路出口 IP ' + ip + ' 已加入清單，現在起全公司手機連公司 WiFi 都能打卡。', 'success');
-  if (typeof loadClockStatus === 'function') loadClockStatus();
-  if (typeof refreshWifiDetectInfo === 'function') refreshWifiDetectInfo();
-  if (typeof switchPage === 'function') switchPage('clock');
+  if (typeof refreshEnrollLinkInfo === 'function') refreshEnrollLinkInfo();
 }
-// 進站時若網址帶著 ?enroll= → 驗證後跳出登記視窗（未登入則提示先登入，登入後會自動跳出）
+// 進站時若網址帶著 ?enroll= → 驗證後跳出核准視窗（未登入則提示先登入，登入後會自動跳出）
 function maybeShowEnroll() {
   const token = pendingEnrollToken();
   if (!token) return;
   const run = function() {
     const v = validateEnrollToken(token);
     if (!v.valid) {
-      if (v.reason === 'used') showToast('這個登記連結已經被用過了，不需要再按一次 🙂', 'info');
-      else if (v.reason === 'expired') showToast('這個登記連結已超過 60 分鐘、自動失效了，請請管理員重新產生。', 'error');
-      else if (v.reason === 'mismatch') showToast('這個登記連結已被管理員作廢，請請他重新產生一個。', 'error');
+      if (v.reason === 'used') showToast('這個核准連結已經被用過了，不需要再按一次 🙂', 'info');
+      else if (v.reason === 'expired') showToast('這個核准連結已超過 60 分鐘、自動失效了，請請管理員重新產生。', 'error');
+      else if (v.reason === 'mismatch') showToast('這個核准連結已被管理員作廢，請請他重新產生一個。', 'error');
       clearPendingEnrollToken();
       return;
     }
     if (!currentUser) {
-      showToast('管理員請您協助登記公司網路 IP — 請先登入，登入後會自動跳出登記視窗。', 'info');
+      showToast('管理員要核准這台裝置打卡 — 請先登入，登入後會自動跳出確認視窗。', 'info');
       return;
     }
     openEnrollModal(token);
@@ -1594,17 +1659,17 @@ function maybeShowEnroll() {
   } else { run(); }
 }
 
-// v5.4.0：已移除 SSID 通道（原 Windows 打卡小工具以 ?ssid=XXX&t=記號 帶入 WiFi 名稱）。
-// 瀏覽器讀不到 SSID，那條通道只能靠小工具，v5.4.0 起統一走「公司網路出口 IP」單一通道。
+// v5.5.0：MAC（公司 AP 的實體位址）由 Windows 打卡小工具以 ?bssid=<MAC>&t=<記號> 帶入，
+//         記號換天自動失效（詳見 verifyToolMAC）。瀏覽器自己讀不到 MAC，這是唯一可行的來源。
 
-// 記錄最近一次偵測到的 IP（僅供顯示／稽核；v4.1.0 起 IP 不再作為放行依據）
-// 回傳 { ip, lan, public, lastIp, updated, reason }
+// 記錄最近一次偵測到的 IP（僅供顯示／稽核；v5.5.0 起 IP 完全不是放行依據）
+// 回傳 { ip, lan, lastIp, updated, reason }
 //  reason = updated / unchanged / no-ip
 function recordDetectedIP(opts) {
   if (!db.wifiSettings) db.wifiSettings = wifiDefaults();
   const w = db.wifiSettings;
   const before = (w.last_ip || '').trim();
-  const result = { ip: currentIP, lan: currentLocalIP, public: currentPublicIP, lastIp: before, updated: false, reason: '' };
+  const result = { ip: currentIP, lan: currentLocalIP, lastIp: before, updated: false, reason: '' };
   const cur = (currentIP || '').trim();
   if (!cur || cur === 'unknown') { result.reason = 'no-ip'; return result; }
   if (cur === before) { result.reason = 'unchanged'; return result; }
@@ -1618,14 +1683,12 @@ function recordDetectedIP(opts) {
   return result;
 }
 
-// 打卡／設定頁共用：抓 IP（紀錄用）→ 回傳結果（v5.2.0：GPS 定位已移除）
+// 打卡／設定頁共用：抓 IP（紀錄用）→ 回傳結果（v5.5.0：只抓內網，不再對外打任何 IP 服務）
 async function refreshNetworkInfo(opts) {
   const det = await detectIPv4();
-  currentIP = det.ip; currentLocalIP = det.lan; currentPublicIP = det.public;
-  if (!currentPublicIP) { try { currentPublicIP = await ensurePublicIP({ timeoutMs: 3000 }); } catch (e) {} }
-  let added = false;
-  if (db.wifiSettings) { recordDetectedIP(opts); added = autoRegisterCompanyWAN(); }
-  return { ip: currentIP, lan: det.lan, public: currentPublicIP || det.public, wanAdded: added };
+  currentIP = det.ip; currentLocalIP = det.lan;
+  if (db.wifiSettings) recordDetectedIP(opts);
+  return { ip: currentIP, lan: det.lan, public: null };
 }
 
 // ===== Late / Early Calculation =====
@@ -2205,28 +2268,27 @@ async function loadClockStatus() {
   const wifiEl = document.getElementById('wifiStatus');
   const isAdmin = currentUser.role === 'admin';
 
-  if (!currentIP || currentIP === 'unknown') {
-    wifiEl.className = 'wifi-status checking';
-    wifiEl.innerHTML = '<span>🔄 正在偵測網路環境...</span>';
-    const det = await detectIPv4();
-    currentIP = det.ip; currentLocalIP = det.lan; currentPublicIP = det.public;
+  // v5.5.0：IP 已經不是放行依據（只供顯示／稽核），所以**刻意不 await** ——
+  // 否則 WebRTC 被瀏覽器停用或抓不到區網 IP 時，打卡頁會卡在「偵測中」整整 3 秒才畫得出來。
+  // 改成背景抓取，抓到再重刷一次畫面（放行判定完全不受影響）。
+  if ((!currentIP || currentIP === 'unknown') && !_ipDetectStarted) {
+    _ipDetectStarted = true; // 只試一次（redetectNetwork 會重設這個旗標，讓使用者可以手動重抓）
+    detectIPv4().then(function(det) {
+      currentIP = det.ip; currentLocalIP = det.lan;
+      if (db.wifiSettings) recordDetectedIP();
+      // 只有真的抓到 IP 才重刷畫面（避免抓不到時無窮重試）
+      if (currentIP && currentIP !== 'unknown' && currentUser && typeof loadClockStatus === 'function') loadClockStatus();
+    }).catch(function() { currentIP = currentIP || 'unknown'; });
   }
-  // v5.3.0：放行可能會靠「公司網路出口 IP」→ 抓不到就在背景補抓，抓到後自動重刷一次畫面
-  // （刻意不 await：打卡頁要立刻顯示，不能讓員工盯著「偵測中」等網路）
-  if (!currentPublicIP) {
-    ensurePublicIP({ timeoutMs: 2500 }).then(function(ip) {
-      if (ip && currentUser) loadClockStatus();
-    }).catch(function() {});
-  }
-  if (!currentUser) return; // 防禦：await 期間使用者可能已登出（v4.0.7 修補的 race，v4.0.11 補強）
-  if (db.wifiSettings) { recordDetectedIP(); if (autoRegisterCompanyWAN()) notifyWANUpdated(); }
+  if (!currentUser) return; // 防禦：非同步期間使用者可能已登出（v4.0.7 修補的 race，v4.0.11 補強）
+  if (db.wifiSettings) recordDetectedIP();
 
   if (isAdmin) {
     // Admin is EXEMPT — can clock in/out & manage from anywhere
     wifiEl.className = 'wifi-status verified';
     wifiEl.innerHTML = '<span>👑 管理員模式：不受打卡管制，可隨時隨地使用 · IP: ' + esc(currentIP || 'unknown') + '</span>';
   } else {
-    // v5.4.0：僅驗證公司網路出口 IP（SSID／GPS／MAC／人臉皆已移除）
+    // v5.5.0：公司 AP 實體位址（MAC）＋ 裝置信任
     const g = evalGate();
     const redetectBtn = '<button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:12px;margin-left:6px;" onclick="redetectNetwork()">🔄 重新偵測</button>';
 
@@ -2236,12 +2298,14 @@ async function loadClockStatus() {
     } else if (g.ok) {
       wifiEl.className = 'wifi-status verified';
       const parts = [];
-      if (g.wanOK) parts.push('🌐 公司網路 IP ' + esc(g.wanIP) + ' ✓');
-      if (!parts.length) parts.push('✅ 已放行（管理員尚未設定公司網路出口 IP）');
+      if (g.macOK) parts.push('🔧 公司基地台 ' + esc(g.bssid) + ' ✓');
+      else if (g.trustOK) parts.push('📱 已核准的裝置 ' + esc(g.uid) + ' ✓');
+      if (!parts.length) parts.push('✅ 已放行（管理員尚未設定公司 AP 的實體位址）');
       wifiEl.innerHTML = '<span>✅ ' + parts.join(' · ') + ' — 已確認在公司，可打卡</span>';
     } else {
       wifiEl.className = 'wifi-status unverified';
-      wifiEl.innerHTML = '<span>❌ ' + esc(gateFailReason(g)) + '</span>' + redetectBtn;
+      wifiEl.innerHTML = '<span>❌ ' + esc(gateFailReason(g)) + '</span>' + redetectBtn + toolDownloadHint();
+      showDeviceCode(g);
     }
   }
 
@@ -2307,19 +2371,17 @@ async function loadClockStatus() {
   updateMakeupInfo(record); // v4.0.5 補班抵扣面板（任何上班日皆顯示）
 }
 
-// 重新偵測（內網 IPv4 / 公用 IP）
+// 重新偵測（v5.5.0：只抓內網 IP；基地台 MAC 由小工具帶入，重按不會改變它）
 async function redetectNetwork() {
   const btn = document.getElementById('redetectBtn');
   if (btn) { btn.disabled = true; btn.textContent = '🔄 偵測中...'; }
-  currentIP = null; currentLocalIP = null; currentPublicIP = null;
+  currentIP = null; currentLocalIP = null;
+  _ipDetectStarted = false; // 手動重抓：允許背景偵測再跑一次
   const det = await detectIPv4();
-  currentIP = det.ip; currentLocalIP = det.lan; currentPublicIP = det.public;
-  // v5.3.0：找不到出口 IP 時再補抓一次（員工按「重新偵測」就是要重判定）
-  if (!currentPublicIP) { try { currentPublicIP = await ensurePublicIP({ timeoutMs: 3000 }); } catch (e) {} }
+  currentIP = det.ip; currentLocalIP = det.lan;
   if (btn) { btn.disabled = false; btn.textContent = '🔄 重新偵測'; }
-  if (typeof autoRegisterCompanyWAN === 'function') autoRegisterCompanyWAN();
   showToast('已重新偵測 — IP：' + (currentIP || 'unknown') +
-    (currentPublicIP ? ' · 網路出口 IP：' + currentPublicIP : ' · 網路出口 IP：抓不到'), 'info');
+    (currentBSSID ? ' · 基地台 MAC：' + currentBSSID : ' · 基地台 MAC：抓不到（電腦請用打卡小工具開啟）'), 'info');
   loadClockStatus();
   if (currentUser && currentUser.role === 'admin' && typeof refreshWifiDetectInfo === 'function') refreshWifiDetectInfo();
 }
@@ -2516,13 +2578,8 @@ async function clockIn() {
   const today = new Date().toLocaleDateString('en-CA');
   const now = new Date().toLocaleTimeString('en-GB');
   const isAdmin = currentUser.role === 'admin';
-  // v5.3.0：抓不到公用 IP 時，手機可能只差這一步就能放行 → 先顯示偵測中並補抓（最多 2.5 秒）
-  if (!isAdmin && (db.wifiSettings || {}).enabled !== false && !isIPv4(currentPublicIP)) {
-    const el0 = document.getElementById('wifiStatus');
-    if (el0) { el0.className = 'wifi-status checking'; el0.innerHTML = '<span>🔄 正在偵測網路環境（公司網路）...</span>'; }
-    try { await ensurePublicIP({ timeoutMs: 2500 }); } catch (e) {}
-  }
-  // v5.3.0：WiFi 名稱 ＋ 公司網路出口 IP 雙軌驗證（管理員豁免）
+  // v5.5.0：公司 AP 實體位址（MAC）＋ 裝置信任 驗證（管理員豁免）
+  // （MAC 由 Windows 小工具帶入、裝置代碼存在本機 → 打卡不必再等任何網路偵測，按下立即判定）
   const gate = evalGate();
   const wifiVerified = isAdmin ? true : gate.ok;
 
@@ -2596,14 +2653,7 @@ async function clockOut() {
   const today = new Date().toLocaleDateString('en-CA');
   const now = new Date().toLocaleTimeString('en-GB');
   const isAdmin = currentUser.role === 'admin';
-  // v5.3.0：下班同樣補抓公用 IP（手機可能只差這一步就能放行）
-  if (!isAdmin && (db.wifiSettings || {}).enabled !== false && !isIPv4(currentPublicIP)) {
-    const el0 = document.getElementById('wifiStatus');
-    if (el0) { el0.className = 'wifi-status checking'; el0.innerHTML = '<span>🔄 正在偵測網路環境（公司網路）...</span>'; }
-    try { await ensurePublicIP({ timeoutMs: 2500 }); } catch (e) {}
-  }
-
-  // v5.3.0：下班打卡驗證（WiFi 名稱 ＋ 公司網路出口 IP）— admin exempt
+  // v5.5.0：下班打卡驗證（公司 AP 實體位址 ＋ 裝置信任）— admin exempt
   const gate = evalGate();
   const wifiVerified = isAdmin ? true : gate.ok;
   if (!isAdmin && gate.enabled && !gate.ok) {
@@ -3195,23 +3245,84 @@ function exportCSV() {
   showToast('CSV已匯出（共 ' + records.length + ' 筆記錄，含請假）', 'success');
 }
 
-// ===== 打卡驗證設定（v5.4.0：公司網路出口 IP 單一通道） =====
+// ===== 打卡驗證設定（v5.5.0：公司基地台 MAC ＋ 裝置信任） =====
 async function loadWifiSettings() {
   if (!requireAdmin()) return;
   const w = db.wifiSettings || {};
   const setVal = function(id, v) { const el = document.getElementById(id); if (el) el.value = v; };
   const setChk = function(id, v) { const el = document.getElementById(id); if (el) el.checked = !!v; };
-  setVal('wanIpInput', w.wan_ip || '');
+  setVal('macListInput', w.bssid_list || '');
   setChk('wifiEnabledInput', w.enabled !== false);
-  setChk('wanRequiredInput', w.wan_required !== false);
-  setChk('wanAutoInput', w.wan_auto !== false);
+  setChk('macRequiredInput', w.bssid_required !== false);
+  setChk('trustRequiredInput', w.trust_required !== false);
   refreshEnrollLinkInfo();
+  refreshTrustedDeviceList();
   refreshWifiDetectInfo(); // 先立即帶出既有設定（不等 IP，避免畫面卡在「載入中」）
   try { await refreshNetworkInfo({ force: false }); } catch (e) {}
   refreshWifiDetectInfo(); // IP 回來後再更新一次
 }
 
-// v5.3.1：遠端登記連結的狀態顯示（有效／已用／已過期）
+// v5.5.0：已核准裝置清單（可逐台移除）
+function refreshTrustedDeviceList() {
+  const box = document.getElementById('trustListBox');
+  if (!box) return;
+  const list = trustedDeviceList();
+  if (!list.length) {
+    box.innerHTML = '<span style="color:var(--text-secondary);">目前還沒有核准任何裝置。</span>';
+    return;
+  }
+  box.innerHTML = '<div style="margin-bottom:6px;color:var(--text-secondary);">已核准 <strong>' + list.length + '</strong> 台裝置：</div>' +
+    list.map(function(d) {
+      const at = String((d && d.at) || '').replace('T', ' ').slice(0, 16);
+      return '<div style="display:flex;gap:8px;align-items:center;padding:5px 8px;border:1px solid var(--border);border-radius:6px;margin-bottom:5px;">' +
+        '<span style="font-family:monospace;font-weight:600;">' + esc((d && d.uid) || '') + '</span>' +
+        '<span style="color:var(--text-secondary);flex:1;">' + esc((d && d.label) || '') +
+        (at ? ' · ' + esc(at) : '') + ((d && d.by) ? ' · 由 ' + esc(d.by) + ' 核准' : '') + '</span>' +
+        '<button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:12px;" onclick="untrustDevice(\'' + esc((d && d.uid) || '') + '\')">移除</button>' +
+        '</div>';
+    }).join('');
+}
+// 管理員在輸入框貼上代碼 → 核准
+function addTrustedDeviceFromInput() {
+  if (!requireAdmin()) return;
+  const inp = document.getElementById('trustCodeInput');
+  const code = inp ? String(inp.value || '').trim() : '';
+  if (!code) { showToast('請先填入要核准的裝置代碼', 'error'); return; }
+  const res = addTrustedDevice(code, '', (currentUser && currentUser.name) || '管理員');
+  if (!res.ok) {
+    showToast(res.reason === 'dup' ? '這台裝置已經核准過了 🙂' : '代碼格式不對，請確認是打卡頁顯示的那組（例：D-3F9A-21C7）', 'error');
+    return;
+  }
+  if (inp) inp.value = '';
+  refreshTrustedDeviceList();
+  showToast('已核准裝置 ' + res.uid + '（記得按「儲存設定」並讓雲端同步）', 'success');
+  if (typeof pushToCloud === 'function') { try { pushToCloud(true); } catch (e) {} }
+  loadClockStatus();
+}
+// 移除核准
+function untrustDevice(uid) {
+  if (!requireAdmin()) return;
+  if (!removeTrustedDevice(uid)) { showToast('找不到這台裝置', 'error'); return; }
+  refreshTrustedDeviceList();
+  showToast('已移除裝置 ' + uid + ' 的核准（該裝置之後打卡會被擋下）', 'success');
+  if (typeof pushToCloud === 'function') { try { pushToCloud(true); } catch (e) {} }
+  loadClockStatus();
+}
+// 一鍵核准「我現在這台」
+function trustThisDevice() {
+  if (!requireAdmin()) return;
+  const res = addTrustedDevice(deviceUID(), (currentUser && currentUser.name) || '', (currentUser && currentUser.name) || '管理員');
+  if (!res.ok) {
+    showToast(res.reason === 'dup' ? '這台裝置已經核准過了 🙂' : '讀不到這台裝置的代碼，請改用輸入框手動核准', 'error');
+    return;
+  }
+  refreshTrustedDeviceList();
+  showToast('已核准您現在這台裝置 ' + res.uid, 'success');
+  if (typeof pushToCloud === 'function') { try { pushToCloud(true); } catch (e) {} }
+  loadClockStatus();
+}
+
+// v5.5.0：遠端核准連結的狀態顯示（有效／已用／已過期）
 function refreshEnrollLinkInfo() {
   const w = db.wifiSettings || {};
   const inp = document.getElementById('enrollLinkInput');
@@ -3221,71 +3332,68 @@ function refreshEnrollLinkInfo() {
   if (!st) return;
   if (buildable) {
     const left = Math.max(1, Math.round((Number(w.enroll_exp) - Date.now()) / 60000));
-    st.innerHTML = '✅ 目前有一組<strong>有效</strong>的登記連結（剩約 ' + left + ' 分鐘，只能用一次）。複製後傳給此刻在公司的同事即可。';
+    st.innerHTML = '✅ 目前有一組<strong>有效</strong>的核准連結（剩約 ' + left + ' 分鐘，只能用一次）。複製後傳給對方即可。';
   } else if (w.enroll_used && w.enroll_by) {
-    st.innerHTML = '✅ 已完成登記：由 <strong>' + esc(w.enroll_by) + '</strong> 於 ' + esc(String(w.enroll_used_at || '').replace('T', ' ').slice(0, 16)) +
-      ' 登錄（連結已失效）。需要再開一組就按「產生登記連結」。';
+    st.innerHTML = '✅ 已完成核准：由 <strong>' + esc(w.enroll_by) + '</strong> 於 ' + esc(String(w.enroll_used_at || '').replace('T', ' ').slice(0, 16)) +
+      ' 完成（連結已失效）。需要再開一組就按「產生核准連結」。';
   } else if (w.enroll_token) {
-    st.innerHTML = '⌛ 這組連結已<strong>超過 60 分鐘失效</strong>了，需要用的話請再按一次「產生登記連結」。';
+    st.innerHTML = '⌛ 這組連結已<strong>超過 60 分鐘失效</strong>了，需要用的話請再按一次「產生核准連結」。';
   } else {
-    st.innerHTML = '尚未產生過登記連結。（管理員不在公司、或公司從沒登錄過出口 IP 時，就是用這個功能開通手機打卡）';
+    st.innerHTML = '尚未產生過核准連結。（不方便當面拿同事的手機時，就用這個功能遠端核准）';
   }
 }
 
-// 管理員手動登錄公司網路出口 IP（必須在公司 WiFi 連線狀態下按）
-async function captureCompanyWAN() {
+// 管理員把「小工具抓到的基地台 MAC」帶入清單（MAC 只能靠小工具帶入，網頁讀不到）
+function captureCompanyMAC() {
   if (!requireAdmin()) return;
-  const btn = document.getElementById('captureWanBtn');
-  const label = btn ? btn.textContent : '';
-  if (btn) { btn.disabled = true; btn.textContent = '🌐 抓取中...'; }
-  let ip = '';
-  try { ip = await fetchPublicIP({ timeoutMs: 6000 }); } catch (e) { ip = ''; }
-  if (btn) { btn.disabled = false; btn.textContent = label; }
-  if (!ip) {
-    showToast('抓不到網路出口 IP，請確認網路連線後再試一次。', 'error');
+  const mac = normalizeMAC(currentBSSID);
+  if (!mac) {
+    showToast('還沒抓到基地台的 MAC — 請先下載打卡小工具，連上公司 WiFi 後用它在公司執行一次，再由它開啟本頁。', 'error');
     return;
   }
-  currentPublicIP = ip;
-  if (!currentIP || currentIP === 'unknown') currentIP = ip;
-  const input = document.getElementById('wanIpInput');
+  const input = document.getElementById('macListInput');
   if (input) {
-    const list = splitIpList(input.value);
-    if (list.indexOf(ip) === -1) list.push(ip);
+    const list = splitMacList(input.value);
+    if (list.indexOf(mac) === -1) list.push(mac);
     input.value = list.join(', ');
   }
-  const g = evalGate();
   refreshWifiDetectInfo();
-  showToast('已抓到這台電腦的網路出口 IP：' + ip + '（請確認是在公司 WiFi 下抓取，並記得按「儲存設定」）' +
-    (g.wanOK ? '' : ' ⚠️ 這顆 IP 目前不在公司清單內（或清單還是空的），請確認連的是公司網路。'), 'success');
+  showToast('已帶入這台電腦目前連上的基地台 MAC：' + mac + '（請記得按「儲存設定」）', 'success');
 }
 
-// 顯示偵測結果：IP / 出口 IP / 放行狀態
+// 顯示偵測結果：IP / 基地台 MAC / 放行狀態
 function refreshWifiDetectInfo() {
   const setTxt = function(id, txt) { const el = document.getElementById(id); if (el) el.textContent = txt; };
   const setHtml = function(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; };
   const w = db.wifiSettings || {};
   setTxt('adminCurrentIP', currentIP || '（無法取得）');
-  // 網路出口 IP（公網）：手機連公司 WiFi 就是靠這個放行
-  if (isIPv4(currentPublicIP)) {
-    const hit = !!(w.wan_ip && isIPAllowed(currentPublicIP, w.wan_ip));
-    setTxt('adminWanIp', currentPublicIP + (hit ? ' ✓' : ' ✗'));
-    setTxt('adminWanIpNote', hit
-      ? ('（在公司網路出口 IP 清單內，員工手機連公司 WiFi 可打卡' + (w.wan_ip_by ? ' · 最近由 ' + w.wan_ip_by + ' 登錄' : '') + '）')
-      : (w.wan_ip ? '（不在清單「' + w.wan_ip + '」內，手機打卡會被擋下）' : '（尚未設定公司網路出口 IP，請按下方按鈕抓取）'));
+  // 這台電腦連上的基地台 MAC（小工具帶入）
+  const mac = normalizeMAC(currentBSSID);
+  if (mac) {
+    const hit = !!(w.bssid_list && isMACAllowed(mac, w.bssid_list));
+    setTxt('adminBssid', mac + (hit ? ' ✓' : ' ✗'));
+    setTxt('adminBssidNote', hit
+      ? ('（在公司基地台清單內，員工用打卡小工具就能打卡' + (w.bssid_by ? ' · 最近由 ' + w.bssid_by + ' 登錄' : '') + '）')
+      : (w.bssid_list ? '（不在清單「' + w.bssid_list + '」內，會被擋下）' : '（尚未設定公司基地台 MAC，請按下方按鈕帶入）'));
   } else {
-    setTxt('adminWanIp', '（抓不到 — 網路被擋／離線）');
-    setTxt('adminWanIpNote', '抓不到出口 IP 時無法判斷是否在公司，員工打卡會被擋下');
+    setTxt('adminBssid', '（讀不到 — 請用打卡小工具開啟本頁）');
+    setTxt('adminBssidNote', '');
   }
+  // 小工具下載提示
+  const hint = document.getElementById('macToolHint');
+  if (hint) hint.innerHTML = (typeof toolDownloadHint === 'function' ? toolDownloadHint() : '');
 
   const note = document.getElementById('wifiAutoNote');
   if (note) {
     const g = evalGate();
     if (!g.enabled) {
       setHtml('wifiAutoNote', '⚠️ 打卡驗證已停用（任何地點皆可打卡）');
-    } else if (g.wanOK) {
-      setHtml('wifiAutoNote', '✅ 驗證通過：🌐 出口 IP ' + esc(g.wanIP) + ' ✓（wan）');
-    } else if (!g.wanActive) {
-      setHtml('wifiAutoNote', '⚠️ 尚未設定公司網路出口 IP（目前不設限，任何人都能打卡）');
+    } else if (g.macOK) {
+      setHtml('wifiAutoNote', '✅ 驗證通過：🔧 公司基地台 ' + esc(g.bssid) + ' ✓（mac）');
+    } else if (g.trustOK) {
+      setHtml('wifiAutoNote', '✅ 驗證通過：📱 已核准裝置 ' + esc(g.uid) + ' ✓（device）');
+    } else if (!g.macActive && !g.trustActive) {
+      setHtml('wifiAutoNote', '⚠️ 尚未設定公司基地台 MAC（目前不設限，任何人都能打卡）');
     } else {
       setHtml('wifiAutoNote', '❌ ' + esc(gateFailReason(g)));
     }
@@ -3294,14 +3402,15 @@ function refreshWifiDetectInfo() {
   const warn = document.getElementById('wifiDetectWarn');
   if (warn) {
     const g = evalGate();
-    if (g.enabled && !g.wanActive) {
+    if (g.enabled && !g.macActive && !g.trustActive) {
       warn.style.display = '';
-      warn.innerHTML = '⚠️ 尚未設定「公司網路出口 IP」→ 目前<strong>不設限</strong>（任何人都能打卡，等於沒有管制）。二選一開通：' +
-        '<br>　<b>① 您現在就在公司</b>：按下方「🌐 抓取這台電腦目前的網路出口 IP」（在公司 WiFi 下抓取）並儲存設定。' +
-        '<br>　<b>② 您<strong>不在公司</strong>（出差／還沒去過）</b>：到下方「🔗 遠端登記連結」產生連結，用 LINE 傳給此刻在公司的同事，請他連公司 WiFi 按一下確認即可。';
-    } else if (g.enabled && !g.ok && !isIPv4(currentPublicIP)) {
+      warn.innerHTML = '⚠️ 尚未設定「公司基地台的 MAC」→ 目前<strong>不設限</strong>（任何人都能打卡，等於沒有管制）。開通方式：' +
+        '<br>　<b>🔧 電腦</b>：下載打卡小工具，在公司 WiFi 下執行 → 按下方「🔍 帶入這台電腦目前連上的基地台 MAC」→ 儲存設定。' +
+        '<br>　<b>📱 手機</b>：請員工在打卡頁抄下「裝置代碼」給您，貼到下方「核准裝置」。';
+    } else if (g.enabled && !g.macActive && g.trustActive) {
       warn.style.display = '';
-      warn.innerHTML = '⚠️ 抓不到網路出口 IP（網路被擋或離線）→ 無法判斷是否在公司，員工暫時打不了卡。請確認網路連線後按「🔄 重新偵測」。';
+      warn.innerHTML = '⚠️ 尚未設定「公司基地台的 MAC」→ 目前只有<strong>已核准的裝置</strong>能打卡。' +
+        '若希望電腦也能用基地台判定，請下載打卡小工具在公司執行一次後帶入 MAC。';
     } else {
       warn.style.display = 'none';
     }
@@ -3313,14 +3422,18 @@ function saveWifiSettings() {
   const prev = db.wifiSettings || wifiDefaults();
   const val = function(id) { const el = document.getElementById(id); return el ? String(el.value || '') : ''; };
   const chk = function(id) { const el = document.getElementById(id); return !!(el && el.checked); };
-  const rawWan = trim(val('wanIpInput'));
+  const rawMac = trim(val('macListInput'));
+  const list = splitMacList(rawMac);
+  const joined = list.join(', ');
+  const changed = joined !== String(prev.bssid_list || '');
   db.wifiSettings = {
-    mode: 'wan',          // v5.4.0：僅公司網路出口 IP
-    wan_ip: rawWan,       // 公司網路出口 IP 清單（支援 * 通配）
-    wan_ip_at: prev.wan_ip_at || '',
-    wan_ip_by: prev.wan_ip_by || '',
-    wan_auto: chk('wanAutoInput'),
-    wan_required: chk('wanRequiredInput'),
+    mode: 'mac',          // v5.5.0：公司基地台 MAC ＋ 裝置信任
+    bssid_list: joined,   // 公司基地台實體位址清單（支援 * 通配）
+    bssid_at: changed ? new Date().toISOString() : (prev.bssid_at || ''),
+    bssid_by: changed ? ((currentUser && currentUser.name) || (prev.bssid_by || '')) : (prev.bssid_by || ''),
+    bssid_required: chk('macRequiredInput'),
+    trusted_devices: Array.isArray(prev.trusted_devices) ? prev.trusted_devices.slice() : [],
+    trust_required: chk('trustRequiredInput'),
     enroll_token: prev.enroll_token || '',
     enroll_exp: prev.enroll_exp || 0,
     enroll_used: prev.enroll_used === true,
@@ -3332,10 +3445,11 @@ function saveWifiSettings() {
     updated_at: new Date().toISOString()
   };
   saveDB();
-  showToast('打卡設定已儲存！（WiFi 名稱：' + name +
-    ' · 出口 IP：' + (rawWan || '未設定') +
+  showToast('打卡設定已儲存！（公司基地台 MAC：' + (list.join(', ') || '未設定') +
+    ' · 已核准裝置 ' + db.wifiSettings.trusted_devices.length + ' 台' +
     (db.wifiSettings.enabled ? ' · 驗證啟用' : ' · 驗證停用') + '）', 'success');
   refreshWifiDetectInfo();
+  refreshTrustedDeviceList();
   loadClockStatus();
 }
 
@@ -3846,7 +3960,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '5.4.0.20261007';
+const BUILD_ID = '5.5.0.20261007';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
@@ -4720,7 +4834,12 @@ async function pullFromCloud(silent, opts) {
         localStorage.removeItem('attendance_github_token');
         localStorage.removeItem('attendance_no_embedded');
         addSyncLog('GET', 'ok', '偵測到認證失效，自動切換為內建憑證後重試', 401);
+        // v5.5.0 修復：clearAllSyncState() 會把 syncPending／syncTimer 一起清掉，
+        // 若此刻本機正好有待推播的變更（例如剛改完薪資設定、2 秒 debounce 還沒到），
+        // 那筆變更會被靜默丟棄、永遠不上雲 → 這裡先把「有待推播」記下來，清完狀態立刻補推。
+        var hadPendingPush = syncPending;
         clearAllSyncState();
+        if (hadPendingPush) { syncPending = true; pushNow(); }
         setTimeout(function() { pullFromCloud(true); }, 800);
         return;
       }
@@ -5403,7 +5522,8 @@ document.querySelectorAll('[data-page]').forEach(function(el) {
 
 // ===== Init =====
 (function init() {
-  // v5.4.0：原「WiFi 名稱（SSID）通道」已移除 — 不再解析 ?ssid=&t=（小工具已下架）
+  // v5.5.0：Windows 打卡小工具以 ?bssid=<MAC>&t=<記號> 帶入公司基地台的實體位址（記號換天失效）
+  resolveBSSIDFromURL();
   // Cloud sync: auto-connect when opened via a shared ?sync=XXXX link (cross-device)
   let syncFlowPending = false; // true = 等待使用者確認是否切換同步碼
   const urlSync = new URLSearchParams(location.search).get('sync');
