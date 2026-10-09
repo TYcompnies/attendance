@@ -635,12 +635,15 @@
           <input type="text" id="macListInput" placeholder="例如：A4:2B:8C:11:22:33 或 A4:2B:8C:*">
           <div class="hint-text">
             這就是<strong>公司無線基地台（路由器）本身的 MAC 位址</strong>，偽造不了、也不會像 IP 那樣浮動，是最可靠的「人在公司」憑據。<br>
-            多台 AP（多樓層）用逗號分隔；同廠牌同批可用 <code>*</code> 通配，例如 <code>A4:2B:8C:*</code>。
+            多台 AP（多樓層）用逗號分隔；同廠牌同批可用 <code>*</code> 通配，例如 <code>A4:2B:8C:*</code>。<br>
+            ✅ 系統已<strong>內建公司兩台 AP</strong>，全新安裝會自動帶入，底下不用再手動設定。
           </div>
         </div>
         <div style="margin-bottom:18px;">
           <button class="btn btn-outline btn-sm" id="captureMacBtn" onclick="captureCompanyMAC()">🔍 帶入這台電腦目前連上的基地台 MAC</button>
-          <div class="hint-text" style="margin-top:6px;">⚠️ 必須先用<strong>打卡小工具</strong>開啟本頁（瀏覽器自己讀不到 MAC），且當下連的是公司 WiFi。</div>
+          <button class="btn btn-outline btn-sm" onclick="restoreBuiltinMAC()" style="margin-left:6px;">↩️ 還原公司內建 MAC</button>
+          <div class="hint-text" style="margin-top:6px;">⚠️ 必須先用<strong>打卡小工具</strong>開啟本頁（瀏覽器自己讀不到 MAC），且當下連的是公司 WiFi。<br>
+            內建清單：<code id="builtinMacText"></code>（按「還原」可把這兩組填回上方欄位）。</div>
           <div id="macToolHint"></div>
         </div>
         <div class="form-group">
@@ -797,7 +800,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v5.5.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-10-07 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證雙通道：① 公司基地台實體位址 MAC／BSSID（電腦用 Windows 打卡小工具帶入，偽造不了、不像 IP 會浮動）② 裝置信任（手機讀不到 MAC，由管理員核准裝置代碼一次，或用一次性遠端核准連結），已移除公司網路出口 IP 判定、WiFi 名稱 SSID 判定、IP 網段判定、舊的裝置 MAC 認證、人臉辨識／活體偵測與 GPS 定位)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v5.5.1 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-10-09 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證雙通道：① 公司基地台實體位址 MAC／BSSID（電腦用 Windows 打卡小工具帶入，偽造不了、不像 IP 會浮動）② 裝置信任（手機讀不到 MAC，由管理員核准裝置代碼一次，或用一次性遠端核准連結），已移除公司網路出口 IP 判定、WiFi 名稱 SSID 判定、IP 網段判定、舊的裝置 MAC 認證、人臉辨識／活體偵測與 GPS 定位)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受打卡管制，隨時隨地使用</td></tr>
@@ -940,12 +943,20 @@ let confirmCallback = null;
 //   ④ 清單都還沒設定 → 不設限放行（不能因為沒設定就把全公司鎖死）
 // ⚠️ 沒過 → 擋下；畫面會顯示「裝置代碼」，請管理員在設定頁核准後即可打卡。
 const WIFI_FACTORY_NAME = 'Office WiFi'; // 舊版（v5.3.x 以前）從未設定過的原廠值（出現即視為未設定，套用預設）
+
+// ===== v5.5.1：內建公司基地台（AP／路由器）實體位址白名單 =====
+// 這兩台是公司固定使用的 AP，直接內建在系統裡：
+//   全新安裝、或從沒登錄過基地台 MAC 的舊資料庫 → 自動帶入，管理員不必手動設定
+//   管理員日後在設定頁手動改過／清空過（bssid_at 有值）→ 尊重管理員的設定，不再覆蓋
+const COMPANY_BSSIDS = ['28:11:A8:67:A1:65', '50:92:6A:B0:E0:86'];
+const COMPANY_BSSID_DEFAULT = COMPANY_BSSIDS.join(', ');
+
 function wifiDefaults() {
   return {
     mode: 'mac',               // v5.5.0：公司 AP 實體位址（BSSID）＋ 裝置信任（出口 IP／SSID／GPS／人臉皆已移除）
-    bssid_list: '',            // 公司 AP／路由器的實體位址（BSSID）清單（逗號分隔，支援 * 通配）
-    bssid_at: '',              // 最近一次登錄／更新公司 AP MAC 的時間
-    bssid_by: '',              // 最近一次是誰登錄的（稽核）
+    bssid_list: COMPANY_BSSID_DEFAULT, // 公司 AP／路由器的實體位址（BSSID）清單（逗號分隔，支援 * 通配）
+    bssid_at: new Date().toISOString(),  // v5.5.1：預設就帶公司內建清單，先填時間＝「已套用內建值」
+    bssid_by: '系統內建',      // 最近一次是誰登錄的（稽核）
     bssid_required: true,      // 啟用公司 AP MAC 驗證
     trusted_devices: [],       // v5.5.0：管理員核准過的裝置 [{uid, label, by, at}]
     trust_required: true,      // 啟用裝置信任（核准過的手機／平板直接放行）
@@ -1021,6 +1032,13 @@ function normalizeWifiSettings(target) {
   if (!w.bssid_list || typeof w.bssid_list !== 'string') w.bssid_list = '';
   if (!w.bssid_at) w.bssid_at = '';
   if (!w.bssid_by || typeof w.bssid_by !== 'string') w.bssid_by = '';
+  // v5.5.1：還沒登錄過任何基地台 MAC（清單空 ＋ 沒有登錄時間）→ 自動帶入公司內建清單
+  // （管理員自己改過／清空過的會留下 bssid_at，那種就不動，尊重管理員設定）
+  if (!w.bssid_list.trim() && !w.bssid_at) {
+    w.bssid_list = COMPANY_BSSID_DEFAULT;
+    w.bssid_at = new Date().toISOString();
+    w.bssid_by = '系統內建';
+  }
   if (w.bssid_required === undefined || typeof w.bssid_required !== 'boolean') w.bssid_required = true;
   // v5.5.0：裝置信任（手機讀不到 MAC，改由管理員核准）
   if (!Array.isArray(w.trusted_devices)) w.trusted_devices = [];
@@ -3251,7 +3269,12 @@ async function loadWifiSettings() {
   const w = db.wifiSettings || {};
   const setVal = function(id, v) { const el = document.getElementById(id); if (el) el.value = v; };
   const setChk = function(id, v) { const el = document.getElementById(id); if (el) el.checked = !!v; };
+  const setTxtBuiltin = function() {
+    const el = document.getElementById('builtinMacText');
+    if (el) el.textContent = COMPANY_BSSID_DEFAULT;
+  };
   setVal('macListInput', w.bssid_list || '');
+  setTxtBuiltin();
   setChk('wifiEnabledInput', w.enabled !== false);
   setChk('macRequiredInput', w.bssid_required !== false);
   setChk('trustRequiredInput', w.trust_required !== false);
@@ -3359,6 +3382,17 @@ function captureCompanyMAC() {
   }
   refreshWifiDetectInfo();
   showToast('已帶入這台電腦目前連上的基地台 MAC：' + mac + '（請記得按「儲存設定」）', 'success');
+}
+
+// v5.5.1：把公司內建的兩台 AP 實體位址填回欄位（管理員改壞／清空時可一鍵還原）
+function restoreBuiltinMAC() {
+  const input = document.getElementById('macListInput');
+  if (!input) return;
+  const list = splitMacList(input.value);
+  COMPANY_BSSIDS.forEach(function(m) { if (list.indexOf(m) === -1) list.push(m); });
+  input.value = list.join(', ');
+  refreshWifiDetectInfo();
+  showToast('已帶入公司內建基地台 MAC：' + COMPANY_BSSID_DEFAULT + '（請記得按「儲存設定」）', 'success');
 }
 
 // 顯示偵測結果：IP / 基地台 MAC / 放行狀態
@@ -3960,7 +3994,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '5.5.0.20261007';
+const BUILD_ID = '5.5.1.20261009';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
