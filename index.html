@@ -636,7 +636,8 @@
           <div class="hint-text">
             這就是<strong>公司無線基地台（路由器）本身的 MAC 位址</strong>，偽造不了、也不會像 IP 那樣浮動，是最可靠的「人在公司」憑據。<br>
             多台 AP（多樓層）用逗號分隔；同廠牌同批可用 <code>*</code> 通配，例如 <code>A4:2B:8C:*</code>。<br>
-            ✅ 系統已<strong>內建公司兩台 AP</strong>，全新安裝會自動帶入，底下不用再手動設定。
+            ✅ 系統已<strong>內建公司基地台清單</strong>，全新安裝會自動帶入，底下不用再手動設定。
+            （公司換 AP 時本清單會自動更新；只有你手動改過才會改成聽你的）
           </div>
         </div>
         <div style="margin-bottom:18px;">
@@ -644,7 +645,8 @@
           <button class="btn btn-outline btn-sm" onclick="restoreBuiltinMAC()" style="margin-left:6px;">↩️ 還原公司內建 MAC</button>
           <div class="hint-text" style="margin-top:6px;">⚠️ 必須先用<strong>打卡小工具</strong>開啟本頁（瀏覽器自己讀不到 MAC），且當下連的是公司 WiFi。<br>
             內建清單（<code id="builtinMacText"></code>）：<br>
-            · <code>50:92:6A:CB:40:88</code> = 公司 AP（TY_5G）的基地台 BSSID<br>
+            · <code>50:92:6A:CB:40:88</code> = 公司 AP 的 5GHz（SSID <code>TY_5G</code>）<br>
+            · <code>50:92:6A:CB:40:87</code> = 公司 AP 的 2.4GHz（SSID <code>TY</code>）<br>
             · <code>50:92:6A:CB:40:86</code> = 公司路由器本身的 LAN MAC，<strong>接網路線的桌上型電腦</strong>靠這組認證<br>
             ⚠️ 欄位裡另外兩組（<code>50:92:6A:B0:E0:86</code>、<code>28:11:A8:67:A1:65</code>）是 v5.5.1 保留下來的舊值，其中後者其實是<strong>筆電自己的網卡</strong>而不是基地台 — 確認無誤後建議刪除。</div>
           <div id="macToolHint"></div>
@@ -803,7 +805,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v5.5.2 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-10-10 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證雙通道：① 公司基地台實體位址 MAC／BSSID（電腦用 Windows 打卡小工具帶入，偽造不了、不像 IP 會浮動）② 裝置信任（手機讀不到 MAC，由管理員核准裝置代碼一次，或用一次性遠端核准連結），已移除公司網路出口 IP 判定、WiFi 名稱 SSID 判定、IP 網段判定、舊的裝置 MAC 認證、人臉辨識／活體偵測與 GPS 定位)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v5.5.3 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-10-10 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證雙通道：① 公司基地台實體位址 MAC／BSSID（電腦用 Windows 打卡小工具帶入，偽造不了、不像 IP 會浮動）② 裝置信任（手機讀不到 MAC，由管理員核准裝置代碼一次，或用一次性遠端核准連結），已移除公司網路出口 IP 判定、WiFi 名稱 SSID 判定、IP 網段判定、舊的裝置 MAC 認證、人臉辨識／活體偵測與 GPS 定位)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受打卡管制，隨時隨地使用</td></tr>
@@ -956,8 +958,13 @@ const WIFI_FACTORY_NAME = 'Office WiFi'; // 舊版（v5.3.x 以前）從未設�
 //        實體位址       : 28:11:a8:67:a1:65   ← 電腦自己的 Wi-Fi 網卡（不是基地台！）
 //        AP BSSID       : 50:92:6a:cb:40:88   ← 真正的基地台（TY_5G / 5GHz）
 //        閘道 192.168.31.1 → 50-92-6a-cb-40-86 ← 路由器本身的 LAN MAC（有線電腦靠這個認證）
+//
+// v5.5.3 更正：小工具掃描到公司 router 其實開了兩台 AP（同一台機器的 2.4G / 5G）：
+//        TY_5G  -> 50:92:6A:CB:40:88   （5 GHz）
+//        TY     -> 50:92:6A:CB:40:87   （2.4 GHz）← 員工若連 2.4G 這台，舊清單會擋下來
 const COMPANY_BSSIDS = [
-  '50:92:6A:CB:40:88',  // 公司 AP（TY_5G 5GHz）的 BSSID  ← 實際連線時抓到的就是這個
+  '50:92:6A:CB:40:88',  // 公司 AP：TY_5G（5 GHz）的 BSSID
+  '50:92:6A:CB:40:87',  // 公司 AP：TY（2.4 GHz）的 BSSID  ← v5.5.3 新增
   '50:92:6A:CB:40:86',  // 公司路由器本身的 LAN MAC（= 預設閘道 192.168.31.1）← 有線電腦走這組
   '50:92:6A:B0:E0:86',  // 保留：v5.5.1 原有的第二組
   '28:11:A8:67:A1:65'   // 保留：v5.5.1 原有的第一組（這其實是筆電自己的 Wi-Fi 網卡，建議管理員刪除）
@@ -965,7 +972,7 @@ const COMPANY_BSSIDS = [
 const COMPANY_BSSID_DEFAULT = COMPANY_BSSIDS.join(', ');
 // 內建清單的版本號：公司換 AP、或清單要更正時 +1，
 // 系統升級時會自動把「系統帶入、管理員沒手動改過」的清單更新到最新版（避免已安裝的裝置一直用舊的錯清單）
-const COMPANY_BSSID_VER = 2;
+const COMPANY_BSSID_VER = 3;
 
 function wifiDefaults() {
   return {
@@ -1519,7 +1526,8 @@ function toolDownloadHint(style) {
     '<a href="tools/TY-clockin-mac.bat" download style="color:var(--primary);font-weight:600;">⬇️ 打卡小工具 .bat</a>' +
     ' ＋ ' +
     '<a href="tools/TY-clockin-mac.ps1" download style="color:var(--primary);font-weight:600;">.ps1</a>' +
-    '<span style="color:var(--text-secondary);">（<strong>兩個檔要放在同一個資料夾</strong>，連上公司 WiFi 後雙擊 .bat 就會自動帶入並開啟打卡頁）</span>' +
+    '<span style="color:var(--text-secondary);">（連上公司網路後<strong>雙擊 .bat</strong> 就會自動偵測並開啟打卡頁；.bat 會自己下載最新版 .ps1，不必兩個檔放一起）</span>' +
+    '<div style="color:var(--text-secondary);margin-top:2px;">工具版本 v1.3.0 · 支援 WiFi 基地台 BSSID 與有線網路閘道 MAC · 讀不到時會產生桌面診斷報告</div>' +
     '</div>';
 }
 // 顯示這台裝置的代碼（手機／平板被擋時，把代碼給管理員核准一次即可）
@@ -4019,7 +4027,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '5.5.2.20261010';
+const BUILD_ID = '5.5.3.20261010';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。

@@ -1,0 +1,7 @@
+# 打卡小工具的換行與編碼是「功能性」的，不准 git 做任何轉換：
+#   .bat 必須是 CRLF（cmd.exe 逐行解析；LF-only 會讓解析器黏行）
+#   .ps1 必須是 UTF-8 with BOM + CRLF（PowerShell 5.1 才讀得對中文）
+# 標成 -text（binary）→ blob 原樣儲存，GitHub Pages 下載到的就是本機這份位元組。
+# 修改後請執行：node .diag/mk-tools.js  （會自動檢查這兩項規格）
+tools/TY-clockin-mac.bat -text
+tools/TY-clockin-mac.ps1 -text

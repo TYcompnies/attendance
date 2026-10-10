@@ -1,21 +1,75 @@
 @echo off
-chcp 65001 >nul
+setlocal
+chcp 65001 >nul 2>&1
+title TY Attendance - Clock-in Tool
+
 REM ============================================================
-REM  專業出勤系統 打卡小工具 (v5.5.2)
-REM  連上公司網路後按兩下本檔，會自動讀出目前連上的
-REM  基地台／路由器實體位址（MAC / BSSID），然後開啟打卡頁並
-REM  自動帶入，員工直接輸入帳密打卡即可。
-REM
-REM  · 有 WiFi  -> 帶入「基地台 BSSID」
-REM  · 只有網路線 -> 帶入「路由器閘道 MAC」（一樣能認證）
-REM
-REM  TY-clockin-mac.ps1 必須與本 .bat 放在同一個資料夾。
+REM  IMPORTANT: keep this file 100 percent ASCII, CRLF line endings.
+REM  Chinese characters inside a .bat break cmd.exe (it reads the
+REM  file byte-by-byte with the active codepage, so comments turn
+REM  into "not recognized as an internal or external command").
+REM  All Chinese output is done by the PowerShell script instead.
+REM  Build helper: .diag/mk-tools.js  (run it after editing)
 REM ============================================================
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0TY-clockin-mac.ps1"
+
+set "TOOLVER=1.3.0"
+set "TY_FROM_BAT=1"
+set "PAGEURL=https://tycompnies.github.io/attendance/"
+set "PSURL=https://tycompnies.github.io/attendance/tools/TY-clockin-mac.ps1"
+set "SIBLING=%~dp0TY-clockin-mac.ps1"
+set "CACHED=%TEMP%\TY-clockin-mac.ps1"
+set "TESTFLAG="
+
+if /i "%~1"=="/test" set "TESTFLAG=-Test"
+if /i "%~1"=="-t"    set "TESTFLAG=-Test"
+
+echo ============================================================
+echo   TY Attendance  -  Clock-in Tool   v%TOOLVER%
+echo ------------------------------------------------------------
+echo   This tool reads the MAC address of the company AP/router
+echo   you are connected to, then opens the clock-in page with it.
+echo   (A browser cannot read the WiFi MAC, so this tool does it.)
+echo ============================================================
+echo.
+
+REM ---- 1. always try to fetch the latest PowerShell script ----
+echo [1/2] Getting tool script...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try{[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12}catch{}; try{Invoke-WebRequest -Uri '%PSURL%' -OutFile '%CACHED%' -UseBasicParsing -TimeoutSec 20}catch{}" >nul 2>&1
+
+set "RUN="
+if exist "%CACHED%" set "RUN=%CACHED%"
+if not defined RUN if exist "%SIBLING%" set "RUN=%SIBLING%"
+
+if defined RUN goto :run
+
+echo.
+echo  [X] Tool script not found.
+echo.
+echo      1. Check that this computer can open this address:
+echo         %PSURL%
+echo.
+echo      2. Or put TY-clockin-mac.ps1 in the SAME folder as this
+echo         .bat file, then run this .bat again.
+echo.
+echo  Phone users do NOT need this tool - just use the device
+echo  code shown on the clock-in page and ask the admin to
+echo  approve it once.
+echo.
+pause
+exit /b 1
+
+:run
+echo [2/2] Detecting your network...
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%RUN%" %TESTFLAG%
+
 echo.
 echo ============================================================
-echo  若上面顯示「讀不到」，請確認這台電腦已連上公司網路後再執行一次。
-echo  用手機打卡者不需要這個工具：請在打卡頁抄下「裝置代碼」給管理員核准。
+echo   If it says "(not found)", make sure this computer is on
+echo   the COMPANY network, then run this file again.
+echo   Phone users do NOT need this tool - use the device code
+echo   on the clock-in page and ask the admin to approve it.
 echo ============================================================
 echo.
 pause
+endlocal
