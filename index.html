@@ -546,7 +546,8 @@
         <div class="card-header"><div class="card-title">薪資計算參數</div></div>
         <div class="info-banner blue">
           <span>ℹ️</span>
-          <span>計算規則：<strong>支薪假</strong>＝特休、婚假、喪假、產假；<strong>半薪假</strong>＝病假、生理假；<strong>不支薪假</strong>＝事假、其他。月薪制日薪＝月薪 ÷ 30、時薪＝日薪 ÷ 標準每日工時；加班費＝加班時數 × 時薪 × 倍率。加班時數＝每日實際工時超過標準每日工時的部分。同一天同時請假且有打卡者，以出勤為準、不重複扣薪。</span>
+          <span>計算規則：<strong>支薪假</strong>＝特休、婚假、喪假、產假；<strong>半薪假</strong>＝病假、生理假；<strong>不支薪假</strong>＝事假、其他。月薪制日薪＝月薪 ÷ 30、時薪＝日薪 ÷ 標準每日工時；加班費＝加班時數 × 時薪 × 倍率。加班時數＝每日實際工時超過標準每日工時的部分。同一天同時請假且有打卡者，以出勤為準、不重複扣薪。<br>
+            <strong>本月應扣金額 ＝ 請假扣款 ＋ 社保金額</strong>（不含其他項目）；<strong>實領薪資 ＝ 本薪 ＋ 加班費 − 本月應扣金額</strong>。<strong>補班天數</strong>＝該員工在這個月實際來補班的天數。</span>
         </div>
         <div class="schedule-row" style="margin-bottom: 20px;">
           <div class="form-group"><label>加班費倍率</label><input type="number" id="payrollOtMultiplier" value="1.34" min="1" step="0.01"></div>
@@ -558,11 +559,12 @@
         <div class="card-header"><div class="card-title">員工薪資設定</div></div>
         <div class="info-banner" style="background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;">
           <span>👑</span>
-          <span>薪資設定會自動同步到雲端與所有裝置。<strong>未設定薪資的員工不會出現在每月薪資試算中</strong>（系統管理員 admin 除外）。</span>
+          <span>薪資設定會自動同步到雲端與所有裝置。<strong>未設定薪資的員工不會出現在每月薪資試算中</strong>（系統管理員 admin 除外）。<br>
+            <strong>社保金額</strong>＝每位員工<strong>每月固定自薪資中扣除</strong>的社保費用（月薪制／時薪制都適用），留白或填 0 表示不扣。它會計入每月薪資試算的「本月應扣金額」。</span>
         </div>
         <div class="table-wrapper">
-          <table><thead><tr><th>員工編號</th><th>姓名</th><th>部門</th><th>薪資制</th><th>月薪（$）</th><th>時薪（$）</th><th>狀態</th></tr></thead>
-          <tbody id="salarySettingsTableBody"><tr><td colspan="7" class="empty-state">載入中...</td></tr></tbody></table>
+          <table><thead><tr><th>員工編號</th><th>姓名</th><th>部門</th><th>薪資制</th><th>月薪（$）</th><th>時薪（$）</th><th>社保金額（$/月）</th><th>狀態</th></tr></thead>
+          <tbody id="salarySettingsTableBody"><tr><td colspan="8" class="empty-state">載入中...</td></tr></tbody></table>
         </div>
         <button class="btn btn-primary" onclick="saveSalarySettings()" style="margin-top:16px;">儲存全部薪資設定</button>
       </div>
@@ -574,8 +576,8 @@
           <button class="btn btn-outline btn-sm" onclick="exportPayrollCSV()">匯出CSV</button>
         </div>
         <div class="table-wrapper">
-          <table><thead><tr><th>員工編號</th><th>姓名</th><th>薪資制</th><th>出勤天數</th><th>總工時</th><th>加班時數</th><th>請假(支薪/半薪/不支薪)</th><th>本薪</th><th>加班費</th><th>請假扣款</th><th>應發薪資</th></tr></thead>
-          <tbody id="payrollTableBody"><tr><td colspan="11" class="empty-state">請選擇月份後點擊「計算」</td></tr></tbody></table>
+          <table><thead><tr><th>員工編號</th><th>姓名</th><th>薪資制</th><th>出勤天數</th><th>總工時</th><th>加班時數</th><th>補班天數</th><th>請假(支薪/半薪/不支薪)</th><th>本薪</th><th>加班費</th><th>本月應扣金額<br><span style="font-weight:400;font-size:11px;color:var(--text-secondary)">（請假＋社保）</span></th><th>實領薪資</th></tr></thead>
+          <tbody id="payrollTableBody"><tr><td colspan="12" class="empty-state">請選擇月份後點擊「計算」</td></tr></tbody></table>
         </div>
         <div class="hint-text" style="margin-top:10px;">金額僅為系統試算結果，實際發放前請再人工核對出勤與假單。</div>
       </div>
@@ -805,7 +807,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v5.5.3 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-10-10 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證雙通道：① 公司基地台實體位址 MAC／BSSID（電腦用 Windows 打卡小工具帶入，偽造不了、不像 IP 會浮動）② 裝置信任（手機讀不到 MAC，由管理員核准裝置代碼一次，或用一次性遠端核准連結），已移除公司網路出口 IP 判定、WiFi 名稱 SSID 判定、IP 網段判定、舊的裝置 MAC 認證、人臉辨識／活體偵測與 GPS 定位)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v5.6.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-10-12 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 員工薪資設定新增每月社保金額 · 薪資試算新增補班天數／本月應扣金額（請假＋社保）／實領薪資 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證雙通道：① 公司基地台實體位址 MAC／BSSID（電腦用 Windows 打卡小工具帶入，偽造不了、不像 IP 會浮動）② 裝置信任（手機讀不到 MAC，由管理員核准裝置代碼一次，或用一次性遠端核准連結），已移除公司網路出口 IP 判定、WiFi 名稱 SSID 判定、IP 網段判定、舊的裝置 MAC 認證、人臉辨識／活體偵測與 GPS 定位)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受打卡管制，隨時隨地使用</td></tr>
@@ -3732,12 +3734,15 @@ function calcPayrollForEmployee(emp, ym) {
   const presentDays = Object.keys(clockedDates).length;
 
   // v4.0.4 補班抵扣：補班日（makeup_type=leave_offset）可抵扣一天平日請假
+  // v5.6.0：補班天數改為「這個月實際來補班的天數」（以補班當天的打卡日期計），
+  //         以前是算全部歷史補班筆數，在每月試算裡沒有意義
   const offsetDates = {};
   let makeupDays = 0;
   (db.attendance || []).forEach(function(a) {
     if (a.employee_id !== emp.employee_id) return;
     if (a.makeup_type === 'leave_offset' && a.offset_leave_date) {
-      makeupDays++;
+      const md = a.date || '';
+      if (md >= range.start && md <= range.end) makeupDays++;
       if (a.offset_leave_date >= range.start && a.offset_leave_date <= range.end) {
         offsetDates[a.offset_leave_date] = true;
       }
@@ -3771,7 +3776,11 @@ function calcPayrollForEmployee(emp, ym) {
     otPay = otHours * hourlyRate * cfg.ot_multiplier;
     leaveDeduct = netCount.unpaid * dayRate + netCount.half * dayRate * 0.5;
   }
-  const grossPay = basePay + otPay - leaveDeduct;
+  // v5.6.0：社保金額＝每位員工每月固定扣款（月薪制／時薪制都適用），計入「本月應扣金額」
+  const socialInsurance = Math.max(0, parseFloat(setting.social_insurance) || 0);
+  const grossPay = basePay + otPay - leaveDeduct;           // 應發（未扣社保）
+  const totalDeduct = leaveDeduct + socialInsurance;        // 本月應扣金額（只含請假、社保）
+  const netPay = grossPay - socialInsurance;                // 實領薪資
   return {
     employee_id: emp.employee_id, name: emp.name, department: emp.department || '',
     pay_type: setting.pay_type === 'hourly' ? 'hourly' : 'monthly',
@@ -3784,7 +3793,10 @@ function calcPayrollForEmployee(emp, ym) {
     leave_paid: payCount.paid, leave_half: payCount.half, leave_unpaid: payCount.unpaid,
     leave_offset_days: leaveOffsetDays, makeup_days: makeupDays,
     net_leave_half: netCount.half, net_leave_unpaid: netCount.unpaid,
+    social_insurance: socialInsurance,   // v5.6.0 每月社保扣款
     base_pay: basePay, ot_pay: otPay, leave_deduct: leaveDeduct, gross_pay: grossPay,
+    total_deduct: totalDeduct,           // v5.6.0 本月應扣金額（請假＋社保）
+    net_pay: netPay,                     // v5.6.0 實領薪資
     ot_multiplier: cfg.ot_multiplier, standard_daily_hours: stdH
   };
 }
@@ -3824,7 +3836,7 @@ function renderSalarySettings() {
   const tbody = document.getElementById('salarySettingsTableBody');
   const employees = (db.employees || []).filter(function(e) { return e.active; });
   if (employees.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="icon">👤</div>暫無在職員工</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">👤</div>暫無在職員工</td></tr>';
     return;
   }
   tbody.innerHTML = employees.map(function(e) {
@@ -3843,6 +3855,8 @@ function renderSalarySettings() {
       '</select></td>' +
       '<td><input type="number" min="0" step="100" placeholder="0" data-emp="' + esc(e.employee_id) + '" data-field="monthly_salary" value="' + (s.monthly_salary || '') + '" style="' + SALARY_INPUT_STYLE + '"></td>' +
       '<td><input type="number" min="0" step="5" placeholder="0" data-emp="' + esc(e.employee_id) + '" data-field="hourly_rate" value="' + (s.hourly_rate || '') + '" style="' + SALARY_INPUT_STYLE + '"></td>' +
+      // v5.6.0：每月社保金額（月薪制／時薪制都要能填）
+      '<td><input type="number" min="0" step="100" placeholder="0" data-emp="' + esc(e.employee_id) + '" data-field="social_insurance" value="' + (s.social_insurance || '') + '" style="' + SALARY_INPUT_STYLE + '"></td>' +
       '<td>' + status + '</td>' +
       '</tr>';
   }).join('');
@@ -3867,14 +3881,16 @@ function saveSalarySettings() {
     const row = sel.closest('tr');
     const monthly = parseFloat((row.querySelector('[data-field="monthly_salary"]') || {}).value);
     const hourly = parseFloat((row.querySelector('[data-field="hourly_rate"]') || {}).value);
+    const social = parseFloat((row.querySelector('[data-field="social_insurance"]') || {}).value); // v5.6.0
     const payType = sel.value;
-    if (payType === 'monthly' && (!monthly || monthly <= 0)) return; // 未填 → 不設定
+    if (payType === 'monthly' && (!monthly || monthly <= 0)) return; // 未填薪資 → 不列入試算
     if (payType === 'hourly' && (!hourly || hourly <= 0)) return;
     const prev = getSalarySetting(empId) || {};
     settings[empId] = {
       pay_type: payType,
       monthly_salary: payType === 'monthly' ? monthly : (parseFloat(prev.monthly_salary) || 0),
       hourly_rate: payType === 'hourly' ? hourly : (parseFloat(prev.hourly_rate) || 0),
+      social_insurance: (social && social > 0) ? social : 0, // v5.6.0 每月社保扣款（0 = 不扣）
       updated_at: nowISO
     };
     savedCount++;
@@ -3908,11 +3924,18 @@ function calcAndRenderPayroll(silent) {
   _lastPayrollMonth = ym;
 
   if (rows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="11" class="empty-state">此月份沒有可計算的員工（請先在上方設定員工薪資）</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" class="empty-state">此月份沒有可計算的員工（請先在上方設定員工薪資）</td></tr>';
     return;
   }
-  const totalGross = rows.reduce(function(s, r) { return s + r.gross_pay; }, 0);
+  // v5.6.0：本月應扣金額（請假＋社保）／實領薪資
+  const totalOt = rows.reduce(function(s, r) { return s + r.ot_pay; }, 0);
+  const totalDeduct = rows.reduce(function(s, r) { return s + r.total_deduct; }, 0);
+  const totalNet = rows.reduce(function(s, r) { return s + r.net_pay; }, 0);
   tbody.innerHTML = rows.map(function(r) {
+    const deductBreak = r.total_deduct > 0
+      ? '<div style="font-size:11px;color:var(--text-secondary);font-weight:400">請假 ' + fmtMoney(r.leave_deduct) +
+        ' ＋ 社保 ' + fmtMoney(r.social_insurance) + '</div>'
+      : '';
     return '<tr>' +
       '<td style="font-weight:600">' + esc(r.employee_id) + '</td>' +
       '<td>' + esc(r.name) + '</td>' +
@@ -3920,17 +3943,23 @@ function calcAndRenderPayroll(silent) {
       '<td>' + r.present_days + ' 天</td>' +
       '<td>' + fmtHours(r.total_hours) + ' 小時</td>' +
       '<td>' + fmtHours(r.ot_hours) + ' 小時</td>' +
+      // v5.6.0 補班天數：本月實際來補班的天數
+      '<td>' + (r.makeup_days > 0
+        ? '<span style="color:#b45309;font-weight:600">' + r.makeup_days + ' 天</span>'
+        : '<span style="color:var(--text-secondary)">--</span>') + '</td>' +
       '<td style="font-size:12px">' + r.leave_paid + ' / ' + r.leave_half + ' / ' + r.leave_unpaid + ' 天' +
         (r.leave_offset_days > 0 ? '<br><span style="color:#b45309">📅 補班抵扣 ' + r.leave_offset_days + ' 天</span>' : '') + '</td>' +
       '<td>' + fmtMoney(r.base_pay) + '</td>' +
       '<td>' + fmtMoney(r.ot_pay) + '</td>' +
-      '<td style="color:var(--danger)">' + (r.leave_deduct > 0 ? '-' + fmtMoney(r.leave_deduct) : '--') + '</td>' +
-      '<td style="font-weight:700;color:var(--primary)">' + fmtMoney(r.gross_pay) + '</td>' +
+      '<td style="color:var(--danger)">' + (r.total_deduct > 0 ? '-' + fmtMoney(r.total_deduct) : '--') + deductBreak + '</td>' +
+      '<td style="font-weight:700;color:var(--primary)">' + fmtMoney(r.net_pay) + '</td>' +
       '</tr>';
   }).join('') +
   '<tr style="background:var(--bg);font-weight:700">' +
-    '<td colspan="10" style="text-align:right">應發總額（' + rows.length + ' 人）</td>' +
-    '<td style="color:var(--primary)">' + fmtMoney(totalGross) + '</td>' +
+    '<td colspan="9" style="text-align:right">合計（' + rows.length + ' 人）</td>' +
+    '<td>' + fmtMoney(totalOt) + '</td>' +
+    '<td style="color:var(--danger)">' + (totalDeduct > 0 ? '-' + fmtMoney(totalDeduct) : '--') + '</td>' +
+    '<td style="color:var(--primary)">' + fmtMoney(totalNet) + '</td>' +
   '</tr>';
   if (!silent) showToast('已計算 ' + ym + ' 薪資（' + rows.length + ' 人）', 'success');
 }
@@ -3939,15 +3968,18 @@ function exportPayrollCSV() {
   if (!requireAdmin()) return;
   if (!_lastPayrollRows || _lastPayrollRows.length === 0) { showToast('請先計算薪資再匯出', 'warning'); return; }
   const ym = _lastPayrollMonth || document.getElementById('payrollMonthInput').value;
+  // v5.6.0：新增 補班天數、社保金額、本月應扣金額、實領薪資
   const headers = ['員工編號', '姓名', '部門', '計薪月份', '薪資制', '出勤天數', '總工時(小時)', '加班時數(小時)',
-    '請假-支薪(天)', '請假-半薪(天)', '請假-不支薪(天)', '補班抵扣(天)', '本薪', '加班費', '請假扣款', '應發薪資', '加班倍率', '標準每日工時'];
+    '補班天數', '請假-支薪(天)', '請假-半薪(天)', '請假-不支薪(天)', '補班抵扣(天)', '本薪', '加班費',
+    '請假扣款', '社保金額', '本月應扣金額(請假+社保)', '實領薪資', '加班倍率', '標準每日工時'];
   const lines = [headers.join(',')];
   _lastPayrollRows.forEach(function(r) {
     const row = [r.employee_id, r.name, r.department, ym, r.pay_type_text, r.present_days, r.total_hours, r.ot_hours,
-      r.leave_paid, r.leave_half, r.leave_unpaid, r.leave_offset_days,
+      r.makeup_days, r.leave_paid, r.leave_half, r.leave_unpaid, r.leave_offset_days,
       Math.round(r.base_pay * 100) / 100, Math.round(r.ot_pay * 100) / 100,
-      Math.round(r.leave_deduct * 100) / 100,
-      Math.round(r.gross_pay * 100) / 100, r.ot_multiplier, r.standard_daily_hours];
+      Math.round(r.leave_deduct * 100) / 100, Math.round(r.social_insurance * 100) / 100,
+      Math.round(r.total_deduct * 100) / 100,
+      Math.round(r.net_pay * 100) / 100, r.ot_multiplier, r.standard_daily_hours];
     lines.push(row.map(function(v) { return '"' + String(v === null || typeof v === 'undefined' ? '' : v).replace(/"/g, '""') + '"'; }).join(','));
   });
   const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
@@ -4027,7 +4059,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '5.5.3.20261010';
+const BUILD_ID = '5.6.0.20261012';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
