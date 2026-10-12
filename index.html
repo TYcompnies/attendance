@@ -807,7 +807,7 @@
       <div class="card">
         <div class="card-header"><div class="card-title">系統資訊</div></div>
         <table style="margin-bottom: 0;">
-          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v5.6.0 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-10-12 · 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 員工薪資設定新增每月社保金額 · 薪資試算新增補班天數／本月應扣金額（請假＋社保）／實領薪資 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證雙通道：① 公司基地台實體位址 MAC／BSSID（電腦用 Windows 打卡小工具帶入，偽造不了、不像 IP 會浮動）② 裝置信任（手機讀不到 MAC，由管理員核准裝置代碼一次，或用一次性遠端核准連結），已移除公司網路出口 IP 判定、WiFi 名稱 SSID 判定、IP 網段判定、舊的裝置 MAC 認證、人臉辨識／活體偵測與 GPS 定位)</span></td></tr>
+          <tr><td style="width:200px;color:var(--text-secondary)">系統版本</td><td>v5.6.1 專業版 <span style="font-size:11px;color:var(--text-secondary);">(build 2026-10-12 · 系統管理員納入薪資計算（薪資設定／試算／補班登記比照一般員工）· 免憑證多通道並行讀寫（自動挑最快通道）· 跨裝置／跨瀏覽器／跨 IP／跨網域／跨國自動連動（免輸入同步碼）· 使用中每 5 秒自適應輪詢（無變化自動降速）· 同瀏覽器多分頁即時同步（BroadcastChannel + storage 事件雙保險）· 打卡後立即上傳 · 新裝置種子資料保護（不覆蓋雲端）· 人資薪資 + 補班抵扣 · 員工薪資設定新增每月社保金額 · 薪資試算新增補班天數／本月應扣金額（請假＋社保）／實領薪資 · 補班全日開放 + 補登記 · 已移除補休功能 · 登入首頁流程/時程 · 一鍵清空測試資料（系統/薪資） · 打卡 3 秒防連點 + 同日多次打卡（逐筆紀錄） · 打卡驗證雙通道：① 公司基地台實體位址 MAC／BSSID（電腦用 Windows 打卡小工具帶入，偽造不了、不像 IP 會浮動）② 裝置信任（手機讀不到 MAC，由管理員核准裝置代碼一次，或用一次性遠端核准連結），已移除公司網路出口 IP 判定、WiFi 名稱 SSID 判定、IP 網段判定、舊的裝置 MAC 認證、人臉辨識／活體偵測與 GPS 定位)</span></td></tr>
           <tr><td style="color:var(--text-secondary)">系統時程</td><td id="systemInfoSchedule">--</td></tr>
           <tr><td style="color:var(--text-secondary)">資料儲存方式</td><td>瀏覽器 localStorage + ☁️ 雲端同步</td></tr>
           <tr><td style="color:var(--text-secondary)">管理員權限</td><td>不受打卡管制，隨時隨地使用</td></tr>
@@ -2476,8 +2476,7 @@ function updateMakeupInfo(record) {
   const regBtn = document.getElementById('makeupRegisterBtn');
   if (!panelEl || !checkEl || !hintEl) return;
   if (!currentUser) return; // 防禦：loadClockStatus 在 await detectIP 期間使用者登出（v4.0.7 修補的 race）
-  if (currentUser.role === 'admin') { panelEl.style.display = 'none'; _makeupRegArmed = false; return; } // admin 不列入薪資
-  panelEl.style.display = ''; // v4.0.5 不再限定週六/週日
+  panelEl.style.display = ''; // v4.0.5 不再限定週六/週日；v5.6.1 管理員納入薪資 → 也能登記補班
   const regBtnIdle = function() { if (regBtn) { regBtn.style.display = 'none'; regBtn.textContent = '補登記為補班日'; } };
   // 今日已登記補班 → 唯讀顯示抵扣結果
   if (record && record.makeup_type === 'leave_offset') {
@@ -2562,7 +2561,7 @@ function buildMakeupSelection() {
 var _makeupRegArmed = false; // 補登記兩段式操作狀態（var 宣告避免 TDZ）
 function registerMakeup() {
   if (!requireLogin()) return;
-  if (currentUser.role === 'admin') { showToast('管理員不列入薪資計算，無需補班登記', 'warning'); return; }
+  // v5.6.1：管理員納入薪資計算 → 補班登記不再阻擋管理員
   const today = new Date().toLocaleDateString('en-CA');
   const record = getTodayRecords(currentUser.employeeId, today).filter(function(a) { return a.clock_in; })[0] || null; // v4.0.11 以當日主要（最早上班）紀錄為準
   if (!record) { showToast('請先完成上班打卡', 'warning'); return; }
@@ -2653,7 +2652,7 @@ async function clockIn() {
   // v4.0.5 補班抵扣：勾選「今日為補班日」時，須選擇要抵扣的請假日（先驗證後寫入）
   let makeupInfo = null;
   const makeupCheck = document.getElementById('makeupCheck');
-  if (makeupCheck && makeupCheck.checked && !isAdmin) {
+  if (makeupCheck && makeupCheck.checked) { // v5.6.1：管理員納入薪資 → 打卡時也能帶補班抵扣
     const r = buildMakeupSelection();
     if (!r.ok) { showToast(r.msg, 'error'); return; }
     makeupInfo = r.info;
@@ -3847,7 +3846,8 @@ function renderSalarySettings() {
       : '<span class="badge" style="background:#e5e7eb;color:#6b7280">未設定</span>';
     return '<tr>' +
       '<td style="font-weight:600">' + esc(e.employee_id) + '</td>' +
-      '<td>' + esc(e.name) + '</td>' +
+      // v5.6.1：系統管理員納入薪資設定 → 加註記方便辨識
+      '<td>' + esc(e.name) + (e.role === 'admin' ? ' <span class="badge badge-info">管理員</span>' : '') + '</td>' +
       '<td>' + (esc(e.department) || '--') + '</td>' +
       '<td><select data-emp="' + esc(e.employee_id) + '" data-field="pay_type" onchange="onSalaryTypeChange(this)" style="' + SALARY_INPUT_STYLE + '">' +
         '<option value="monthly"' + (payType === 'monthly' ? ' selected' : '') + '>月薪制</option>' +
@@ -3916,7 +3916,7 @@ function calcAndRenderPayroll(silent) {
 
   const rows = [];
   (db.employees || []).forEach(function(e) {
-    if (e.employee_id === 'admin') return; // 系統管理員不列入薪資
+    // v5.6.1：系統管理員也納入薪資計算（與一般員工同規則：有設定薪資才會出現）
     const r = calcPayrollForEmployee(e, ym);
     if (r) rows.push(r);
   });
@@ -4059,7 +4059,7 @@ function importFullData(event) {
 // ===== Cloud Sync (cross-device data sharing) =====
 const SYNC_KEY_STORAGE = 'attendance_sync_key';
 // v4.0：建置識別碼 — 用於「版本新鮮度守衛」自動偵測瀏覽器是否仍快取舊版程式
-const BUILD_ID = '5.6.0.20261012';
+const BUILD_ID = '5.6.1.20261012';
 const DEFAULT_SYNC_KEY = '3yc8e2q'; // 既有雲端同步碼（GitHub 備援鏡像的檔名）
 // v3.0：改用 GitHub API 作為雲端同步後端。
 // 根因：extendsclass.com 的 OPTIONS preflight 回應 500，瀏覽器拒絕所有 PUT 請求（CORS preflight failure）。
